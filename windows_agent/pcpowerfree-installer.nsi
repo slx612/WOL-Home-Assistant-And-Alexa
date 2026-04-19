@@ -8,7 +8,7 @@ RequestExecutionLevel admin
 
 !define APP_NAME "PC Power Free"
 !define APP_PUBLISHER "PC Power Free"
-!define APP_VERSION "0.1.0"
+!define APP_VERSION "0.2.0"
 !define INSTALL_BASENAME "pcpowerfree-windows-x64-setup.exe"
 !define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
 
@@ -25,10 +25,11 @@ ShowUnInstDetails show
 BrandingText "${APP_NAME}"
 
 !define MUI_ABORTWARNING
+!insertmacro MUI_RESERVEFILE_LANGDLL
 !define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\modern-install.ico"
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico"
 !define MUI_FINISHPAGE_RUN "$INSTDIR\PCPowerSetup.exe"
-!define MUI_FINISHPAGE_RUN_TEXT "Abrir el configurador ahora"
+!define MUI_FINISHPAGE_RUN_TEXT "$(FinishRunText)"
 !define MUI_FINISHPAGE_SHOWREADME ""
 
 !insertmacro MUI_PAGE_WELCOME
@@ -39,11 +40,25 @@ BrandingText "${APP_NAME}"
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 
+!insertmacro MUI_LANGUAGE "English"
 !insertmacro MUI_LANGUAGE "Spanish"
+
+LangString FinishRunText 1033 "Open the configurator now"
+LangString FinishRunText 1034 "Abrir el configurador ahora"
+LangString OnlyX64Message 1033 "This installer is only for Windows x64."
+LangString OnlyX64Message 1034 "Este instalador es solo para Windows x64."
+LangString ConfigureShortcut 1033 "Configure ${APP_NAME}"
+LangString ConfigureShortcut 1034 "Configurar ${APP_NAME}"
+LangString UninstallShortcut 1033 "Uninstall ${APP_NAME}"
+LangString UninstallShortcut 1034 "Desinstalar ${APP_NAME}"
+
+Function .onInit
+  !insertmacro MUI_LANGDLL_DISPLAY
+FunctionEnd
 
 Section "Install" SEC_MAIN
   ${IfNot} ${RunningX64}
-    MessageBox MB_ICONSTOP "Este instalador es solo para Windows x64."
+    MessageBox MB_ICONSTOP "$(OnlyX64Message)"
     Abort
   ${EndIf}
 
@@ -60,8 +75,8 @@ Section "Install" SEC_MAIN
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
   CreateDirectory "$SMPROGRAMS\${APP_NAME}"
-  CreateShortcut "$SMPROGRAMS\${APP_NAME}\Configurar ${APP_NAME}.lnk" "$INSTDIR\PCPowerSetup.exe"
-  CreateShortcut "$SMPROGRAMS\${APP_NAME}\Desinstalar ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe"
+  CreateShortcut "$SMPROGRAMS\${APP_NAME}\$(ConfigureShortcut).lnk" "$INSTDIR\PCPowerSetup.exe"
+  CreateShortcut "$SMPROGRAMS\${APP_NAME}\$(UninstallShortcut).lnk" "$INSTDIR\Uninstall.exe"
   CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\PCPowerSetup.exe"
 
   WriteRegStr HKLM "${UNINSTALL_KEY}" "DisplayName" "${APP_NAME}"
@@ -81,8 +96,8 @@ Section "Uninstall"
   ExecWait '"$SYSDIR\netsh.exe" advfirewall firewall delete rule name="PC Power Agent"'
 
   Delete "$DESKTOP\${APP_NAME}.lnk"
-  Delete "$SMPROGRAMS\${APP_NAME}\Configurar ${APP_NAME}.lnk"
-  Delete "$SMPROGRAMS\${APP_NAME}\Desinstalar ${APP_NAME}.lnk"
+  Delete "$SMPROGRAMS\${APP_NAME}\$(ConfigureShortcut).lnk"
+  Delete "$SMPROGRAMS\${APP_NAME}\$(UninstallShortcut).lnk"
   RMDir "$SMPROGRAMS\${APP_NAME}"
 
   Delete "$INSTDIR\PCPowerAgent.exe"
