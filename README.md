@@ -27,6 +27,7 @@ No cloud dependency. No open internet ports required.
 - A Home Assistant custom integration in [`custom_components/pc_power_free`](custom_components/pc_power_free)
 - A Windows agent in [`windows_agent`](windows_agent)
 - A full Windows installer in [`windows_agent/dist/pcpowerfree-windows-x64-setup.exe`](windows_agent/dist/pcpowerfree-windows-x64-setup.exe)
+- A packaged Home Assistant integration zip in [`release_assets/pcpowerfree-home-assistant-integration.zip`](release_assets/pcpowerfree-home-assistant-integration.zip)
 - Standalone Windows binaries:
   - [`windows_agent/dist/PCPowerAgent.exe`](windows_agent/dist/PCPowerAgent.exe)
   - [`windows_agent/dist/PCPowerSetup.exe`](windows_agent/dist/PCPowerSetup.exe)

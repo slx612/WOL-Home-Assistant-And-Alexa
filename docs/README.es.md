@@ -27,6 +27,7 @@ No depende de la nube. No requiere abrir puertos a Internet.
 - Una integracion personalizada para Home Assistant en [`custom_components/pc_power_free`](../custom_components/pc_power_free)
 - Un agente para Windows en [`windows_agent`](../windows_agent)
 - Un instalador completo para Windows en [`windows_agent/dist/pcpowerfree-windows-x64-setup.exe`](../windows_agent/dist/pcpowerfree-windows-x64-setup.exe)
+- Un zip empaquetado de la integracion de Home Assistant en [`release_assets/pcpowerfree-home-assistant-integration.zip`](../release_assets/pcpowerfree-home-assistant-integration.zip)
 - Ejecutables sueltos:
   - [`windows_agent/dist/PCPowerAgent.exe`](../windows_agent/dist/PCPowerAgent.exe)
   - [`windows_agent/dist/PCPowerSetup.exe`](../windows_agent/dist/PCPowerSetup.exe)
