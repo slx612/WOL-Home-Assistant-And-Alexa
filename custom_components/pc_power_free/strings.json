@@ -1,0 +1,67 @@
+{
+  "title": "PC Power Free",
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Choose a PC",
+        "description": "Select one of the Windows PCs discovered on your local network, or continue with a manual IP.",
+        "data": {
+          "discovered_device": "Discovered PC"
+        }
+      },
+      "manual": {
+        "title": "Discover manually",
+        "description": "Enter the current IP or hostname of the Windows PC if it has not appeared automatically yet.",
+        "data": {
+          "host": "Current PC host or IP",
+          "agent_port": "Agent port"
+        }
+      },
+      "pair": {
+        "title": "Pair PC",
+        "description": "Enter the temporary pairing code shown by the Windows installer for {name} ({host}).",
+        "data": {
+          "name": "Device name",
+          "pairing_code": "Pairing code",
+          "scan_interval": "Status update interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to reach the Windows agent",
+      "invalid_input": "Invalid values",
+      "invalid_pairing_code": "The pairing code is not valid",
+      "invalid_response": "The agent returned invalid discovery data",
+      "network_not_allowed": "Home Assistant is not allowed by the PC firewall or subnet restrictions",
+      "no_pairing_code": "The PC has no active pairing code. Open the Windows configurator and generate one",
+      "pairing_code_expired": "The pairing code has expired. Generate a new one in Windows"
+    },
+    "abort": {
+      "already_configured": "This PC is already configured",
+      "cannot_connect": "Unable to reach the Windows agent",
+      "invalid_response": "The agent returned invalid discovery data",
+      "network_not_allowed": "Home Assistant is not allowed by the PC firewall or subnet restrictions",
+      "no_pairing_code": "PC discovered, but it does not have an active pairing code"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "PC Power Free options",
+        "data": {
+          "name": "Device name",
+          "host": "Current PC host or IP",
+          "agent_port": "Agent port",
+          "discovery_subnets": "Discovery subnets (optional, e.g. 192.168.1.0/24)",
+          "broadcast_address": "Wake-on-LAN broadcast address",
+          "broadcast_port": "Wake-on-LAN port",
+          "scan_interval": "Status update interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "Invalid discovery subnet"
+    }
+  }
+}

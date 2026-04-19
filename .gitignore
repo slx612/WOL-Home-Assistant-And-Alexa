@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+custom_components/**/__pycache__/
+windows_agent/config.json
+windows_agent/pc_power_agent.log
+windows_agent/build/

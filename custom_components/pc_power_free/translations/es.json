@@ -1,0 +1,67 @@
+{
+  "title": "PC Power Free",
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Elegir PC",
+        "description": "Selecciona uno de los PCs Windows detectados en tu red local o continua con una IP manual.",
+        "data": {
+          "discovered_device": "PC detectado"
+        }
+      },
+      "manual": {
+        "title": "Busqueda manual",
+        "description": "Introduce la IP o el host actual del PC Windows si todavia no ha aparecido automaticamente.",
+        "data": {
+          "host": "IP o host actual del PC",
+          "agent_port": "Puerto del agente"
+        }
+      },
+      "pair": {
+        "title": "Vincular PC",
+        "description": "Introduce el codigo temporal que muestra el instalador de Windows para {name} ({host}).",
+        "data": {
+          "name": "Nombre del dispositivo",
+          "pairing_code": "Codigo de vinculacion",
+          "scan_interval": "Intervalo de actualizacion del estado (segundos)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "No se puede contactar con el agente de Windows",
+      "invalid_input": "Los valores no son validos",
+      "invalid_pairing_code": "El codigo de vinculacion no es valido",
+      "invalid_response": "El agente ha devuelto datos de descubrimiento no validos",
+      "network_not_allowed": "Home Assistant no esta permitido por el firewall o por la restriccion de subred",
+      "no_pairing_code": "El PC no tiene un codigo de vinculacion activo. Abre el configurador de Windows y genera uno",
+      "pairing_code_expired": "El codigo de vinculacion ha caducado. Genera uno nuevo en Windows"
+    },
+    "abort": {
+      "already_configured": "Este PC ya esta configurado",
+      "cannot_connect": "No se puede contactar con el agente de Windows",
+      "invalid_response": "El agente ha devuelto datos de descubrimiento no validos",
+      "network_not_allowed": "Home Assistant no esta permitido por el firewall o por la restriccion de subred",
+      "no_pairing_code": "El PC se ha detectado, pero no tiene un codigo de vinculacion activo"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opciones de PC Power Free",
+        "data": {
+          "name": "Nombre del dispositivo",
+          "host": "IP o host actual del PC",
+          "agent_port": "Puerto del agente",
+          "discovery_subnets": "Subredes de descubrimiento (opcional, ej. 192.168.1.0/24)",
+          "broadcast_address": "Direccion broadcast de Wake-on-LAN",
+          "broadcast_port": "Puerto de Wake-on-LAN",
+          "scan_interval": "Intervalo de actualizacion del estado (segundos)"
+        }
+      }
+    },
+    "error": {
+      "invalid_input": "La subred de descubrimiento no es valida"
+    }
+  }
+}
