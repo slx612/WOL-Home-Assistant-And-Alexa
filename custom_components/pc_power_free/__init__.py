@@ -8,6 +8,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_MAC, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
 from .api import PCPowerClient
@@ -24,6 +25,7 @@ from .const import (
 from .coordinator import PCPowerCoordinator
 
 PLATFORMS: tuple[Platform, ...] = (Platform.SWITCH, Platform.BUTTON)
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 @dataclass(slots=True)
