@@ -201,7 +201,7 @@ The repository is prepared for:
 Still pending for `default HACS repository` inclusion:
 
 - HACS validation green
-- first public GitHub release
+- GitHub release published after green validation
 - PR to `hacs/default`
 
 Still pending before calling it truly final:
