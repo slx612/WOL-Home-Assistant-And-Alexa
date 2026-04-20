@@ -102,6 +102,15 @@ The repository is prepared for HACS with [`hacs.json`](hacs.json).
 4. Install `PC Power Free`
 5. Restart Home Assistant
 
+For the `default HACS list`, there is an extra maintainer process after the
+repository is already working as a custom repository:
+
+1. Make the GitHub Actions pass without ignored checks
+2. Publish a full GitHub release
+3. Open a PR against `hacs/default`
+
+Checklist: [`docs/HACS_PUBLISHING.md`](docs/HACS_PUBLISHING.md)
+
 ## Pairing with Home Assistant
 
 ### Recommended flow
@@ -188,6 +197,12 @@ The repository is prepared for:
 - manual installation
 - HACS custom repository installation
 - Windows installer distribution
+
+Still pending for `default HACS repository` inclusion:
+
+- HACS validation green
+- first public GitHub release
+- PR to `hacs/default`
 
 Still pending before calling it truly final:
 
