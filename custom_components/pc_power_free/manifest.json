@@ -1,15 +1,15 @@
 {
   "domain": "pc_power_free",
   "name": "PC Power Free",
-  "documentation": "https://github.com/slx612/WOL-Home-Assistant-And-Alexa",
-  "issue_tracker": "https://github.com/slx612/WOL-Home-Assistant-And-Alexa/issues",
   "codeowners": [
     "@slx612"
   ],
   "config_flow": true,
+  "documentation": "https://github.com/slx612/WOL-Home-Assistant-And-Alexa",
   "integration_type": "hub",
-  "version": "0.2.0-beta.1",
   "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/slx612/WOL-Home-Assistant-And-Alexa/issues",
+  "version": "0.2.0-beta.1",
   "zeroconf": [
     "_pcpowerfree._tcp.local."
   ]
