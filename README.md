@@ -90,7 +90,8 @@ Recommended path:
 5. Click `Install`
 6. Confirm the tray app is enabled at startup
 7. Use the tray icon to temporarily or permanently ignore Home Assistant power requests when needed
-8. Save the pairing code
+8. Keep the pairing code visible or copied somewhere because Home Assistant will ask for it next
+9. Pair the PC in Home Assistant within 10 minutes, or generate a new code later from the Windows configurator
 
 The setup program auto-detects:
 
@@ -138,12 +139,13 @@ Checklist: [`docs/HACS_PUBLISHING.md`](docs/HACS_PUBLISHING.md)
 
 ### Recommended flow
 
-1. Install the Windows program
-2. Install the Home Assistant integration
-3. Wait for the PC to appear automatically
-4. Select the discovered PC
-5. Enter the temporary pairing code shown by the Windows setup program
-6. Confirm the device name
+1. Install the Windows program first
+2. Finish the Windows setup and keep the temporary pairing code visible
+3. Install or open the Home Assistant integration flow
+4. Wait for the PC to appear automatically
+5. Select the discovered PC
+6. Enter the temporary pairing code while it is still active
+7. Confirm the device name
 
 ### If automatic discovery fails
 
@@ -154,6 +156,8 @@ There is also a manual IP flow:
 3. `Set up by IP manually`
 4. Enter the PC IP and agent port
 5. Enter the pairing code
+
+If the code expires, open the Windows configurator and generate a new one.
 
 ## Alexa
 
