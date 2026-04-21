@@ -90,7 +90,8 @@ Ruta recomendada:
 5. Pulsa `Instalar`
 6. Comprueba que la app de bandeja queda activada al inicio
 7. Usa el icono de bandeja para ignorar temporal o permanentemente las órdenes de Home Assistant cuando te convenga
-8. Guarda el código de vinculación
+8. Deja el código de vinculación visible o copiado porque Home Assistant te lo pedirá a continuación
+9. Vincula el PC en Home Assistant dentro de los 10 minutos siguientes, o genera un código nuevo más tarde desde el configurador de Windows
 
 El configurador detecta automáticamente:
 
@@ -136,12 +137,13 @@ Para el listado `default` de HACS, la publicación ya está en marcha:
 
 ### Flujo recomendado
 
-1. Instala el programa en Windows
-2. Instala la integración en Home Assistant
-3. Espera a que el PC aparezca automáticamente
-4. Selecciona el PC detectado
-5. Introduce el código temporal mostrado por el configurador
-6. Confirma el nombre del dispositivo
+1. Instala primero el programa en Windows
+2. Termina la instalación en Windows y deja visible el código temporal
+3. Instala o abre el flujo de la integración en Home Assistant
+4. Espera a que el PC aparezca automáticamente
+5. Selecciona el PC detectado
+6. Introduce el código temporal mientras siga activo
+7. Confirma el nombre del dispositivo
 
 ### Si falla el descubrimiento automático
 
@@ -152,6 +154,8 @@ También hay un flujo manual por IP:
 3. `Configurar por IP manualmente`
 4. Introduce la IP del PC y el puerto del agente
 5. Introduce el código de vinculación
+
+Si el código caduca, abre el configurador de Windows y genera uno nuevo.
 
 ## Alexa
 
