@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
+from dataclasses import dataclass
 import hashlib
 import ipaddress
 import json
@@ -27,22 +29,87 @@ except ImportError:  # pragma: no cover - optional during source-only use
     ServiceInfo = None
     Zeroconf = None
 
-AGENT_VERSION = "0.2.0"
+AGENT_VERSION = "0.2.0-beta.3"
 DEFAULT_HOST = "0.0.0.0"
 DEFAULT_PORT = 8777
 DEFAULT_ALLOWED_SUBNETS = ("127.0.0.1/32",)
 DEFAULT_SHUTDOWN_DELAY = 0
 DEFAULT_SHUTDOWN_FORCE = False
 DEFAULT_BROADCAST_PORT = 9
+DEFAULT_GUARD_STATE_FILE = "guard_state.json"
 PAIRING_CODE_TTL_SECONDS = 600
 PAIRING_CODE_MIN_LENGTH = 6
 ZEROCONF_SERVICE_TYPE = "_pcpowerfree._tcp.local."
+COMMAND_GUARD_ALLOW = "allow"
+COMMAND_GUARD_IGNORE_MANUAL = "ignore_manual"
+COMMAND_GUARD_IGNORE_UNTIL = "ignore_until"
 
 AllowedNetwork = ipaddress.IPv4Network | ipaddress.IPv6Network
 
 
 class AgentConfigError(ValueError):
     """Raised when the agent configuration is invalid."""
+
+
+@dataclass(slots=True)
+class CommandGuardState:
+    """Persistent state that can temporarily block power commands."""
+
+    mode: str = COMMAND_GUARD_ALLOW
+    until_ts: float | None = None
+    updated_at: float | None = None
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any] | None) -> "CommandGuardState":
+        """Build the guard state from a JSON payload."""
+        if not isinstance(payload, dict):
+            return cls()
+
+        mode = str(payload.get("mode", COMMAND_GUARD_ALLOW)).strip().lower()
+        if mode not in {
+            COMMAND_GUARD_ALLOW,
+            COMMAND_GUARD_IGNORE_MANUAL,
+            COMMAND_GUARD_IGNORE_UNTIL,
+        }:
+            mode = COMMAND_GUARD_ALLOW
+
+        until_raw = payload.get("until_ts")
+        try:
+            until_ts = float(until_raw) if until_raw not in (None, "") else None
+        except (TypeError, ValueError):
+            until_ts = None
+
+        updated_raw = payload.get("updated_at")
+        try:
+            updated_at = float(updated_raw) if updated_raw not in (None, "") else None
+        except (TypeError, ValueError):
+            updated_at = None
+
+        return cls(mode=mode, until_ts=until_ts, updated_at=updated_at)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize the guard state to JSON."""
+        return {
+            "mode": self.mode,
+            "until_ts": self.until_ts,
+            "updated_at": self.updated_at,
+        }
+
+    def effective(self, now: float | None = None) -> "CommandGuardState":
+        """Return the effective current state, clearing expired windows."""
+        current_time = time.time() if now is None else now
+        if self.mode == COMMAND_GUARD_IGNORE_UNTIL:
+            if self.until_ts is None or self.until_ts <= current_time:
+                return CommandGuardState(
+                    mode=COMMAND_GUARD_ALLOW,
+                    until_ts=None,
+                    updated_at=self.updated_at,
+                )
+        return self
+
+    def is_blocking(self, now: float | None = None) -> bool:
+        """Return whether commands should currently be blocked."""
+        return self.effective(now).mode != COMMAND_GUARD_ALLOW
 
 
 class AgentConfig:
@@ -170,6 +237,9 @@ class PCPowerHTTPServer(ThreadingHTTPServer):
         self.hostname = socket.gethostname()
         self.last_command: str | None = None
         self.last_command_at: float | None = None
+        self.guard_state_path = config_path.with_name(DEFAULT_GUARD_STATE_FILE)
+        self.guard_state = load_guard_state(self.guard_state_path)
+        self.guard_state_mtime_ns = _get_config_mtime_ns(self.guard_state_path)
 
     def refresh_config_if_needed(self) -> None:
         """Reload the config if it has changed on disk."""
@@ -194,6 +264,39 @@ class PCPowerHTTPServer(ThreadingHTTPServer):
         """Persist the current config to disk."""
         save_config(self.config_path, self.config)
         self.config_mtime_ns = _get_config_mtime_ns(self.config_path)
+
+    def refresh_guard_state_if_needed(self) -> None:
+        """Reload the command guard state if it changed on disk."""
+        current_mtime = _get_config_mtime_ns(self.guard_state_path)
+        if current_mtime == self.guard_state_mtime_ns:
+            return
+
+        self.guard_state = load_guard_state(self.guard_state_path)
+        self.guard_state_mtime_ns = current_mtime
+        self.logger.info("Reloaded command guard state from disk")
+
+    def persist_guard_state(self) -> None:
+        """Persist the current command guard state."""
+        save_guard_state(self.guard_state_path, self.guard_state)
+        self.guard_state_mtime_ns = _get_config_mtime_ns(self.guard_state_path)
+
+    def get_effective_guard_state(self) -> CommandGuardState:
+        """Return the effective command guard state, clearing expired windows."""
+        effective_state = self.guard_state.effective()
+        if effective_state.to_dict() != self.guard_state.to_dict():
+            self.guard_state = effective_state
+            self.persist_guard_state()
+        return effective_state
+
+    def build_guard_status_payload(self) -> dict[str, Any]:
+        """Return the current command guard state as JSON."""
+        state = self.get_effective_guard_state()
+        return {
+            "active": state.mode != COMMAND_GUARD_ALLOW,
+            "mode": state.mode,
+            "until_ts": state.until_ts,
+            "updated_at": state.updated_at,
+        }
 
 
 class ServiceAdvertiser:
@@ -263,6 +366,7 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         """Handle GET requests."""
         self.server.refresh_config_if_needed()
+        self.server.refresh_guard_state_if_needed()
 
         if self.path == "/v1/status":
             if not self._authorize():
@@ -276,16 +380,29 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.OK, self._build_discovery_payload())
             return
 
+        if self.path == "/v1/local/guard":
+            if not self._authorize_local():
+                return
+            self._send_json(HTTPStatus.OK, self.server.build_guard_status_payload())
+            return
+
         self._send_json(HTTPStatus.NOT_FOUND, {"error": "Not found"})
 
     def do_POST(self) -> None:
         """Handle POST requests."""
         self.server.refresh_config_if_needed()
+        self.server.refresh_guard_state_if_needed()
 
         if self.path == "/v1/pairing/exchange":
             if not self._authorize_network():
                 return
             self._handle_pairing_exchange()
+            return
+
+        if self.path == "/v1/local/guard":
+            if not self._authorize_local():
+                return
+            self._handle_guard_update()
             return
 
         if not self._authorize():
@@ -326,8 +443,37 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
 
         return True
 
+    def _authorize_local(self) -> bool:
+        """Authorize a loopback-only local control request."""
+        if not self._authorize():
+            return False
+
+        client_ip = ipaddress.ip_address(self.client_address[0])
+        if not client_ip.is_loopback:
+            self._send_json(HTTPStatus.FORBIDDEN, {"error": "Local control requires loopback"})
+            return False
+        return True
+
     def _handle_power_action(self, action: str) -> None:
         """Run a power action if the request is valid."""
+        guard_state = self.server.get_effective_guard_state()
+        if guard_state.is_blocking():
+            self.server.logger.warning(
+                "Ignored %s command from %s because the command guard is active (%s)",
+                action,
+                self.client_address[0],
+                guard_state.mode,
+            )
+            self._send_json(
+                HTTPStatus.LOCKED,
+                {
+                    "error": "Command guard is active",
+                    "action": action,
+                    **self.server.build_guard_status_payload(),
+                },
+            )
+            return
+
         try:
             payload = self._read_json()
             delay_seconds = max(
@@ -355,6 +501,57 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
             HTTPStatus.ACCEPTED,
             {"accepted": True, "action": action, "delay_seconds": delay_seconds, "force": force},
         )
+
+    def _handle_guard_update(self) -> None:
+        """Update the command guard mode from a local request."""
+        try:
+            payload = self._read_json()
+        except ValueError:
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Invalid JSON body"})
+            return
+
+        mode = str(payload.get("mode", "")).strip().lower()
+        now = time.time()
+
+        if mode == COMMAND_GUARD_ALLOW:
+            self.server.guard_state = CommandGuardState(
+                mode=COMMAND_GUARD_ALLOW,
+                until_ts=None,
+                updated_at=now,
+            )
+        elif mode == COMMAND_GUARD_IGNORE_MANUAL:
+            self.server.guard_state = CommandGuardState(
+                mode=COMMAND_GUARD_IGNORE_MANUAL,
+                until_ts=None,
+                updated_at=now,
+            )
+        elif mode == COMMAND_GUARD_IGNORE_UNTIL:
+            try:
+                duration_minutes = int(payload.get("duration_minutes", 0))
+            except (TypeError, ValueError):
+                duration_minutes = 0
+            if duration_minutes <= 0:
+                self._send_json(
+                    HTTPStatus.BAD_REQUEST,
+                    {"error": "duration_minutes must be a positive integer"},
+                )
+                return
+            self.server.guard_state = CommandGuardState(
+                mode=COMMAND_GUARD_IGNORE_UNTIL,
+                until_ts=now + duration_minutes * 60,
+                updated_at=now,
+            )
+        else:
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Unsupported guard mode"})
+            return
+
+        self.server.persist_guard_state()
+        self.server.logger.info(
+            "Updated command guard from %s to %s",
+            self.client_address[0],
+            self.server.guard_state.mode,
+        )
+        self._send_json(HTTPStatus.OK, self.server.build_guard_status_payload())
 
     def _handle_pairing_exchange(self) -> None:
         """Exchange a valid pairing code for the long-lived API token."""
@@ -426,6 +623,9 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
 
     def _build_status_payload(self) -> dict[str, Any]:
         """Build the authenticated status payload."""
+        guard_state = self.server.get_effective_guard_state()
+        uptime_seconds = get_system_uptime_seconds()
+        booted_at = (time.time() - uptime_seconds) if uptime_seconds is not None else None
         return {
             "online": True,
             "hostname": self.server.hostname,
@@ -434,6 +634,11 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
             "last_command_at": self.server.last_command_at,
             "mac_addresses": get_local_mac_addresses(),
             "machine_id": self.server.config.machine_id,
+            "uptime_seconds": uptime_seconds,
+            "booted_at": booted_at,
+            "command_guard_active": guard_state.mode != COMMAND_GUARD_ALLOW,
+            "command_guard_mode": guard_state.mode,
+            "command_guard_until_ts": guard_state.until_ts,
         }
 
     def _build_discovery_payload(self) -> dict[str, Any]:
@@ -495,6 +700,14 @@ def build_windows_command(action: str, *, delay_seconds: int, force: bool) -> li
 def hash_pairing_code(pairing_code: str) -> str:
     """Hash a pairing code before storing or comparing it."""
     return hashlib.sha256(pairing_code.strip().encode("utf-8")).hexdigest()
+
+
+def get_system_uptime_seconds() -> int | None:
+    """Return the Windows uptime in whole seconds."""
+    try:
+        return int(ctypes.windll.kernel32.GetTickCount64() // 1000)
+    except (AttributeError, OSError):
+        return None
 
 
 def get_local_mac_addresses() -> list[str]:
@@ -575,6 +788,24 @@ def save_config(config_path: Path, config: AgentConfig) -> None:
     """Persist the JSON configuration to disk."""
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text(json.dumps(config.to_dict(), indent=2), encoding="utf-8")
+
+
+def load_guard_state(state_path: Path) -> CommandGuardState:
+    """Load the persisted command guard state from disk."""
+    try:
+        raw = json.loads(state_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return CommandGuardState()
+    except (OSError, ValueError):
+        return CommandGuardState()
+
+    return CommandGuardState.from_dict(raw if isinstance(raw, dict) else None)
+
+
+def save_guard_state(state_path: Path, guard_state: CommandGuardState) -> None:
+    """Persist the command guard state to disk."""
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(json.dumps(guard_state.to_dict(), indent=2), encoding="utf-8")
 
 
 def create_logger(log_file: Path) -> logging.Logger:

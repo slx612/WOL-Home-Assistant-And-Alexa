@@ -8,7 +8,7 @@ RequestExecutionLevel admin
 
 !define APP_NAME "PC Power Free"
 !define APP_PUBLISHER "PC Power Free"
-!define APP_VERSION "0.2.0"
+!define APP_VERSION "0.2.0-beta.3"
 !define INSTALL_BASENAME "pcpowerfree-windows-x64-setup.exe"
 !define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
 
@@ -65,7 +65,13 @@ Section "Install" SEC_MAIN
   SetShellVarContext all
   SetOutPath "$INSTDIR"
 
+  ExecWait '"$SYSDIR\schtasks.exe" /End /TN "PC Power Agent"'
+  ExecWait '"$SYSDIR\taskkill.exe" /IM "PCPowerAgent.exe" /F'
+  ExecWait '"$SYSDIR\taskkill.exe" /IM "PCPowerTray.exe" /F'
+  Sleep 1200
+
   File "${OUTPUT_DIR}\PCPowerAgent.exe"
+  File "${OUTPUT_DIR}\PCPowerTray.exe"
   File "${OUTPUT_DIR}\PCPowerSetup.exe"
   File "${OUTPUT_DIR}\install-task.ps1"
   File "${OUTPUT_DIR}\uninstall-task.ps1"
@@ -92,6 +98,7 @@ SectionEnd
 Section "Uninstall"
   SetShellVarContext all
 
+  ExecWait '"$SYSDIR\taskkill.exe" /IM "PCPowerTray.exe" /F'
   ExecWait '"$SYSDIR\schtasks.exe" /Delete /TN "PC Power Agent" /F'
   ExecWait '"$SYSDIR\netsh.exe" advfirewall firewall delete rule name="PC Power Agent"'
 
@@ -101,6 +108,7 @@ Section "Uninstall"
   RMDir "$SMPROGRAMS\${APP_NAME}"
 
   Delete "$INSTDIR\PCPowerAgent.exe"
+  Delete "$INSTDIR\PCPowerTray.exe"
   Delete "$INSTDIR\PCPowerSetup.exe"
   Delete "$INSTDIR\install-task.ps1"
   Delete "$INSTDIR\uninstall-task.ps1"
@@ -109,7 +117,10 @@ Section "Uninstall"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"
 
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "PC Power Free Tray"
+
   Delete "$APPDATA\${APP_NAME}\config.json"
+  Delete "$APPDATA\${APP_NAME}\guard_state.json"
   Delete "$APPDATA\${APP_NAME}\home_assistant_values.txt"
   Delete "$APPDATA\${APP_NAME}\pc_power_agent.log"
   RMDir "$APPDATA\${APP_NAME}"

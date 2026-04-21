@@ -24,7 +24,7 @@ from .const import (
 )
 from .coordinator import PCPowerCoordinator
 
-PLATFORMS: tuple[Platform, ...] = (Platform.SWITCH, Platform.BUTTON)
+PLATFORMS: tuple[Platform, ...] = (Platform.SWITCH, Platform.BUTTON, Platform.SENSOR)
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 

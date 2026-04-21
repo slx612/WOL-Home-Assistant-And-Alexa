@@ -12,7 +12,12 @@ $toolsDir = Join-Path $agentDir ".tools"
 $portableNsisDir = Join-Path $toolsDir "nsis"
 $portableNsisZip = Join-Path $toolsDir "nsis-3.11.zip"
 
-if ($RebuildExe -or -not (Test-Path (Join-Path $distDir "PCPowerAgent.exe")) -or -not (Test-Path (Join-Path $distDir "PCPowerSetup.exe"))) {
+if (
+    $RebuildExe -or
+    -not (Test-Path (Join-Path $distDir "PCPowerAgent.exe")) -or
+    -not (Test-Path (Join-Path $distDir "PCPowerTray.exe")) -or
+    -not (Test-Path (Join-Path $distDir "PCPowerSetup.exe"))
+) {
     & (Join-Path $agentDir "build-exe.ps1") -Clean:$Clean
 }
 

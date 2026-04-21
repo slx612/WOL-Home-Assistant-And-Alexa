@@ -1,5 +1,7 @@
 # PC Power Free
 
+![PC Power Free](custom_components/pc_power_free/brand/logo.png)
+
 Language:
 
 - [English](README.md)
@@ -8,6 +10,12 @@ Language:
 Local, subscription-free power control for a Windows PC through Home Assistant and Alexa.
 
 Current status: `feature-complete, pending real-world testing`.
+
+Recent additions:
+
+- Windows tray protection to temporarily or permanently ignore power requests from Home Assistant
+- Home Assistant diagnostic sensors for `Uptime` and `Boot time`
+- Desktop setup with update checks against GitHub releases
 
 ## What this is
 
@@ -30,6 +38,7 @@ No cloud dependency. No open internet ports required.
 - A packaged Home Assistant integration zip in [`release_assets/pcpowerfree-home-assistant-integration.zip`](release_assets/pcpowerfree-home-assistant-integration.zip)
 - Standalone Windows binaries:
   - [`windows_agent/dist/PCPowerAgent.exe`](windows_agent/dist/PCPowerAgent.exe)
+  - [`windows_agent/dist/PCPowerTray.exe`](windows_agent/dist/PCPowerTray.exe)
   - [`windows_agent/dist/PCPowerSetup.exe`](windows_agent/dist/PCPowerSetup.exe)
 
 ## How it works

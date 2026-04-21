@@ -14,11 +14,12 @@ if ($Clean) {
     Remove-Item $distDir -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-& $PythonLauncher -m pip install --upgrade pyinstaller zeroconf
+& $PythonLauncher -m pip install --upgrade pyinstaller zeroconf pillow pystray
 
 Push-Location $agentDir
 try {
     & $PythonLauncher -m PyInstaller --noconfirm --clean --onefile --name PCPowerAgent pc_power_agent.py
+    & $PythonLauncher -m PyInstaller --noconfirm --clean --onefile --windowed --name PCPowerTray --hidden-import pystray._win32 pc_power_tray.py
     & $PythonLauncher -m PyInstaller --noconfirm --clean --onefile --windowed --uac-admin --name PCPowerSetup setup_wizard_gui.py
 
     Copy-Item .\config.example.json (Join-Path $distDir "config.example.json") -Force
@@ -29,6 +30,7 @@ try {
     Write-Host ""
     Write-Host "Compilacion completada." -ForegroundColor Green
     Write-Host "Agent:  $(Join-Path $distDir 'PCPowerAgent.exe')" -ForegroundColor Green
+    Write-Host "Tray:   $(Join-Path $distDir 'PCPowerTray.exe')" -ForegroundColor Green
     Write-Host "Setup:  $(Join-Path $distDir 'PCPowerSetup.exe')" -ForegroundColor Green
     Write-Host ""
 }

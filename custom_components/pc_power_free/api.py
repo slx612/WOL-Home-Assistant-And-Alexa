@@ -17,7 +17,13 @@ from .const import (
     DEFAULT_AGENT_PORT,
     DEFAULT_BROADCAST_ADDRESS,
     DEFAULT_BROADCAST_PORT,
+    STATUS_BOOTED_AT,
+    STATUS_COMMAND_GUARD_ACTIVE,
+    STATUS_COMMAND_GUARD_MODE,
+    STATUS_COMMAND_GUARD_UNTIL_TS,
+    STATUS_LAST_COMMAND_AT,
     STATUS_MACHINE_ID,
+    STATUS_UPTIME_SECONDS,
 )
 
 MAC_REGEX = re.compile(r"^[0-9a-fA-F]{12}$")
@@ -374,6 +380,10 @@ class PCPowerClient:
                 ) as response:
                     if response.status in (401, 403):
                         raise PCPowerAuthError("The agent rejected the token")
+                    if response.status == 423:
+                        raise PCPowerCommandError(
+                            "Power commands are currently blocked in the Windows tray"
+                        )
 
                     response.raise_for_status()
                     return
@@ -530,7 +540,13 @@ class PCPowerClient:
             "host": self._host,
             "hostname": payload.get("hostname"),
             "agent_version": payload.get("agent_version"),
+            "booted_at": payload.get(STATUS_BOOTED_AT),
+            "command_guard_active": bool(payload.get("command_guard_active", False)),
+            "command_guard_mode": payload.get("command_guard_mode"),
+            "command_guard_until_ts": payload.get("command_guard_until_ts"),
             "last_command": payload.get("last_command"),
+            "last_command_at": payload.get(STATUS_LAST_COMMAND_AT),
             "mac_addresses": payload.get("mac_addresses", []),
             "machine_id": payload_machine_id or self._machine_id,
+            "uptime_seconds": payload.get(STATUS_UPTIME_SECONDS),
         }

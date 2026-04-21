@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_MAC, CONF_NAME
@@ -15,12 +17,18 @@ from .const import (
     CONF_MACHINE_ID,
     DOMAIN,
     STATUS_AGENT_VERSION,
+    STATUS_BOOTED_AT,
+    STATUS_COMMAND_GUARD_ACTIVE,
+    STATUS_COMMAND_GUARD_MODE,
+    STATUS_COMMAND_GUARD_UNTIL_TS,
     STATUS_HOST,
     STATUS_HOSTNAME,
     STATUS_LAST_COMMAND,
+    STATUS_LAST_COMMAND_AT,
     STATUS_MAC_ADDRESSES,
     STATUS_ONLINE,
     STATUS_REACHABLE,
+    STATUS_UPTIME_SECONDS,
 )
 
 
@@ -67,16 +75,22 @@ class PCPowerSwitch(CoordinatorEntity, SwitchEntity):
         return bool(data.get(STATUS_ONLINE, False))
 
     @property
-    def extra_state_attributes(self) -> dict[str, str | bool | None]:
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Expose diagnostic attributes."""
         data = self.coordinator.data or {}
         return {
             STATUS_HOST: data.get(STATUS_HOST, self._client.host or None),
             STATUS_HOSTNAME: data.get(STATUS_HOSTNAME),
             STATUS_AGENT_VERSION: data.get(STATUS_AGENT_VERSION),
+            STATUS_BOOTED_AT: data.get(STATUS_BOOTED_AT),
+            STATUS_COMMAND_GUARD_ACTIVE: data.get(STATUS_COMMAND_GUARD_ACTIVE, False),
+            STATUS_COMMAND_GUARD_MODE: data.get(STATUS_COMMAND_GUARD_MODE),
+            STATUS_COMMAND_GUARD_UNTIL_TS: data.get(STATUS_COMMAND_GUARD_UNTIL_TS),
             STATUS_REACHABLE: data.get(STATUS_REACHABLE, False),
             STATUS_LAST_COMMAND: data.get(STATUS_LAST_COMMAND),
+            STATUS_LAST_COMMAND_AT: data.get(STATUS_LAST_COMMAND_AT),
             STATUS_MAC_ADDRESSES: ", ".join(data.get(STATUS_MAC_ADDRESSES, [])),
+            STATUS_UPTIME_SECONDS: data.get(STATUS_UPTIME_SECONDS),
         }
 
     async def async_turn_on(self, **kwargs) -> None:

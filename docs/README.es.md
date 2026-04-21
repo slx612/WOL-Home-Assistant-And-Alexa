@@ -1,5 +1,7 @@
 # PC Power Free
 
+![PC Power Free](../custom_components/pc_power_free/brand/logo.png)
+
 Idioma:
 
 - [English](../README.md)
@@ -8,6 +10,12 @@ Idioma:
 Solucion local y sin suscripcion para encender, apagar y reiniciar un PC Windows desde Home Assistant y Alexa.
 
 Estado actual: `terminado a falta de probar en una instalacion real`.
+
+Novedades recientes:
+
+- Icono de bandeja en Windows para bloquear temporal o permanentemente las ordenes de Home Assistant
+- Sensores de diagnostico en Home Assistant para `Uptime` y `Boot time`
+- Comprobacion de actualizaciones desde GitHub en el configurador de escritorio
 
 ## Que es
 
@@ -30,6 +38,7 @@ No depende de la nube. No requiere abrir puertos a Internet.
 - Un zip empaquetado de la integracion de Home Assistant en [`release_assets/pcpowerfree-home-assistant-integration.zip`](../release_assets/pcpowerfree-home-assistant-integration.zip)
 - Ejecutables sueltos:
   - [`windows_agent/dist/PCPowerAgent.exe`](../windows_agent/dist/PCPowerAgent.exe)
+  - [`windows_agent/dist/PCPowerTray.exe`](../windows_agent/dist/PCPowerTray.exe)
   - [`windows_agent/dist/PCPowerSetup.exe`](../windows_agent/dist/PCPowerSetup.exe)
 
 ## Como funciona
