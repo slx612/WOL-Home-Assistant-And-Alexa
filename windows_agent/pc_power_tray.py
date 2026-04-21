@@ -4,16 +4,20 @@ from __future__ import annotations
 
 import argparse
 import ctypes
+from dataclasses import dataclass
 import json
 import locale
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
+import threading
 import time
 from typing import Any
 from urllib import error as urllib_error
 from urllib import request as urllib_request
+import webbrowser
 
 from PIL import Image, ImageDraw
 import pystray
@@ -29,6 +33,17 @@ COMMAND_GUARD_IGNORE_MANUAL = "ignore_manual"
 COMMAND_GUARD_IGNORE_UNTIL = "ignore_until"
 LOCAL_GUARD_ENDPOINT = "/v1/local/guard"
 MUTEX_NAME = "Local\\PCPowerFreeTraySingleton"
+UPDATE_STATE_FILENAME = "update_state.json"
+UPDATE_CHECK_INTERVAL_SECONDS = 6 * 60 * 60
+UPDATE_CHECK_STARTUP_DELAY_SECONDS = 5
+GITHUB_RELEASES_API_URL = (
+    "https://api.github.com/repos/slx612/WOL-Home-Assistant-And-Alexa/releases?per_page=10"
+)
+VERSION_REGEX = re.compile(
+    r"^v?(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)"
+    r"(?:[-.]?(?P<stage>alpha|beta|rc)(?:[.-]?(?P<stage_number>\d+))?)?$",
+    re.IGNORECASE,
+)
 
 TRANSLATIONS = {
     "en": {
@@ -43,16 +58,27 @@ TRANSLATIONS = {
         "menu_ignore_15": "Ignore for 15 minutes",
         "menu_ignore_60": "Ignore for 1 hour",
         "menu_ignore_manual": "Ignore until I re-enable it",
+        "menu_check_updates": "Check for updates",
         "menu_refresh": "Refresh status",
         "menu_open_setup": "Open configurator",
         "menu_exit": "Exit tray icon",
         "notify_refresh_failed": "Could not refresh status: {error}",
         "notify_change_failed": "Could not change protection: {error}",
+        "notify_update_check_running": "Update check already in progress.",
+        "notify_update_check_failed": "Could not check updates: {error}",
+        "notify_up_to_date": "PC Power Free is already up to date: {version}",
         "notify_allow": "Home Assistant requests are allowed again.",
         "notify_ignore_15": "Home Assistant requests will be ignored for 15 minutes.",
         "notify_ignore_60": "Home Assistant requests will be ignored for 1 hour.",
         "notify_ignore_manual": "Home Assistant requests will be ignored until you re-enable them.",
         "notify_open_setup_failed": "Could not open the configurator: {error}",
+        "update_available_title": "Update available",
+        "update_available_message": (
+            "A newer version of PC Power Free is available.\n\n"
+            "Installed version: {current_version}\n"
+            "Latest version: {latest_version}\n\n"
+            "Do you want to open the release page now?"
+        ),
     },
     "es": {
         "status_not_configured": "PC Power Free todavia no esta configurado",
@@ -66,18 +92,122 @@ TRANSLATIONS = {
         "menu_ignore_15": "Ignorar durante 15 minutos",
         "menu_ignore_60": "Ignorar durante 1 hora",
         "menu_ignore_manual": "Ignorar hasta que yo lo reactive",
+        "menu_check_updates": "Buscar actualizaciones",
         "menu_refresh": "Actualizar estado",
         "menu_open_setup": "Abrir configurador",
         "menu_exit": "Salir del icono de bandeja",
         "notify_refresh_failed": "No se pudo actualizar el estado: {error}",
         "notify_change_failed": "No se pudo cambiar la proteccion: {error}",
+        "notify_update_check_running": "La comprobacion de actualizaciones ya esta en marcha.",
+        "notify_update_check_failed": "No se pudieron comprobar las actualizaciones: {error}",
+        "notify_up_to_date": "PC Power Free ya esta al dia: {version}",
         "notify_allow": "Las ordenes de Home Assistant vuelven a estar permitidas.",
         "notify_ignore_15": "Las ordenes de Home Assistant se ignoraran durante 15 minutos.",
         "notify_ignore_60": "Las ordenes de Home Assistant se ignoraran durante 1 hora.",
         "notify_ignore_manual": "Las ordenes de Home Assistant se ignoraran hasta que lo reactives.",
         "notify_open_setup_failed": "No se pudo abrir el configurador: {error}",
+        "update_available_title": "Actualizacion disponible",
+        "update_available_message": (
+            "Hay una version mas nueva de PC Power Free.\n\n"
+            "Version instalada: {current_version}\n"
+            "Ultima version: {latest_version}\n\n"
+            "Quieres abrir ahora la pagina de la version?"
+        ),
     },
 }
+
+
+@dataclass(slots=True)
+class GitHubRelease:
+    """Published GitHub release data used by the updater."""
+
+    version: str
+    html_url: str
+    name: str
+
+
+def normalize_version_text(version: str) -> str:
+    """Return a normalized version string without a leading v."""
+    return version.strip().lower().removeprefix("v")
+
+
+def parse_version_key(version: str) -> tuple[int, int, int, int, int] | None:
+    """Parse a release version into a sortable tuple."""
+    match = VERSION_REGEX.fullmatch(normalize_version_text(version))
+    if match is None:
+        return None
+
+    stage_order = {"alpha": 0, "beta": 1, "rc": 2, None: 3}
+    stage = match.group("stage")
+    return (
+        int(match.group("major")),
+        int(match.group("minor")),
+        int(match.group("patch")),
+        stage_order[stage.lower() if stage else None],
+        int(match.group("stage_number") or 0),
+    )
+
+
+def is_newer_version(candidate: str, current: str) -> bool:
+    """Return whether the candidate version is newer than the current one."""
+    candidate_key = parse_version_key(candidate)
+    current_key = parse_version_key(current)
+    if candidate_key is None or current_key is None:
+        return normalize_version_text(candidate) != normalize_version_text(current)
+    return candidate_key > current_key
+
+
+def format_update_error(err: Exception) -> str:
+    """Return a short, user-facing error message for update checks."""
+    if isinstance(err, urllib_error.HTTPError):
+        return f"GitHub HTTP {err.code}"
+    if isinstance(err, urllib_error.URLError):
+        reason = getattr(err, "reason", err)
+        return str(reason)
+    return str(err) or err.__class__.__name__
+
+
+def fetch_latest_github_release(timeout: int = 5) -> GitHubRelease:
+    """Return the latest published GitHub release, including prereleases."""
+    request = urllib_request.Request(
+        GITHUB_RELEASES_API_URL,
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": f"PCPowerFreeTray/{APP_VERSION}",
+        },
+    )
+    with urllib_request.urlopen(request, timeout=timeout) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+
+    if not isinstance(payload, list):
+        raise RuntimeError("GitHub returned an invalid response")
+
+    ranked_releases: list[tuple[tuple[int, int, int, int, int], GitHubRelease]] = []
+    for item in payload:
+        if not isinstance(item, dict) or item.get("draft"):
+            continue
+
+        version = str(item.get("tag_name") or item.get("name") or "").strip()
+        version_key = parse_version_key(version)
+        if version_key is None:
+            continue
+
+        ranked_releases.append(
+            (
+                version_key,
+                GitHubRelease(
+                    version=normalize_version_text(version),
+                    html_url=str(item.get("html_url") or "").strip(),
+                    name=str(item.get("name") or version).strip(),
+                ),
+            )
+        )
+
+    if not ranked_releases:
+        raise RuntimeError("No published release was found")
+
+    ranked_releases.sort(key=lambda item: item[0], reverse=True)
+    return ranked_releases[0][1]
 
 
 def resolve_data_dir(app_dir: Path) -> Path:
@@ -168,6 +298,33 @@ def build_tray_image(*, mode: str | None, available: bool) -> Image.Image:
     return image
 
 
+def load_update_state(path: Path) -> dict[str, Any]:
+    """Load the persisted updater state, if any."""
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def save_update_state(path: Path, payload: dict[str, Any]) -> None:
+    """Persist the updater state."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def ask_yes_no(title: str, message: str) -> bool:
+    """Show a native yes/no dialog and return True for Yes."""
+    user32 = ctypes.windll.user32
+    result = user32.MessageBoxW(
+        None,
+        message,
+        title,
+        0x00000004 | 0x00000020 | 0x00010000 | 0x00040000,
+    )
+    return result == 6
+
+
 def acquire_single_instance_mutex() -> int | None:
     """Prevent duplicate tray instances in the same session."""
     kernel32 = ctypes.windll.kernel32
@@ -185,9 +342,11 @@ class TrayApp:
 
     def __init__(self, config_path: Path) -> None:
         self._config_path = config_path
+        self._update_state_path = config_path.with_name(UPDATE_STATE_FILENAME)
         self._language_code = resolve_language()
         self._cached_state: dict[str, Any] | None = None
         self._last_error: str | None = None
+        self._update_check_in_progress = False
         self._icon = pystray.Icon(APP_NAME)
         self._icon.icon = build_tray_image(mode=None, available=False)
         self._icon.title = APP_TITLE
@@ -199,6 +358,7 @@ class TrayApp:
             pystray.MenuItem(lambda item: self._t("menu_ignore_60"), self._ignore_for_1_hour),
             pystray.MenuItem(lambda item: self._t("menu_ignore_manual"), self._ignore_manually),
             pystray.Menu.SEPARATOR,
+            pystray.MenuItem(lambda item: self._t("menu_check_updates"), self._check_updates_from_menu),
             pystray.MenuItem(lambda item: self._t("menu_refresh"), self._refresh_from_menu),
             pystray.MenuItem(lambda item: self._t("menu_open_setup"), self._open_setup),
             pystray.MenuItem(lambda item: self._t("menu_exit"), self._quit),
@@ -211,6 +371,7 @@ class TrayApp:
     def run(self) -> None:
         """Run the tray application."""
         self._refresh_state(notify=False)
+        self._start_update_check(manual=False)
         self._icon.run()
 
     def _noop(self, icon: pystray.Icon, item: pystray.MenuItem) -> None:
@@ -329,6 +490,10 @@ class TrayApp:
         """Refresh the displayed protection state."""
         self._refresh_state(notify=True)
 
+    def _check_updates_from_menu(self, icon: pystray.Icon, item: pystray.MenuItem) -> None:
+        """Check GitHub for updates from the tray menu."""
+        self._start_update_check(manual=True)
+
     def _open_setup(self, icon: pystray.Icon, item: pystray.MenuItem) -> None:
         """Open the desktop configurator."""
         if getattr(sys, "frozen", False):
@@ -356,6 +521,90 @@ class TrayApp:
             self._icon.notify(message, APP_TITLE)
         except Exception:
             pass
+
+    def _start_update_check(self, *, manual: bool) -> None:
+        """Start an asynchronous GitHub update check."""
+        if self._update_check_in_progress:
+            if manual:
+                self._notify(self._t("notify_update_check_running"))
+            return
+
+        self._update_check_in_progress = True
+        worker = threading.Thread(
+            target=self._update_check_worker,
+            args=(manual,),
+            daemon=True,
+        )
+        worker.start()
+
+    def _update_check_worker(self, manual: bool) -> None:
+        """Run the update check without blocking the tray UI."""
+        try:
+            if not manual:
+                time.sleep(UPDATE_CHECK_STARTUP_DELAY_SECONDS)
+                if not self._should_auto_check_updates():
+                    return
+
+            latest_release = fetch_latest_github_release()
+            self._record_update_check(latest_release.version)
+
+            if is_newer_version(latest_release.version, APP_VERSION):
+                if manual or self._should_prompt_for_release(latest_release.version):
+                    self._record_prompted_release(latest_release.version)
+                    should_open = ask_yes_no(
+                        self._t("update_available_title"),
+                        self._t(
+                            "update_available_message",
+                            current_version=APP_VERSION,
+                            latest_version=latest_release.version,
+                        ),
+                    )
+                    if should_open and latest_release.html_url:
+                        webbrowser.open(latest_release.html_url)
+                return
+
+            if manual:
+                self._notify(self._t("notify_up_to_date", version=APP_VERSION))
+        except Exception as err:  # pragma: no cover - depends on local Windows runtime
+            if manual:
+                self._notify(
+                    self._t("notify_update_check_failed", error=format_update_error(err))
+                )
+        finally:
+            self._update_check_in_progress = False
+
+    def _should_auto_check_updates(self) -> bool:
+        """Return whether the startup check should hit GitHub now."""
+        state = load_update_state(self._update_state_path)
+        last_checked_raw = state.get("last_checked_at")
+        try:
+            last_checked = float(last_checked_raw)
+        except (TypeError, ValueError):
+            last_checked = None
+
+        if last_checked is None:
+            return True
+        return (time.time() - last_checked) >= UPDATE_CHECK_INTERVAL_SECONDS
+
+    def _record_update_check(self, latest_version: str) -> None:
+        """Persist when the last successful update check happened."""
+        state = load_update_state(self._update_state_path)
+        state["last_checked_at"] = time.time()
+        state["last_seen_version"] = latest_version
+        save_update_state(self._update_state_path, state)
+
+    def _should_prompt_for_release(self, latest_version: str) -> bool:
+        """Return whether this release has already been shown automatically."""
+        state = load_update_state(self._update_state_path)
+        prompted_version = str(state.get("last_prompted_version") or "").strip().lower()
+        return prompted_version != normalize_version_text(latest_version)
+
+    def _record_prompted_release(self, latest_version: str) -> None:
+        """Persist the latest release version that was shown to the user."""
+        state = load_update_state(self._update_state_path)
+        state["last_prompted_version"] = normalize_version_text(latest_version)
+        state["last_prompted_at"] = time.time()
+        save_update_state(self._update_state_path, state)
 
 
 def parse_args() -> argparse.Namespace:
