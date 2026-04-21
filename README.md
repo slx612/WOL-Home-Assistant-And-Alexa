@@ -9,7 +9,13 @@ Language:
 
 Local, subscription-free power control for a Windows PC through Home Assistant and Alexa.
 
-Current status: `feature-complete, pending real-world testing`.
+Current status: `0.2.0-beta.4 prerelease, Home Assistant path feature-complete, pending real-world validation`.
+
+Publication status:
+
+- Repository code currently targets `v0.2.0-beta.4`
+- Supported distribution paths: manual install, HACS custom repository, Windows installer
+- Still not validated end-to-end on real hardware: Alexa through Home Assistant
 
 Recent additions:
 
@@ -66,6 +72,7 @@ No cloud dependency. No open internet ports required.
 - Home Assistant on the same local network
 - A Windows PC with Wake-on-LAN support
 - BIOS/UEFI with Wake-on-LAN available
+- Home Assistant `2026.3` or newer if you want the bundled integration logo from `custom_components/.../brand/`
 - Alexa is optional and works through Home Assistant
 
 ## Windows installation
@@ -79,7 +86,9 @@ Recommended path:
    - `Create firewall rule`
    - `Install at startup`
 5. Click `Install`
-6. Save the pairing code
+6. Confirm the tray app is enabled at startup
+7. Use the tray icon to temporarily or permanently ignore Home Assistant power requests when needed
+8. Save the pairing code
 
 The setup program auto-detects:
 
@@ -91,6 +100,7 @@ The setup program auto-detects:
 - Discovery subnet
 
 The setup UI now supports `English` and `Spanish`.
+It also includes a `Check for updates` action against GitHub releases.
 
 ## Home Assistant installation
 
@@ -110,9 +120,11 @@ The repository is prepared for HACS with [`hacs.json`](hacs.json).
 3. Type: `Integration`
 4. Install `PC Power Free`
 5. Restart Home Assistant
+6. Enable beta/pre-release updates for this repository if you want release notifications for the current prerelease line
 
-For the `default HACS list`, there is an extra maintainer process after the
-repository is already working as a custom repository:
+If the integration tile still shows the generic placeholder icon, your Home Assistant version is likely older than `2026.3`, which is the first release that supports bundled `brand/` assets for custom integrations.
+
+For the `default HACS list`, there is an extra maintainer process after the repository is already working as a custom repository:
 
 1. Make the GitHub Actions pass without ignored checks
 2. Publish a full GitHub release
@@ -143,7 +155,8 @@ There is also a manual IP flow:
 
 ## Alexa
 
-The supported path is `Alexa + Home Assistant`.
+The supported design path is `Alexa + Home Assistant`.
+It is not yet validated end-to-end on a real installation, so treat the Alexa route as `experimental` until that test is complete.
 
 The simplest local route is `emulated_hue`.
 
@@ -201,7 +214,7 @@ LICENSE
 
 ## Publishing state
 
-The repository is prepared for:
+The repository is currently prepared for:
 
 - manual installation
 - HACS custom repository installation
