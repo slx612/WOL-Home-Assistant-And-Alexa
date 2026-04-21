@@ -14,7 +14,9 @@ Current status: `0.2.0-beta.4 prerelease, Home Assistant path feature-complete, 
 Publication status:
 
 - Repository code currently targets `v0.2.0-beta.4`
-- Supported distribution paths: manual install, HACS custom repository, Windows installer
+- Latest GitHub prerelease published: `v0.2.0-beta.4` on April 21, 2026
+- HACS default submission is already open in `hacs/default#7156`
+- Supported distribution paths: manual install, HACS custom repository, GitHub prerelease downloads, Windows installer
 - Still not validated end-to-end on real hardware: Alexa through Home Assistant
 
 Recent additions:
@@ -124,11 +126,11 @@ The repository is prepared for HACS with [`hacs.json`](hacs.json).
 
 If the integration tile still shows the generic placeholder icon, your Home Assistant version is likely older than `2026.3`, which is the first release that supports bundled `brand/` assets for custom integrations.
 
-For the `default HACS list`, there is an extra maintainer process after the repository is already working as a custom repository:
+For the `default HACS list`, the submission is already in progress:
 
-1. Make the GitHub Actions pass without ignored checks
-2. Publish a full GitHub release
-3. Open a PR against `hacs/default`
+1. The GitHub prerelease is already published
+2. The submission PR is already open in `hacs/default#7156`
+3. The remaining step is maintainer review and merge on the HACS side
 
 Checklist: [`docs/HACS_PUBLISHING.md`](docs/HACS_PUBLISHING.md)
 
@@ -218,13 +220,14 @@ The repository is currently prepared for:
 
 - manual installation
 - HACS custom repository installation
+- GitHub prerelease distribution
 - Windows installer distribution
 
-Still pending for `default HACS repository` inclusion:
+Current `default HACS repository` status:
 
-- HACS validation green
-- GitHub release published after green validation
-- PR to `hacs/default`
+- submission PR already open: `hacs/default#7156`
+- latest prerelease already published: `v0.2.0-beta.4`
+- waiting for HACS maintainer review
 
 Still pending before calling it truly final:
 
