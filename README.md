@@ -23,7 +23,7 @@ Recent additions:
 
 - Windows tray protection to temporarily or permanently ignore power requests from Home Assistant
 - Home Assistant diagnostic sensors for `Uptime` and `Boot time`
-- Desktop setup with update checks against GitHub releases
+- Desktop setup and tray startup update checks against GitHub releases
 
 ## What this is
 
@@ -104,6 +104,7 @@ The setup program auto-detects:
 
 The setup UI now supports `English` and `Spanish`.
 It also includes a `Check for updates` action against GitHub releases.
+The tray app also checks for updates automatically after Windows starts and can offer to open the latest release page.
 
 ## Home Assistant installation
 
