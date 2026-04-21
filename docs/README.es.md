@@ -214,13 +214,6 @@ LICENSE
 
 ## Estado de publicación
 
-El repositorio queda preparado para:
-
-- instalación manual
-- instalación como custom repository de HACS
-- distribución de prereleases en GitHub
-- distribución del instalador de Windows
-
 Estado actual para el repositorio `default` de HACS:
 
 - PR de envío ya abierta: `hacs/default#7156`
