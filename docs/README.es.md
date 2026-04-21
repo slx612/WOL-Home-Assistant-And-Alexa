@@ -7,46 +7,52 @@ Idioma:
 - [English](../README.md)
 - [Español](README.es.md)
 
-Solucion local y sin suscripcion para encender, apagar y reiniciar un PC Windows desde Home Assistant y Alexa.
+Solución local y sin suscripción para encender, apagar y reiniciar un PC Windows desde Home Assistant y Alexa.
 
-Estado actual: `terminado a falta de probar en una instalacion real`.
+Estado actual: `0.2.0-beta.4 prerelease, ruta Home Assistant terminada, pendiente de validación real`.
+
+Estado de publicación:
+
+- El código del repositorio apunta ahora a `v0.2.0-beta.4`
+- Las rutas previstas de distribución son: instalación manual, custom repository de HACS e instalador de Windows
+- Sigue sin validarse de extremo a extremo en hardware real la ruta `Alexa + Home Assistant`
 
 Novedades recientes:
 
-- Icono de bandeja en Windows para bloquear temporal o permanentemente las ordenes de Home Assistant
-- Sensores de diagnostico en Home Assistant para `Uptime` y `Boot time`
-- Comprobacion de actualizaciones desde GitHub en el configurador de escritorio
+- Icono de bandeja en Windows para bloquear temporal o permanentemente las órdenes de Home Assistant
+- Sensores de diagnóstico en Home Assistant para `Uptime` y `Boot time`
+- Comprobación de actualizaciones desde GitHub en el configurador de escritorio
 
-## Que es
+## Qué es
 
 Este proyecto cubre el flujo local completo:
 
 - Instalar un programa normal en Windows
-- Detectar automaticamente ese PC en Home Assistant
-- Vincularlo con un codigo temporal
+- Detectar automáticamente ese PC en Home Assistant
+- Vincularlo con un código temporal
 - Encenderlo por Wake-on-LAN
 - Apagarlo o reiniciarlo por red local
-- Exponerlo a Alexa a traves de Home Assistant sin pagar una suscripcion de terceros
+- Exponerlo a Alexa a través de Home Assistant sin pagar una suscripción de terceros
 
 No depende de la nube. No requiere abrir puertos a Internet.
 
 ## Incluye
 
-- Una integracion personalizada para Home Assistant en [`custom_components/pc_power_free`](../custom_components/pc_power_free)
+- Una integración personalizada para Home Assistant en [`custom_components/pc_power_free`](../custom_components/pc_power_free)
 - Un agente para Windows en [`windows_agent`](../windows_agent)
 - Un instalador completo para Windows en [`windows_agent/dist/pcpowerfree-windows-x64-setup.exe`](../windows_agent/dist/pcpowerfree-windows-x64-setup.exe)
-- Un zip empaquetado de la integracion de Home Assistant en [`release_assets/pcpowerfree-home-assistant-integration.zip`](../release_assets/pcpowerfree-home-assistant-integration.zip)
+- Un zip empaquetado de la integración de Home Assistant en [`release_assets/pcpowerfree-home-assistant-integration.zip`](../release_assets/pcpowerfree-home-assistant-integration.zip)
 - Ejecutables sueltos:
   - [`windows_agent/dist/PCPowerAgent.exe`](../windows_agent/dist/PCPowerAgent.exe)
   - [`windows_agent/dist/PCPowerTray.exe`](../windows_agent/dist/PCPowerTray.exe)
   - [`windows_agent/dist/PCPowerSetup.exe`](../windows_agent/dist/PCPowerSetup.exe)
 
-## Como funciona
+## Cómo funciona
 
 ### Encendido
 
-1. Home Assistant envia un paquete Wake-on-LAN.
-2. El PC arranca si BIOS/UEFI y Windows estan bien configurados.
+1. Home Assistant envía un paquete Wake-on-LAN.
+2. El PC arranca si BIOS/UEFI y Windows están bien configurados.
 
 ### Apagado y reinicio
 
@@ -54,34 +60,37 @@ No depende de la nube. No requiere abrir puertos a Internet.
 2. El agente valida la red de origen y el token interno.
 3. Ejecuta `shutdown` o `restart`.
 
-### Descubrimiento y vinculacion
+### Descubrimiento y vinculación
 
 1. El agente de Windows anuncia el PC por `zeroconf` en la red local.
-2. Home Assistant lo detecta automaticamente.
-3. El usuario introduce un codigo temporal de 6 digitos generado por el instalador de Windows.
-4. Home Assistant intercambia ese codigo por el token interno y guarda la configuracion.
+2. Home Assistant lo detecta automáticamente.
+3. El usuario introduce un código temporal de 6 dígitos generado por el instalador de Windows.
+4. Home Assistant intercambia ese código por el token interno y guarda la configuración.
 
 ## Requisitos
 
 - Home Assistant en la misma red local
 - Un PC Windows con soporte Wake-on-LAN
 - BIOS/UEFI con Wake-on-LAN disponible
-- Alexa es opcional y funciona a traves de Home Assistant
+- Home Assistant `2026.3` o superior si quieres que se vea el logo incluido en `custom_components/.../brand/`
+- Alexa es opcional y funciona a través de Home Assistant
 
-## Instalacion en Windows
+## Instalación en Windows
 
 Ruta recomendada:
 
 1. Ejecuta [`windows_agent/dist/pcpowerfree-windows-x64-setup.exe`](../windows_agent/dist/pcpowerfree-windows-x64-setup.exe)
-2. Completa la instalacion
-3. Revisa la configuracion detectada
+2. Completa la instalación
+3. Revisa la configuración detectada
 4. Deja activadas estas opciones:
    - `Crear regla de firewall`
    - `Instalar al arranque`
 5. Pulsa `Instalar`
-6. Guarda el codigo de vinculacion
+6. Comprueba que la app de bandeja queda activada al inicio
+7. Usa el icono de bandeja para ignorar temporal o permanentemente las órdenes de Home Assistant cuando te convenga
+8. Guarda el código de vinculación
 
-El configurador detecta automaticamente:
+El configurador detecta automáticamente:
 
 - Nombre del equipo
 - Adaptador de red activo
@@ -91,8 +100,9 @@ El configurador detecta automaticamente:
 - Subred de descubrimiento
 
 La interfaz del configurador ya soporta `español` e `inglés`.
+También incluye una opción para `Buscar actualizaciones` en GitHub.
 
-## Instalacion en Home Assistant
+## Instalación en Home Assistant
 
 ### Manual
 
@@ -103,40 +113,44 @@ La interfaz del configurador ya soporta `español` e `inglés`.
 
 ### HACS
 
-El repositorio esta preparado para HACS con [`hacs.json`](../hacs.json).
+El repositorio está preparado para HACS con [`hacs.json`](../hacs.json).
 
 1. En HACS, abre `Custom repositories`
 2. Añade la URL de este repositorio
 3. Tipo: `Integration`
 4. Instala `PC Power Free`
 5. Reinicia Home Assistant
+6. Activa las betas o prereleases para este repositorio si quieres recibir avisos de actualización de la rama prerelease actual
 
-## Vinculacion con Home Assistant
+Si la tarjeta de la integración sigue mostrando el icono genérico, lo normal es que tu Home Assistant sea anterior a `2026.3`, que es la primera versión con soporte para assets `brand/` incluidos dentro de una custom integration.
+
+## Vinculación con Home Assistant
 
 ### Flujo recomendado
 
 1. Instala el programa en Windows
-2. Instala la integracion en Home Assistant
-3. Espera a que el PC aparezca automaticamente
+2. Instala la integración en Home Assistant
+3. Espera a que el PC aparezca automáticamente
 4. Selecciona el PC detectado
-5. Introduce el codigo temporal mostrado por el configurador
+5. Introduce el código temporal mostrado por el configurador
 6. Confirma el nombre del dispositivo
 
-### Si falla el descubrimiento automatico
+### Si falla el descubrimiento automático
 
-Tambien hay un flujo manual por IP:
+También hay un flujo manual por IP:
 
-1. `Añadir integracion`
+1. `Añadir integración`
 2. `PC Power Free`
 3. `Configurar por IP manualmente`
 4. Introduce la IP del PC y el puerto del agente
-5. Introduce el codigo de vinculacion
+5. Introduce el código de vinculación
 
 ## Alexa
 
-La ruta soportada es `Alexa + Home Assistant`.
+La ruta prevista es `Alexa + Home Assistant`.
+Todavía no está validada de extremo a extremo en una instalación real, así que ahora mismo debe considerarse `experimental`.
 
-La opcion local mas simple es `emulated_hue`.
+La opción local más simple es `emulated_hue`.
 
 Ejemplo:
 
@@ -186,21 +200,27 @@ LICENSE
 ## Seguridad
 
 - No expongas el puerto `8777` a Internet
-- Limita el acceso a la IP de Home Assistant o, como minimo, a tu LAN
+- Limita el acceso a la IP de Home Assistant o, como mínimo, a tu LAN
 - Usa VPN si necesitas acceso remoto
-- El codigo de vinculacion es temporal
+- El código de vinculación es temporal
 
-## Estado de publicacion
+## Estado de publicación
 
 El repositorio queda preparado para:
 
-- instalacion manual
-- instalacion como custom repository de HACS
-- distribucion del instalador de Windows
+- instalación manual
+- instalación como custom repository de HACS
+- distribución del instalador de Windows
+
+Sigue pendiente para el repositorio `default` de HACS:
+
+- validación HACS en verde
+- GitHub release publicada tras esa validación
+- PR a `hacs/default`
 
 Pendiente antes de considerarlo realmente final:
 
 - prueba real en Home Assistant
 - prueba real de descubrimiento `zeroconf`
-- prueba real de vinculacion por codigo
+- prueba real de vinculación por código
 - prueba real con Alexa via `emulated_hue`
