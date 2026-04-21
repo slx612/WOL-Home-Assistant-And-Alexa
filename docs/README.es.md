@@ -23,7 +23,7 @@ Novedades recientes:
 
 - Icono de bandeja en Windows para bloquear temporal o permanentemente las órdenes de Home Assistant
 - Sensores de diagnóstico en Home Assistant para `Uptime` y `Boot time`
-- Comprobación de actualizaciones desde GitHub en el configurador de escritorio
+- Comprobación de actualizaciones desde GitHub en el configurador y al iniciar Windows desde la app de bandeja
 
 ## Qué es
 
@@ -104,6 +104,7 @@ El configurador detecta automáticamente:
 
 La interfaz del configurador ya soporta `español` e `inglés`.
 También incluye una opción para `Buscar actualizaciones` en GitHub.
+La app de bandeja también comprueba actualizaciones automáticamente tras iniciar Windows y puede abrir la página de la última release.
 
 ## Instalación en Home Assistant
 
