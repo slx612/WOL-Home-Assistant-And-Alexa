@@ -9,7 +9,7 @@ Idioma:
 
 Solución local y sin suscripción para encender, apagar y reiniciar un PC Windows desde Home Assistant y Alexa.
 
-Estado actual: `0.2.0-beta.4 prerelease, ruta Home Assistant terminada, pendiente de validación real`.
+Estado actual: `0.2.0-beta.4 prerelease, ruta Home Assistant validada en instalación real, ruta Alexa aún pendiente de validación real`.
 
 Estado de publicación:
 
@@ -17,7 +17,7 @@ Estado de publicación:
 - La última prerelease publicada en GitHub es `v0.2.0-beta.4`, del 21 de abril de 2026
 - La solicitud para el repositorio `default` de HACS ya está abierta en `hacs/default#7156`
 - Las rutas previstas de distribución son: instalación manual, custom repository de HACS, descargas prerelease de GitHub e instalador de Windows
-- Sigue sin validarse de extremo a extremo en hardware real la ruta `Alexa + Home Assistant`
+- La única validación real que sigue pendiente es la ruta `Alexa + Home Assistant`
 
 Novedades recientes:
 
@@ -229,7 +229,4 @@ Estado actual para el repositorio `default` de HACS:
 
 Pendiente antes de considerarlo realmente final:
 
-- prueba real en Home Assistant
-- prueba real de descubrimiento `zeroconf`
-- prueba real de vinculación por código
 - prueba real con Alexa via `emulated_hue`
