@@ -14,7 +14,9 @@ Estado actual: `0.2.0-beta.4 prerelease, ruta Home Assistant terminada, pendient
 Estado de publicación:
 
 - El código del repositorio apunta ahora a `v0.2.0-beta.4`
-- Las rutas previstas de distribución son: instalación manual, custom repository de HACS e instalador de Windows
+- La última prerelease publicada en GitHub es `v0.2.0-beta.4`, del 21 de abril de 2026
+- La solicitud para el repositorio `default` de HACS ya está abierta en `hacs/default#7156`
+- Las rutas previstas de distribución son: instalación manual, custom repository de HACS, descargas prerelease de GitHub e instalador de Windows
 - Sigue sin validarse de extremo a extremo en hardware real la ruta `Alexa + Home Assistant`
 
 Novedades recientes:
@@ -124,6 +126,12 @@ El repositorio está preparado para HACS con [`hacs.json`](../hacs.json).
 
 Si la tarjeta de la integración sigue mostrando el icono genérico, lo normal es que tu Home Assistant sea anterior a `2026.3`, que es la primera versión con soporte para assets `brand/` incluidos dentro de una custom integration.
 
+Para el listado `default` de HACS, la publicación ya está en marcha:
+
+1. La prerelease de GitHub ya está publicada
+2. La PR de envío ya está abierta en `hacs/default#7156`
+3. Lo único pendiente ahí es la revisión y el merge por parte del equipo de HACS
+
 ## Vinculación con Home Assistant
 
 ### Flujo recomendado
@@ -210,13 +218,14 @@ El repositorio queda preparado para:
 
 - instalación manual
 - instalación como custom repository de HACS
+- distribución de prereleases en GitHub
 - distribución del instalador de Windows
 
-Sigue pendiente para el repositorio `default` de HACS:
+Estado actual para el repositorio `default` de HACS:
 
-- validación HACS en verde
-- GitHub release publicada tras esa validación
-- PR a `hacs/default`
+- PR de envío ya abierta: `hacs/default#7156`
+- última prerelease ya publicada: `v0.2.0-beta.4`
+- pendiente de revisión por los maintainers de HACS
 
 Pendiente antes de considerarlo realmente final:
 
