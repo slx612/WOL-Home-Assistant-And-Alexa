@@ -216,13 +216,6 @@ LICENSE
 
 ## Publishing state
 
-The repository is currently prepared for:
-
-- manual installation
-- HACS custom repository installation
-- GitHub prerelease distribution
-- Windows installer distribution
-
 Current `default HACS repository` status:
 
 - submission PR already open: `hacs/default#7156`
