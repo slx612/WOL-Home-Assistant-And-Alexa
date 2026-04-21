@@ -9,7 +9,7 @@ Language:
 
 Local, subscription-free power control for a Windows PC through Home Assistant and Alexa.
 
-Current status: `0.2.0-beta.4 prerelease, Home Assistant path feature-complete, pending real-world validation`.
+Current status: `0.2.0-beta.4 prerelease, Home Assistant path validated on real setup, Alexa path still pending real-world validation`.
 
 Publication status:
 
@@ -17,7 +17,7 @@ Publication status:
 - Latest GitHub prerelease published: `v0.2.0-beta.4` on April 21, 2026
 - HACS default submission is already open in `hacs/default#7156`
 - Supported distribution paths: manual install, HACS custom repository, GitHub prerelease downloads, Windows installer
-- Still not validated end-to-end on real hardware: Alexa through Home Assistant
+- The only remaining real-world validation pending is Alexa through Home Assistant
 
 Recent additions:
 
@@ -231,7 +231,4 @@ Current `default HACS repository` status:
 
 Still pending before calling it truly final:
 
-- real Home Assistant test
-- real `zeroconf` discovery test
-- real pairing-code test
 - real Alexa test through `emulated_hue`
