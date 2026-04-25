@@ -18,13 +18,16 @@ from .const import (
     DEFAULT_BROADCAST_ADDRESS,
     DEFAULT_BROADCAST_PORT,
     STATUS_BOOTED_AT,
+    STATUS_CAPABILITIES,
     STATUS_COMMAND_GUARD_ACTIVE,
     STATUS_COMMAND_GUARD_MODE,
     STATUS_COMMAND_GUARD_UNTIL_TS,
     STATUS_LAST_COMMAND_AT,
     STATUS_MACHINE_ID,
+    STATUS_PLATFORM,
     STATUS_UPTIME_SECONDS,
 )
+from .platforms import normalize_agent_capabilities, normalize_agent_platform
 
 MAC_REGEX = re.compile(r"^[0-9a-fA-F]{12}$")
 DISCOVERY_TIMEOUT_SECONDS = 0.75
@@ -64,7 +67,7 @@ class PCPowerPairingError(PCPowerError):
 
 @dataclass(slots=True)
 class PCPowerDiscoveryInfo:
-    """Normalized discovery data returned by the Windows agent."""
+    """Normalized discovery data returned by the local agent."""
 
     machine_id: str
     host: str
@@ -76,6 +79,8 @@ class PCPowerDiscoveryInfo:
     broadcast_address: str
     discovery_subnets: tuple[str, ...]
     agent_version: str | None
+    platform: str | None
+    capabilities: tuple[str, ...]
     pairing_code_active: bool
 
     @property
@@ -86,7 +91,7 @@ class PCPowerDiscoveryInfo:
 
 @dataclass(slots=True)
 class PCPowerPairingResult:
-    """Pairing response returned by the Windows agent."""
+    """Pairing response returned by the local agent."""
 
     discovery: PCPowerDiscoveryInfo
     api_token: str
@@ -207,6 +212,8 @@ def _normalize_discovery_payload(
         broadcast_address=broadcast_address,
         discovery_subnets=discovery_subnets,
         agent_version=str(payload.get("agent_version") or "").strip() or None,
+        platform=normalize_agent_platform(payload.get(STATUS_PLATFORM)),
+        capabilities=normalize_agent_capabilities(payload.get(STATUS_CAPABILITIES)),
         pairing_code_active=bool(payload.get("pairing_code_active")),
     )
 
@@ -218,7 +225,7 @@ async def async_fetch_discovery_info(
     agent_port: int = DEFAULT_AGENT_PORT,
     timeout: int = 5,
 ) -> PCPowerDiscoveryInfo:
-    """Fetch pre-pairing discovery data from the Windows agent."""
+    """Fetch pre-pairing discovery data from the local agent."""
     try:
         async with asyncio.timeout(timeout):
             async with session.get(
@@ -296,7 +303,7 @@ async def async_exchange_pairing_code(
 
 
 class PCPowerClient:
-    """Local network client for the Windows agent."""
+    """Local network client for the local agent."""
 
     def __init__(
         self,
@@ -382,7 +389,7 @@ class PCPowerClient:
                         raise PCPowerAuthError("The agent rejected the token")
                     if response.status == 423:
                         raise PCPowerCommandError(
-                            "Power commands are currently blocked in the Windows tray"
+                            "Power commands are currently blocked by the local guard"
                         )
 
                     response.raise_for_status()
@@ -541,6 +548,7 @@ class PCPowerClient:
             "hostname": payload.get("hostname"),
             "agent_version": payload.get("agent_version"),
             "booted_at": payload.get(STATUS_BOOTED_AT),
+            "capabilities": normalize_agent_capabilities(payload.get(STATUS_CAPABILITIES)),
             "command_guard_active": bool(payload.get("command_guard_active", False)),
             "command_guard_mode": payload.get("command_guard_mode"),
             "command_guard_until_ts": payload.get("command_guard_until_ts"),
@@ -548,5 +556,6 @@ class PCPowerClient:
             "last_command_at": payload.get(STATUS_LAST_COMMAND_AT),
             "mac_addresses": payload.get("mac_addresses", []),
             "machine_id": payload_machine_id or self._machine_id,
+            "platform": normalize_agent_platform(payload.get(STATUS_PLATFORM)),
             "uptime_seconds": payload.get(STATUS_UPTIME_SECONDS),
         }
