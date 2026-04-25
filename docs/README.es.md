@@ -9,13 +9,12 @@ Idioma:
 
 Solucion local y sin suscripcion para controlar el encendido, apagado y reinicio de equipos Windows y Linux desde Home Assistant y Alexa.
 
-Estado actual: `0.2.0-beta.5 preparado en el repositorio, rutas Windows y Linux con Home Assistant validadas en instalaciones reales, ruta Alexa aun pendiente de validacion real`.
+Estado actual: `0.2.0-beta.5 ya publicado en GitHub, rutas Windows y Linux con Home Assistant validadas en instalaciones reales, ruta Alexa aun pendiente de validacion real`.
 
 Estado de publicacion:
 
 - El codigo del repositorio apunta ahora a `v0.2.0-beta.5`
-- La ultima prerelease publicada en GitHub es `v0.2.0-beta.4`, del 21 de abril de 2026
-- La siguiente prerelease prevista es `v0.2.0-beta.5`
+- La ultima prerelease publicada en GitHub es `v0.2.0-beta.5`, del 25 de abril de 2026
 - La solicitud para el repositorio `default` de HACS ya esta abierta en `hacs/default#7156`
 - Las rutas previstas de distribucion son: instalacion manual, custom repository de HACS, descargas prerelease de GitHub, instalador de Windows e instalacion experimental en Linux desde codigo fuente
 - La unica validacion real que sigue pendiente es `Alexa + Home Assistant`
@@ -184,7 +183,7 @@ Si la tarjeta de la integracion sigue mostrando el icono generico, lo normal es 
 
 Para el listado `default` de HACS, la publicacion ya esta en marcha:
 
-1. Ya existe una prerelease en GitHub, y el repositorio ya esta preparado para `v0.2.0-beta.5`
+1. La ultima prerelease ya publicada en GitHub es `v0.2.0-beta.5`
 2. La PR de envio ya esta abierta en `hacs/default#7156`
 3. Lo unico pendiente ahi es la revision y el merge por parte del equipo de HACS
 
@@ -294,8 +293,7 @@ LICENSE
 Estado actual para el repositorio `default` de HACS:
 
 - PR de envio ya abierta: `hacs/default#7156`
-- ultima prerelease ya publicada: `v0.2.0-beta.4`
-- siguiente prerelease prevista: `v0.2.0-beta.5`
+- ultima prerelease ya publicada: `v0.2.0-beta.5`
 - pendiente de revision por los maintainers de HACS
 
 Pendiente antes de considerarlo realmente final:
