@@ -1,0 +1,15 @@
+[Unit]
+Description=PC Power Free Linux Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/pc-power-free
+ExecStart=/opt/pc-power-free/.venv/bin/python /opt/pc-power-free/linux_agent/pc_power_agent.py --config /etc/pc-power-free/config.json
+Restart=on-failure
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target
