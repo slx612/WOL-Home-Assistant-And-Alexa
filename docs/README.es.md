@@ -184,7 +184,7 @@ Si la tarjeta de la integracion sigue mostrando el icono generico, lo normal es 
 
 Para el listado `default` de HACS, la publicacion ya esta en marcha:
 
-1. La prerelease de GitHub ya esta publicada
+1. Ya existe una prerelease en GitHub, y el repositorio ya esta preparado para `v0.2.0-beta.5`
 2. La PR de envio ya esta abierta en `hacs/default#7156`
 3. Lo unico pendiente ahi es la revision y el merge por parte del equipo de HACS
 
@@ -267,19 +267,19 @@ LICENSE
 ### Ejecutables de Windows
 
 ```powershell
-.\windows_agent\build-exe.ps1 -Clean
+.\\windows_agent\\build-exe.ps1 -Clean
 ```
 
 ### Instalador de Windows
 
 ```powershell
-.\windows_agent\build-installer.ps1
+.\\windows_agent\\build-installer.ps1
 ```
 
 ### Assets de release
 
 ```powershell
-.\build-release-assets.ps1
+.\\build-release-assets.ps1
 ```
 
 ## Seguridad
