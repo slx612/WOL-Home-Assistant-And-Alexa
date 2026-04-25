@@ -25,8 +25,8 @@ import pystray
 APP_NAME = "PC Power Free"
 APP_TITLE = "PC Power Free Tray"
 APP_DIR_NAME = "PC Power Free"
-APP_VERSION = "0.2.0-beta.4"
-DEFAULT_AGENT_PORT = 8777
+APP_VERSION = "0.2.0-beta.5"
+DEFAULT_AGENT_PORT = 58477
 CONFIG_FILENAME = "config.json"
 COMMAND_GUARD_ALLOW = "allow"
 COMMAND_GUARD_IGNORE_MANUAL = "ignore_manual"
