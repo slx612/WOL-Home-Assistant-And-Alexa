@@ -184,7 +184,7 @@ If the integration tile still shows the generic placeholder icon, your Home Assi
 
 For the `default HACS list`, the submission is already in progress:
 
-1. The GitHub prerelease is already published
+1. A GitHub prerelease already exists, and the repository is now prepared for `v0.2.0-beta.5`
 2. The submission PR is already open in `hacs/default#7156`
 3. The remaining step is maintainer review and merge on the HACS side
 
@@ -267,19 +267,19 @@ LICENSE
 ### Windows executables
 
 ```powershell
-.\windows_agent\build-exe.ps1 -Clean
+.\\windows_agent\\build-exe.ps1 -Clean
 ```
 
 ### Windows installer
 
 ```powershell
-.\windows_agent\build-installer.ps1
+.\\windows_agent\\build-installer.ps1
 ```
 
 ### Release assets
 
 ```powershell
-.\build-release-assets.ps1
+.\\build-release-assets.ps1
 ```
 
 ## Security
