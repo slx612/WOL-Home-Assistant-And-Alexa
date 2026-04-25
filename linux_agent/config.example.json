@@ -1,0 +1,15 @@
+{
+  "host": "0.0.0.0",
+  "port": 58477,
+  "token": "CHANGE_THIS_TOKEN_TO_A_LONG_RANDOM_VALUE",
+  "allowed_subnets": [
+    "192.168.1.0/24",
+    "127.0.0.1/32"
+  ],
+  "shutdown_delay_seconds": 0,
+  "shutdown_force": false,
+  "log_file": "pc_power_agent.log",
+  "machine_id": "replace_with_machine_id",
+  "pairing_code_hash": "replace_with_pairing_code_hash",
+  "pairing_code_expires_at": 0
+}
