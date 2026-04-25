@@ -9,13 +9,12 @@ Language:
 
 Local, subscription-free power control for Windows PCs and Linux hosts through Home Assistant and Alexa.
 
-Current status: `0.2.0-beta.5 prepared in the repository, Windows and Linux Home Assistant paths validated on real setups, Alexa path still pending real-world validation`.
+Current status: `0.2.0-beta.5 published on GitHub, Windows and Linux Home Assistant paths validated on real setups, Alexa path still pending real-world validation`.
 
 Publication status:
 
 - Repository code currently targets `v0.2.0-beta.5`
-- Latest GitHub prerelease published: `v0.2.0-beta.4` on April 21, 2026
-- Next planned GitHub prerelease: `v0.2.0-beta.5`
+- Latest GitHub prerelease published: `v0.2.0-beta.5` on April 25, 2026
 - HACS default submission is already open in `hacs/default#7156`
 - Supported distribution paths: manual install, HACS custom repository, GitHub prerelease downloads, Windows installer, experimental Linux source install
 - The only remaining real-world validation still pending is `Alexa + Home Assistant`
@@ -184,7 +183,7 @@ If the integration tile still shows the generic placeholder icon, your Home Assi
 
 For the `default HACS list`, the submission is already in progress:
 
-1. A GitHub prerelease already exists, and the repository is now prepared for `v0.2.0-beta.5`
+1. The latest GitHub prerelease already published is `v0.2.0-beta.5`
 2. The submission PR is already open in `hacs/default#7156`
 3. The remaining step is maintainer review and merge on the HACS side
 
@@ -294,8 +293,7 @@ LICENSE
 Current `default HACS repository` status:
 
 - submission PR already open: `hacs/default#7156`
-- latest prerelease already published: `v0.2.0-beta.4`
-- next planned prerelease: `v0.2.0-beta.5`
+- latest prerelease already published: `v0.2.0-beta.5`
 - waiting for HACS maintainer review
 
 Still pending before calling it truly final:
