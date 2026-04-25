@@ -1,7 +1,12 @@
 # HACS publishing checklist
 
-Use this checklist when preparing the repository for HACS publication and for
-submission to the default HACS repository list.
+Use this checklist to keep the repository aligned with the current HACS situation and with the next prerelease.
+
+## Current status
+
+- Latest GitHub prerelease already published: `v0.2.0-beta.4`
+- HACS default submission already open: `hacs/default#7156`
+- Repository code and release assets are now being prepared for `v0.2.0-beta.5`
 
 ## 1. Repository metadata on GitHub
 
@@ -18,51 +23,66 @@ Suggested topics:
 - `custom-integration`
 - `wake-on-lan`
 - `windows`
+- `linux`
 - `alexa`
 
 ## 2. Validation workflows
 
-Before asking for inclusion in the default HACS list:
+Before publishing a new prerelease:
 
 - `HACS validation` must pass with no ignored checks
 - `hassfest` must pass
 
 ## 3. Release
 
-After the workflows are green:
+For the next prerelease:
 
-1. Create a full GitHub release
+1. Create a full GitHub prerelease
 2. Do not publish only a tag
 3. Attach release notes
+4. Attach the current release assets
 
-Suggested first release path:
+Current planned assets for `v0.2.0-beta.5`:
 
-- Start with a prerelease if the project has not yet been tested end to end on
-  real hardware
-- Promote to a normal release after the first successful real-world validation
+- `pcpowerfree-windows-x64-setup.exe`
+- `PCPowerAgent.exe`
+- `PCPowerTray.exe`
+- `PCPowerSetup.exe`
+- `pcpowerfree-home-assistant-integration.zip`
+- `pcpowerfree-linux-agent.tar.gz`
+
+Suggested release path from this point:
+
+- Keep using prereleases until `Alexa + Home Assistant` has been validated on a real setup
+- Keep Linux marked as experimental until it has packaging beyond the source bundle
+- Do not present DSM as published support yet
 
 ## 4. HACS default repository submission
 
-After the release exists:
+The submission step itself is already done:
 
-1. Fork `hacs/default`
-2. Add this repository to the `integration` list in alphabetical order
-3. Open a PR from your fork
-4. Wait for HACS review
+1. The repository was already added in a PR to `hacs/default`
+2. The PR is already open as `#7156`
+3. The remaining step is HACS maintainer review and merge
 
 Important:
 
 - Default-list review can take a long time
-- The project can already be installed before that as a normal HACS custom
-  repository
+- The project can already be installed before that as a normal HACS custom repository
 
-## 5. Recommended before default-list submission
+## 5. Recommended validation status
 
-These are not strict HACS format requirements, but they are recommended for
-this project before asking for broad public exposure:
+Already validated on real setups:
 
-- Real Home Assistant discovery test
-- Real pairing-code test
-- Real shutdown/restart test
-- Real Wake-on-LAN boot test
+- Home Assistant discovery
+- Pairing code flow
+- Windows path with Home Assistant
+- Linux path with Home Assistant
+- Linux power-off from Home Assistant
+
+Still pending:
+
+- Real Wake-on-LAN boot validation on Linux hardware if that path is going to be advertised broadly
+- Real restart validation on Linux hardware
 - Real Alexa test through Home Assistant
+- DSM packaging and DSM privilege model
