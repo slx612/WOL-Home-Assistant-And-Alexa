@@ -10,12 +10,33 @@ $projectRoot = Split-Path -Parent $agentDir
 $buildDir = Join-Path $agentDir "build"
 $distDir = Join-Path $agentDir "dist"
 
+function Invoke-PythonCommand {
+    param(
+        [string[]]$Arguments,
+        [string]$StepName
+    )
+
+    & $PythonLauncher @Arguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "$StepName fallo con codigo $LASTEXITCODE"
+    }
+}
+
 if ($Clean) {
     Remove-Item $buildDir -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Item $distDir -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-& $PythonLauncher -m pip install --upgrade pyinstaller zeroconf pillow pystray
+Invoke-PythonCommand -StepName "La instalacion de dependencias de build" -Arguments @(
+    "-m",
+    "pip",
+    "install",
+    "--upgrade",
+    "pyinstaller",
+    "zeroconf",
+    "pillow",
+    "pystray"
+)
 
 Push-Location $agentDir
 try {
@@ -29,9 +50,35 @@ try {
         "agent_core.common"
     )
 
-    & $PythonLauncher -m PyInstaller @sharedPyInstallerArgs --name PCPowerAgent pc_power_agent.py
-    & $PythonLauncher -m PyInstaller @sharedPyInstallerArgs --windowed --name PCPowerTray --hidden-import pystray._win32 pc_power_tray.py
-    & $PythonLauncher -m PyInstaller @sharedPyInstallerArgs --windowed --uac-admin --name PCPowerSetup setup_wizard_gui.py
+    Invoke-PythonCommand -StepName "La compilacion de PCPowerAgent" -Arguments @(
+        "-m",
+        "PyInstaller",
+        @sharedPyInstallerArgs,
+        "--name",
+        "PCPowerAgent",
+        "pc_power_agent.py"
+    )
+    Invoke-PythonCommand -StepName "La compilacion de PCPowerTray" -Arguments @(
+        "-m",
+        "PyInstaller",
+        @sharedPyInstallerArgs,
+        "--windowed",
+        "--name",
+        "PCPowerTray",
+        "--hidden-import",
+        "pystray._win32",
+        "pc_power_tray.py"
+    )
+    Invoke-PythonCommand -StepName "La compilacion de PCPowerSetup" -Arguments @(
+        "-m",
+        "PyInstaller",
+        @sharedPyInstallerArgs,
+        "--windowed",
+        "--uac-admin",
+        "--name",
+        "PCPowerSetup",
+        "setup_wizard_gui.py"
+    )
 
     Copy-Item .\config.example.json (Join-Path $distDir "config.example.json") -Force
     Copy-Item .\install-task.ps1 (Join-Path $distDir "install-task.ps1") -Force
