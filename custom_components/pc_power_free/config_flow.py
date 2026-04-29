@@ -28,8 +28,10 @@ from .const import (
     CONF_API_TOKEN,
     CONF_BROADCAST_ADDRESS,
     CONF_BROADCAST_PORT,
+    CONF_CAPABILITIES,
     CONF_DISCOVERY_SUBNETS,
     CONF_MACHINE_ID,
+    CONF_PLATFORM,
     CONF_SCAN_INTERVAL,
     DEFAULT_AGENT_PORT,
     DEFAULT_BROADCAST_ADDRESS,
@@ -40,6 +42,7 @@ from .const import (
     DOMAIN,
     MANUAL_DISCOVERY_OPTION,
 )
+from .platforms import platform_label
 
 
 def _manual_schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
@@ -55,6 +58,11 @@ def _manual_schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
             ): vol.All(vol.Coerce(int), vol.Range(min=1, max=65535)),
         }
     )
+
+
+def _discovery_choice_label(discovery: PCPowerDiscoveryInfo) -> str:
+    """Return the label shown for one discovered device."""
+    return f"{discovery.name} ({discovery.host}, {platform_label(discovery.platform)})"
 
 
 def _pair_schema(discovery: PCPowerDiscoveryInfo, defaults: dict[str, Any] | None = None) -> vol.Schema:
@@ -79,7 +87,7 @@ def _options_schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
 
     return vol.Schema(
         {
-            vol.Required(CONF_NAME, default=data.get(CONF_NAME, "PC Windows")): cv.string,
+            vol.Required(CONF_NAME, default=data.get(CONF_NAME, "PC Power Device")): cv.string,
             vol.Required(CONF_HOST, default=data.get(CONF_HOST, "")): cv.string,
             vol.Required(
                 CONF_AGENT_PORT,
@@ -151,7 +159,7 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return await self.async_step_pair()
 
         options = {
-            machine_id: f"{discovery.name} ({discovery.host})"
+            machine_id: _discovery_choice_label(discovery)
             for machine_id, discovery in discovered_items.items()
         }
         options[MANUAL_DISCOVERY_OPTION] = "Configurar por IP manualmente"
@@ -227,6 +235,10 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_MACHINE_ID: discovery.machine_id,
                     CONF_SCAN_INTERVAL: user_input[CONF_SCAN_INTERVAL],
                 }
+                if discovery.capabilities:
+                    entry_data[CONF_CAPABILITIES] = list(discovery.capabilities)
+                if discovery.platform:
+                    entry_data[CONF_PLATFORM] = discovery.platform
                 await self.async_set_unique_id(discovery.machine_id)
                 self._abort_if_unique_id_configured(
                     updates=self._build_discovery_updates(discovery)
@@ -239,6 +251,7 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={
                 "name": self._discovery_info.name,
                 "host": self._discovery_info.host,
+                "platform": platform_label(self._discovery_info.platform),
             },
             errors=errors,
         )
@@ -301,6 +314,10 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_MAC: discovery.primary_mac,
             CONF_MACHINE_ID: discovery.machine_id,
         }
+        if discovery.capabilities:
+            updates[CONF_CAPABILITIES] = list(discovery.capabilities)
+        if discovery.platform:
+            updates[CONF_PLATFORM] = discovery.platform
         if discovery.broadcast_address:
             updates[CONF_BROADCAST_ADDRESS] = discovery.broadcast_address
         if discovery.discovery_subnets:
