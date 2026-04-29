@@ -1,12 +1,16 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import os
+
+project_root = os.path.abspath(os.path.join(SPECPATH, os.pardir))
+
 
 a = Analysis(
     ['setup_wizard_gui.py'],
-    pathex=[],
+    pathex=[project_root],
     binaries=[],
     datas=[],
-    hiddenimports=[],
+    hiddenimports=['agent_core.common'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
