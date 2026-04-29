@@ -6,6 +6,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $agentDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$projectRoot = Split-Path -Parent $agentDir
 $buildDir = Join-Path $agentDir "build"
 $distDir = Join-Path $agentDir "dist"
 
@@ -18,9 +19,19 @@ if ($Clean) {
 
 Push-Location $agentDir
 try {
-    & $PythonLauncher -m PyInstaller --noconfirm --clean --onefile --name PCPowerAgent pc_power_agent.py
-    & $PythonLauncher -m PyInstaller --noconfirm --clean --onefile --windowed --name PCPowerTray --hidden-import pystray._win32 pc_power_tray.py
-    & $PythonLauncher -m PyInstaller --noconfirm --clean --onefile --windowed --uac-admin --name PCPowerSetup setup_wizard_gui.py
+    $sharedPyInstallerArgs = @(
+        "--noconfirm",
+        "--clean",
+        "--onefile",
+        "--paths",
+        $projectRoot,
+        "--hidden-import",
+        "agent_core.common"
+    )
+
+    & $PythonLauncher -m PyInstaller @sharedPyInstallerArgs --name PCPowerAgent pc_power_agent.py
+    & $PythonLauncher -m PyInstaller @sharedPyInstallerArgs --windowed --name PCPowerTray --hidden-import pystray._win32 pc_power_tray.py
+    & $PythonLauncher -m PyInstaller @sharedPyInstallerArgs --windowed --uac-admin --name PCPowerSetup setup_wizard_gui.py
 
     Copy-Item .\config.example.json (Join-Path $distDir "config.example.json") -Force
     Copy-Item .\install-task.ps1 (Join-Path $distDir "install-task.ps1") -Force
