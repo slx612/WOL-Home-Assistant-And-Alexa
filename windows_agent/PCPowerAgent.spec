@@ -1,12 +1,16 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import os
+
+project_root = os.path.abspath(os.path.join(SPECPATH, os.pardir))
+
 
 a = Analysis(
     ['pc_power_agent.py'],
-    pathex=[],
+    pathex=[project_root],
     binaries=[],
     datas=[],
-    hiddenimports=[],
+    hiddenimports=['agent_core.common'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
