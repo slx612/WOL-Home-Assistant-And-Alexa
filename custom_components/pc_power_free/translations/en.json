@@ -4,23 +4,23 @@
     "flow_title": "{name}",
     "step": {
       "user": {
-        "title": "Choose a PC",
-        "description": "Select one of the Windows PCs discovered on your local network, or continue with a manual IP.",
+        "title": "Choose a device",
+        "description": "Select one of the discovered devices on your local network, or continue with a manual IP.",
         "data": {
-          "discovered_device": "Discovered PC"
+          "discovered_device": "Discovered device"
         }
       },
       "manual": {
         "title": "Discover manually",
-        "description": "Enter the current IP or hostname of the Windows PC if it has not appeared automatically yet.",
+        "description": "Enter the current IP or hostname of the device if it has not appeared automatically yet.",
         "data": {
-          "host": "Current PC host or IP",
+          "host": "Current device host or IP",
           "agent_port": "Agent port"
         }
       },
       "pair": {
-        "title": "Pair PC",
-        "description": "Enter the temporary pairing code shown by the Windows installer for {name} ({host}).",
+        "title": "Pair device",
+        "description": "Enter the temporary pairing code shown by the local setup for {name} ({host}, {platform}).",
         "data": {
           "name": "Device name",
           "pairing_code": "Pairing code",
@@ -29,20 +29,20 @@
       }
     },
     "error": {
-      "cannot_connect": "Unable to reach the Windows agent",
+      "cannot_connect": "Unable to reach the local agent",
       "invalid_input": "Invalid values",
       "invalid_pairing_code": "The pairing code is not valid",
       "invalid_response": "The agent returned invalid discovery data",
-      "network_not_allowed": "Home Assistant is not allowed by the PC firewall or subnet restrictions",
-      "no_pairing_code": "The PC has no active pairing code. Open the Windows configurator and generate one",
-      "pairing_code_expired": "The pairing code has expired. Generate a new one in Windows"
+      "network_not_allowed": "Home Assistant is not allowed by the device firewall or subnet restrictions",
+      "no_pairing_code": "The device has no active pairing code. Open the local configurator and generate one",
+      "pairing_code_expired": "The pairing code has expired. Generate a new one in the local setup"
     },
     "abort": {
-      "already_configured": "This PC is already configured",
-      "cannot_connect": "Unable to reach the Windows agent",
+      "already_configured": "This device is already configured",
+      "cannot_connect": "Unable to reach the local agent",
       "invalid_response": "The agent returned invalid discovery data",
-      "network_not_allowed": "Home Assistant is not allowed by the PC firewall or subnet restrictions",
-      "no_pairing_code": "PC discovered, but it does not have an active pairing code"
+      "network_not_allowed": "Home Assistant is not allowed by the device firewall or subnet restrictions",
+      "no_pairing_code": "Device discovered, but it does not have an active pairing code"
     }
   },
   "options": {
@@ -51,7 +51,7 @@
         "title": "PC Power Free options",
         "data": {
           "name": "Device name",
-          "host": "Current PC host or IP",
+          "host": "Current device host or IP",
           "agent_port": "Agent port",
           "discovery_subnets": "Discovery subnets (optional, e.g. 192.168.1.0/24)",
           "broadcast_address": "Wake-on-LAN broadcast address",
