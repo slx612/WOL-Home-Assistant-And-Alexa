@@ -4,17 +4,15 @@ from __future__ import annotations
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_MAC, CONF_NAME
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
 from . import PCPowerRuntimeData
+from .device_info import build_device_info
 from .const import (
-    CONF_MACHINE_ID,
     DOMAIN,
     STATUS_BOOTED_AT,
     STATUS_ONLINE,
@@ -54,18 +52,7 @@ class PCPowerSensorEntity(CoordinatorEntity, SensorEntity):
         """Initialize the shared sensor state."""
         super().__init__(runtime_data.coordinator)
         self._attr_unique_id = f"{entry.entry_id}_{unique_suffix}"
-        device_name = entry.options.get(CONF_NAME, entry.data.get(CONF_NAME, entry.title))
-        device_identifier = entry.data.get(CONF_MACHINE_ID, entry.unique_id or entry.entry_id)
-        connections = set()
-        if mac_address := entry.data.get(CONF_MAC):
-            connections.add((CONNECTION_NETWORK_MAC, mac_address))
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, device_identifier)},
-            connections=connections,
-            name=device_name,
-            manufacturer="PC Power Free",
-            model="Windows PC",
-        )
+        self._attr_device_info = build_device_info(entry)
 
     @property
     def available(self) -> bool:
