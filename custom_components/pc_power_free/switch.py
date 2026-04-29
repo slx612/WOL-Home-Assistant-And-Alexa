@@ -6,18 +6,17 @@ from typing import Any
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_MAC, CONF_NAME
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import PCPowerRuntimeData
+from .device_info import build_device_info
 from .const import (
-    CONF_MACHINE_ID,
     DOMAIN,
     STATUS_AGENT_VERSION,
     STATUS_BOOTED_AT,
+    STATUS_CAPABILITIES,
     STATUS_COMMAND_GUARD_ACTIVE,
     STATUS_COMMAND_GUARD_MODE,
     STATUS_COMMAND_GUARD_UNTIL_TS,
@@ -27,6 +26,7 @@ from .const import (
     STATUS_LAST_COMMAND_AT,
     STATUS_MAC_ADDRESSES,
     STATUS_ONLINE,
+    STATUS_PLATFORM,
     STATUS_REACHABLE,
     STATUS_UPTIME_SECONDS,
 )
@@ -55,18 +55,7 @@ class PCPowerSwitch(CoordinatorEntity, SwitchEntity):
         self._entry = entry
         self._client = runtime_data.client
         self._attr_unique_id = f"{entry.entry_id}_power"
-        device_name = entry.options.get(CONF_NAME, entry.data.get(CONF_NAME, entry.title))
-        device_identifier = entry.data.get(CONF_MACHINE_ID, entry.unique_id or entry.entry_id)
-        connections = set()
-        if mac_address := entry.data.get(CONF_MAC):
-            connections.add((CONNECTION_NETWORK_MAC, mac_address))
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, device_identifier)},
-            connections=connections,
-            name=device_name,
-            manufacturer="PC Power Free",
-            model="Windows PC",
-        )
+        self._attr_device_info = build_device_info(entry)
 
     @property
     def is_on(self) -> bool:
@@ -83,6 +72,7 @@ class PCPowerSwitch(CoordinatorEntity, SwitchEntity):
             STATUS_HOSTNAME: data.get(STATUS_HOSTNAME),
             STATUS_AGENT_VERSION: data.get(STATUS_AGENT_VERSION),
             STATUS_BOOTED_AT: data.get(STATUS_BOOTED_AT),
+            STATUS_CAPABILITIES: ", ".join(data.get(STATUS_CAPABILITIES, [])),
             STATUS_COMMAND_GUARD_ACTIVE: data.get(STATUS_COMMAND_GUARD_ACTIVE, False),
             STATUS_COMMAND_GUARD_MODE: data.get(STATUS_COMMAND_GUARD_MODE),
             STATUS_COMMAND_GUARD_UNTIL_TS: data.get(STATUS_COMMAND_GUARD_UNTIL_TS),
@@ -90,6 +80,7 @@ class PCPowerSwitch(CoordinatorEntity, SwitchEntity):
             STATUS_LAST_COMMAND: data.get(STATUS_LAST_COMMAND),
             STATUS_LAST_COMMAND_AT: data.get(STATUS_LAST_COMMAND_AT),
             STATUS_MAC_ADDRESSES: ", ".join(data.get(STATUS_MAC_ADDRESSES, [])),
+            STATUS_PLATFORM: data.get(STATUS_PLATFORM),
             STATUS_UPTIME_SECONDS: data.get(STATUS_UPTIME_SECONDS),
         }
 
