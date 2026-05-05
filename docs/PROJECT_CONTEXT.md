@@ -94,7 +94,7 @@ Changes already made:
 
 Current public prerelease:
 
-- `v0.2.0-beta.4`
+- `v0.2.0-beta.6`
 
 Validation runs used for HACS submission:
 
@@ -107,7 +107,7 @@ Original release used when the HACS submission was first opened:
 
 Current latest published prerelease:
 
-- `https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.4`
+- `https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.6`
 
 ## HACS Default Repository Submission
 
@@ -896,3 +896,31 @@ Recommendation:
 
 - `v0.2.0-beta.6` is reasonable as a new prerelease focused on DSM packaging, re-pairing stability, and security hardening
 - DSM should still be labeled experimental in release notes until shutdown, restart, and wake are validated on real hardware
+
+## Beta 0.2.0-beta.6 Published 2026-05-06
+
+The `v0.2.0-beta.6` prerelease has now been published on GitHub with the current release assets attached.
+
+Published state:
+
+- repository `main` updated through commit `74ddcc5` - `Prepare v0.2.0-beta.6 release`
+- tag published: `v0.2.0-beta.6`
+- prerelease published:
+  `https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.6`
+
+Assets attached to the published prerelease:
+
+- `pcpowerfree-windows-x64-setup.exe`
+- `PCPowerAgent.exe`
+- `PCPowerTray.exe`
+- `PCPowerSetup.exe`
+- `pcpowerfree-home-assistant-integration.zip`
+- `pcpowerfree-linux-agent.tar.gz`
+- `pcpowerfree-dsm-noarch-0.2.0-0006.spk`
+
+Public-facing docs were updated to reflect that `beta.6` is the active published prerelease line while real-world validation is still pending for:
+
+- `Alexa + Home Assistant`
+- DSM shutdown
+- DSM restart
+- DSM wake

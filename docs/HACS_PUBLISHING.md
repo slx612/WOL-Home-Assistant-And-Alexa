@@ -1,12 +1,13 @@
 # HACS publishing checklist
 
-Use this checklist to keep the repository aligned with the current HACS situation and with the next prerelease.
+Use this checklist to keep the repository aligned with the current HACS situation and with the active prerelease.
 
 ## Current status
 
-- Latest GitHub prerelease already published: `v0.2.0-beta.5`
+- Latest GitHub prerelease already published: `v0.2.0-beta.6`
+- Release assets already attached for `v0.2.0-beta.6`
 - HACS default submission already open: `hacs/default#7156`
-- Repository code and release assets are now being prepared for `v0.2.0-beta.6`
+- Repository code and release assets are now aligned with `v0.2.0-beta.6`
 
 ## 1. Repository metadata on GitHub
 
@@ -35,14 +36,14 @@ Before publishing a new prerelease:
 
 ## 3. Release
 
-For the next prerelease:
+For each new prerelease:
 
 1. Create a full GitHub prerelease
 2. Do not publish only a tag
 3. Attach release notes
 4. Attach the current release assets
 
-Current planned assets for `v0.2.0-beta.6`:
+Current published assets for `v0.2.0-beta.6`:
 
 - `pcpowerfree-windows-x64-setup.exe`
 - `PCPowerAgent.exe`

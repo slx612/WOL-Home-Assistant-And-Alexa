@@ -9,13 +9,13 @@ Language:
 
 Local, subscription-free power control for Windows PCs and Linux hosts through Home Assistant and Alexa.
 
-Current status: `0.2.0-beta.5 published on GitHub, Windows and Linux Home Assistant paths validated on real setups, DSM package install/discovery/pairing validated on DSM 7.2, Alexa path and DSM power-action validation still pending`.
+Current status: `0.2.0-beta.6 published on GitHub on May 6, 2026, Windows and Linux Home Assistant paths validated on real setups, DSM package install/discovery/pairing validated on DSM 7.2, Alexa path and DSM power-action validation still pending`.
 
 Publication status:
 
 - Repository code currently targets `v0.2.0-beta.6`
-- Latest GitHub prerelease published: `v0.2.0-beta.5` on April 25, 2026
-- Next prerelease prepared locally: `v0.2.0-beta.6`
+- Latest GitHub prerelease published: `v0.2.0-beta.6` on May 6, 2026
+- Current prerelease assets already published: Windows installer, standalone Windows binaries, Home Assistant zip, Linux source bundle, DSM `.spk`
 - HACS default submission is already open in `hacs/default#7156`
 - Supported distribution paths: manual install, HACS custom repository, GitHub prerelease downloads, Windows installer, experimental Linux source install
 - Remaining real-world validation still pending: `Alexa + Home Assistant`, DSM shutdown, DSM restart, DSM wake
@@ -187,7 +187,7 @@ If the integration tile still shows the generic placeholder icon, your Home Assi
 
 For the `default HACS list`, the submission is already in progress:
 
-1. The latest GitHub prerelease already published is `v0.2.0-beta.5`
+1. The latest GitHub prerelease already published is `v0.2.0-beta.6`
 2. The submission PR is already open in `hacs/default#7156`
 3. The remaining step is maintainer review and merge on the HACS side
 
@@ -297,8 +297,8 @@ LICENSE
 Current `default HACS repository` status:
 
 - submission PR already open: `hacs/default#7156`
-- latest prerelease already published: `v0.2.0-beta.5`
-- next local prerelease target: `v0.2.0-beta.6`
+- latest prerelease already published: `v0.2.0-beta.6`
+- current release assets already attached on GitHub
 - waiting for HACS maintainer review
 
 Still pending before calling it truly final:

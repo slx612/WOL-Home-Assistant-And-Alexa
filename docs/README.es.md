@@ -9,13 +9,13 @@ Idioma:
 
 Solucion local y sin suscripcion para controlar el encendido, apagado y reinicio de equipos Windows y Linux desde Home Assistant y Alexa.
 
-Estado actual: `0.2.0-beta.5 ya publicado en GitHub, rutas Windows y Linux con Home Assistant validadas en instalaciones reales, paquete DSM validado en DSM 7.2 para instalacion/descubrimiento/vinculacion, ruta Alexa y validacion de acciones de energia DSM aun pendientes`.
+Estado actual: `0.2.0-beta.6 ya publicado en GitHub el 6 de mayo de 2026, rutas Windows y Linux con Home Assistant validadas en instalaciones reales, paquete DSM validado en DSM 7.2 para instalacion/descubrimiento/vinculacion, ruta Alexa y validacion de acciones de energia DSM aun pendientes`.
 
 Estado de publicacion:
 
 - El codigo del repositorio apunta ahora a `v0.2.0-beta.6`
-- La ultima prerelease publicada en GitHub es `v0.2.0-beta.5`, del 25 de abril de 2026
-- La siguiente prerelease preparada localmente es `v0.2.0-beta.6`
+- La ultima prerelease publicada en GitHub es `v0.2.0-beta.6`, del 6 de mayo de 2026
+- Los assets actuales de la prerelease ya estan publicados: instalador de Windows, binarios Windows, zip de Home Assistant, bundle Linux y paquete DSM `.spk`
 - La solicitud para el repositorio `default` de HACS ya esta abierta en `hacs/default#7156`
 - Las rutas previstas de distribucion son: instalacion manual, custom repository de HACS, descargas prerelease de GitHub, instalador de Windows e instalacion experimental en Linux desde codigo fuente
 - Las validaciones reales que siguen pendientes son `Alexa + Home Assistant`, apagado DSM, reinicio DSM y wake DSM
@@ -187,7 +187,7 @@ Si la tarjeta de la integracion sigue mostrando el icono generico, lo normal es 
 
 Para el listado `default` de HACS, la publicacion ya esta en marcha:
 
-1. La ultima prerelease ya publicada en GitHub es `v0.2.0-beta.5`
+1. La ultima prerelease ya publicada en GitHub es `v0.2.0-beta.6`
 2. La PR de envio ya esta abierta en `hacs/default#7156`
 3. Lo unico pendiente ahi es la revision y el merge por parte del equipo de HACS
 
@@ -297,8 +297,8 @@ LICENSE
 Estado actual para el repositorio `default` de HACS:
 
 - PR de envio ya abierta: `hacs/default#7156`
-- ultima prerelease ya publicada: `v0.2.0-beta.5`
-- siguiente prerelease local preparada: `v0.2.0-beta.6`
+- ultima prerelease ya publicada: `v0.2.0-beta.6`
+- assets de la release actual ya adjuntos en GitHub
 - pendiente de revision por los maintainers de HACS
 
 Pendiente antes de considerarlo realmente final:
