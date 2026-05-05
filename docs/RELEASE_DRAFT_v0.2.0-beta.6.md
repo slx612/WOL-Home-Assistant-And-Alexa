@@ -1,45 +1,20 @@
-# PC Power Free v0.2.0-beta.6
+Sixth public beta release of PC Power Free.
 
-Sixth public beta release.
-
-## Highlights
-
-- DSM package scaffold now validated on real DSM 7.2 hardware for install, service start, discovery, and pairing
-- Home Assistant can now repair an existing entry during re-pairing and refresh platform metadata correctly
-- Home Assistant rediscovery no longer probes the local subnet with the stored API token
+Highlights in this beta:
+- DSM package validated on real DSM 7.2 hardware for install, service start, discovery, and pairing
+- Home Assistant repair flow now refreshes existing entries correctly after re-pairing
+- Rediscovery no longer probes the subnet with the stored API token
 - Pairing now blocks the temporary code after repeated failed attempts
 
-## Included
-
-- Home Assistant custom integration
-- Shared cross-platform runtime core
-- Windows installer and standalone Windows binaries
+Included assets:
+- Windows installer
+- Standalone Windows agent
+- Standalone Windows tray app
+- Standalone Windows setup tool
+- Packaged Home Assistant integration zip
 - Experimental Linux source bundle
-- Experimental DSM `.spk` package
-- Automatic LAN discovery with `zeroconf`
-- Pairing with a temporary code
-- Wake-on-LAN power on
-- Local shutdown and restart
+- Experimental DSM package
 
-## Assets to attach
-
-- `pcpowerfree-windows-x64-setup.exe`
-- `PCPowerAgent.exe`
-- `PCPowerTray.exe`
-- `PCPowerSetup.exe`
-- `pcpowerfree-home-assistant-integration.zip`
-- `pcpowerfree-linux-agent.tar.gz`
-- `pcpowerfree-dsm-noarch-0.2.0-0006.spk`
-
-## Known status
-
-- Windows path validated on a real Home Assistant installation
-- Linux path validated on a real Ubuntu machine for discovery, pairing, and power off
-- DSM package validated on a real DSM 7.2 NAS for install, service start, discovery, and pairing
-- Alexa through Home Assistant is still pending real-world validation
-- DSM shutdown, restart, and wake are still pending real-world validation
-
-## Notes
-
-Use this release as a prerelease or beta.
-The Linux runtime and the DSM package should still be presented as experimental distribution paths.
+Known pending validation:
+- Alexa through Home Assistant
+- DSM shutdown, restart, and wake
