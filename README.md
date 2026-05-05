@@ -9,20 +9,24 @@ Language:
 
 Local, subscription-free power control for Windows PCs and Linux hosts through Home Assistant and Alexa.
 
-Current status: `0.2.0-beta.5 published on GitHub, Windows and Linux Home Assistant paths validated on real setups, Alexa path still pending real-world validation`.
+Current status: `0.2.0-beta.5 published on GitHub, Windows and Linux Home Assistant paths validated on real setups, DSM package install/discovery/pairing validated on DSM 7.2, Alexa path and DSM power-action validation still pending`.
 
 Publication status:
 
-- Repository code currently targets `v0.2.0-beta.5`
+- Repository code currently targets `v0.2.0-beta.6`
 - Latest GitHub prerelease published: `v0.2.0-beta.5` on April 25, 2026
+- Next prerelease prepared locally: `v0.2.0-beta.6`
 - HACS default submission is already open in `hacs/default#7156`
 - Supported distribution paths: manual install, HACS custom repository, GitHub prerelease downloads, Windows installer, experimental Linux source install
-- The only remaining real-world validation still pending is `Alexa + Home Assistant`
+- Remaining real-world validation still pending: `Alexa + Home Assistant`, DSM shutdown, DSM restart, DSM wake
 
 Recent additions:
 
 - Experimental Linux agent runtime with the same discovery and pairing protocol as Windows
 - Home Assistant flow now validated against both Windows and Linux hosts
+- DSM package scaffold now validated on a real DSM 7.2 NAS for install, service start, discovery, and pairing
+- Home Assistant rediscovery no longer probes the subnet with the stored API token
+- Pairing now invalidates the temporary code after repeated failed attempts
 - Default local agent port moved to `58477`
 - Windows tray protection and update checks remain part of the current desktop build
 
@@ -266,19 +270,19 @@ LICENSE
 ### Windows executables
 
 ```powershell
-.\\windows_agent\\build-exe.ps1 -Clean
+.\windows_agent\build-exe.ps1 -Clean
 ```
 
 ### Windows installer
 
 ```powershell
-.\\windows_agent\\build-installer.ps1
+.\windows_agent\build-installer.ps1
 ```
 
 ### Release assets
 
 ```powershell
-.\\build-release-assets.ps1
+.\build-release-assets.ps1
 ```
 
 ## Security
@@ -294,9 +298,10 @@ Current `default HACS repository` status:
 
 - submission PR already open: `hacs/default#7156`
 - latest prerelease already published: `v0.2.0-beta.5`
+- next local prerelease target: `v0.2.0-beta.6`
 - waiting for HACS maintainer review
 
 Still pending before calling it truly final:
 
 - real Alexa test through `emulated_hue`
-- DSM package and privilege model
+- DSM power-action privilege model

@@ -9,7 +9,7 @@
   "integration_type": "hub",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/slx612/WOL-Home-Assistant-And-Alexa/issues",
-  "version": "0.2.0-beta.5",
+  "version": "0.2.0-beta.6",
   "zeroconf": [
     "_pcpowerfree._tcp.local."
   ]

@@ -1,0 +1,20 @@
+#!/bin/sh
+
+PKG_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+VAR_DIR="${SYNOPKG_PKGVAR:-${PKG_ROOT}/var}"
+INIT_SCRIPT="${PKG_ROOT}/target/app/dsm_runtime/init.sh"
+
+mkdir -p "${VAR_DIR}"
+
+if [ -x "${INIT_SCRIPT}" ]; then
+    if "${INIT_SCRIPT}" --ensure-config >> "${SYNOPKG_TEMP_LOGFILE}" 2>&1; then
+        echo "" >> "${SYNOPKG_TEMP_LOGFILE}"
+        echo "PC Power Free DSM setup summary stored at: ${VAR_DIR}/setup-output.txt" >> "${SYNOPKG_TEMP_LOGFILE}"
+    else
+        echo "" >> "${SYNOPKG_TEMP_LOGFILE}"
+        echo "PC Power Free DSM was installed, but initial runtime setup could not be completed." >> "${SYNOPKG_TEMP_LOGFILE}"
+        echo "Check ${VAR_DIR}/setup-output.txt and ${VAR_DIR}/pc_power_agent.log after resolving python3 and module availability." >> "${SYNOPKG_TEMP_LOGFILE}"
+    fi
+fi
+
+exit 0

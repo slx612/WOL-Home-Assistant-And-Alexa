@@ -50,18 +50,20 @@ try {
         "agent_core.common"
     )
 
-    Invoke-PythonCommand -StepName "La compilacion de PCPowerAgent" -Arguments @(
+    $agentBuildArgs = (
         "-m",
-        "PyInstaller",
-        @sharedPyInstallerArgs,
+        "PyInstaller"
+    ) + $sharedPyInstallerArgs + @(
         "--name",
         "PCPowerAgent",
         "pc_power_agent.py"
     )
-    Invoke-PythonCommand -StepName "La compilacion de PCPowerTray" -Arguments @(
+    Invoke-PythonCommand -StepName "La compilacion de PCPowerAgent" -Arguments $agentBuildArgs
+
+    $trayBuildArgs = (
         "-m",
-        "PyInstaller",
-        @sharedPyInstallerArgs,
+        "PyInstaller"
+    ) + $sharedPyInstallerArgs + @(
         "--windowed",
         "--name",
         "PCPowerTray",
@@ -69,16 +71,19 @@ try {
         "pystray._win32",
         "pc_power_tray.py"
     )
-    Invoke-PythonCommand -StepName "La compilacion de PCPowerSetup" -Arguments @(
+    Invoke-PythonCommand -StepName "La compilacion de PCPowerTray" -Arguments $trayBuildArgs
+
+    $setupBuildArgs = (
         "-m",
-        "PyInstaller",
-        @sharedPyInstallerArgs,
+        "PyInstaller"
+    ) + $sharedPyInstallerArgs + @(
         "--windowed",
         "--uac-admin",
         "--name",
         "PCPowerSetup",
         "setup_wizard_gui.py"
     )
+    Invoke-PythonCommand -StepName "La compilacion de PCPowerSetup" -Arguments $setupBuildArgs
 
     Copy-Item .\config.example.json (Join-Path $distDir "config.example.json") -Force
     Copy-Item .\install-task.ps1 (Join-Path $distDir "install-task.ps1") -Force

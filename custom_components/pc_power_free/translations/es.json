@@ -35,6 +35,7 @@
       "invalid_response": "El agente ha devuelto datos de descubrimiento no validos",
       "network_not_allowed": "Home Assistant no esta permitido por el firewall del dispositivo o por la restriccion de subred",
       "no_pairing_code": "El dispositivo no tiene un codigo de vinculacion activo. Abre la configuracion local y genera uno",
+      "pairing_code_blocked": "Demasiados intentos no validos. Genera un nuevo codigo de vinculacion en la configuracion local",
       "pairing_code_expired": "El codigo de vinculacion ha caducado. Genera uno nuevo en la configuracion local"
     },
     "abort": {
@@ -42,7 +43,8 @@
       "cannot_connect": "No se puede contactar con el agente local",
       "invalid_response": "El agente ha devuelto datos de descubrimiento no validos",
       "network_not_allowed": "Home Assistant no esta permitido por el firewall del dispositivo o por la restriccion de subred",
-      "no_pairing_code": "El dispositivo se ha detectado, pero no tiene un codigo de vinculacion activo"
+      "no_pairing_code": "El dispositivo se ha detectado, pero no tiene un codigo de vinculacion activo",
+      "repair_successful": "El dispositivo existente se actualizo correctamente"
     }
   },
   "options": {

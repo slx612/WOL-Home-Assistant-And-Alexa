@@ -272,6 +272,8 @@ async def async_exchange_pairing_code(
                     raise PCPowerPairingError("network_not_allowed")
                 if response.status == 410:
                     raise PCPowerPairingError("pairing_code_expired")
+                if response.status == 429:
+                    raise PCPowerPairingError("pairing_code_blocked")
                 if response.status == 412:
                     raise PCPowerPairingError("no_pairing_code")
                 response.raise_for_status()
@@ -491,7 +493,7 @@ class PCPowerClient:
         host: str,
         semaphore: asyncio.Semaphore,
     ) -> str | None:
-        """Probe a candidate host and return it if it matches the configured PC."""
+        """Probe a candidate host without exposing the API token."""
         if host == self._host:
             return None
 
@@ -499,8 +501,8 @@ class PCPowerClient:
             try:
                 async with asyncio.timeout(DISCOVERY_TIMEOUT_SECONDS):
                     async with self._session.get(
-                        f"http://{host}:{self._agent_port}/v1/status",
-                        headers=self._headers(),
+                        f"http://{host}:{self._agent_port}/v1/discovery",
+                        headers={"Accept": "application/json"},
                     ) as response:
                         if response.status != 200:
                             return None

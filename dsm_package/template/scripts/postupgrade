@@ -1,0 +1,22 @@
+#!/bin/sh
+
+PKG_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+STATE_DIR="${SYNOPKG_PKGVAR:-${PKG_ROOT}/var}"
+BACKUP_DIR="${SYNOPKG_TEMP_UPGRADE_FOLDER}/pcpowerfree-state"
+INIT_SCRIPT="${PKG_ROOT}/target/app/dsm_runtime/init.sh"
+
+mkdir -p "${STATE_DIR}"
+
+if [ -d "${BACKUP_DIR}" ]; then
+    for name in config.json guard_state.json setup-output.txt; do
+        if [ -f "${BACKUP_DIR}/${name}" ]; then
+            cp "${BACKUP_DIR}/${name}" "${STATE_DIR}/${name}"
+        fi
+    done
+fi
+
+if [ -x "${INIT_SCRIPT}" ]; then
+    "${INIT_SCRIPT}" --ensure-config >> "${SYNOPKG_TEMP_LOGFILE}" 2>&1 || true
+fi
+
+exit 0

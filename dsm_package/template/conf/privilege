@@ -1,0 +1,27 @@
+{
+  "defaults": {
+    "run-as": "package"
+  },
+  "username": "pcpowerfree",
+  "groupname": "pcpowerfree",
+  "tool": [
+    {
+      "relpath": "app/dsm_runtime/find-python.sh",
+      "user": "package",
+      "group": "package",
+      "permission": "0700"
+    },
+    {
+      "relpath": "app/dsm_runtime/init.sh",
+      "user": "package",
+      "group": "package",
+      "permission": "0700"
+    },
+    {
+      "relpath": "app/dsm_runtime/run-agent.sh",
+      "user": "package",
+      "group": "package",
+      "permission": "0700"
+    }
+  ]
+}

@@ -8,7 +8,7 @@ RequestExecutionLevel admin
 
 !define APP_NAME "PC Power Free"
 !define APP_PUBLISHER "PC Power Free"
-!define APP_VERSION "0.2.0-beta.5"
+!define APP_VERSION "0.2.0-beta.6"
 !define INSTALL_BASENAME "pcpowerfree-windows-x64-setup.exe"
 !define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
 

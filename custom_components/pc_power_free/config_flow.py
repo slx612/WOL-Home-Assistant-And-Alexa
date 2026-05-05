@@ -138,6 +138,7 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialize the config flow."""
         self._discovery_info: PCPowerDiscoveryInfo | None = None
+        self._repair_entry: ConfigEntry | None = None
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
         """Handle the initial step."""
@@ -152,7 +153,7 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             discovery = discovered_items.get(selected_machine_id)
             if discovery is not None:
-                result = await self._async_prepare_discovery(discovery)
+                result = await self._async_prepare_discovery(discovery, allow_repair=True)
                 if result is not None:
                     return result
                 self.context["title_placeholders"] = {"name": discovery.name}
@@ -188,7 +189,7 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 if not discovery.pairing_code_active:
                     errors["base"] = "no_pairing_code"
                 else:
-                    result = await self._async_prepare_discovery(discovery)
+                    result = await self._async_prepare_discovery(discovery, allow_repair=True)
                     if result is not None:
                         return result
                     self.context["title_placeholders"] = {"name": discovery.name}
@@ -219,9 +220,6 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = err.reason
             else:
                 discovery = pairing_result.discovery
-                result = await self._async_prepare_discovery(discovery)
-                if result is not None:
-                    return result
 
                 entry_data = {
                     CONF_NAME: user_input[CONF_NAME].strip() or discovery.name,
@@ -239,6 +237,21 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     entry_data[CONF_CAPABILITIES] = list(discovery.capabilities)
                 if discovery.platform:
                     entry_data[CONF_PLATFORM] = discovery.platform
+
+                if self._repair_entry is not None:
+                    repair_entry = self._repair_entry
+                    self.hass.config_entries.async_update_entry(
+                        repair_entry,
+                        data={**repair_entry.data, **entry_data},
+                        title=entry_data[CONF_NAME],
+                        unique_id=discovery.machine_id,
+                    )
+                    return self.async_abort(reason="repair_successful")
+
+                result = await self._async_prepare_discovery(discovery, allow_repair=True)
+                if result is not None:
+                    return result
+
                 await self.async_set_unique_id(discovery.machine_id)
                 self._abort_if_unique_id_configured(
                     updates=self._build_discovery_updates(discovery)
@@ -275,7 +288,7 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             await self._async_prepare_discovery(discovery)
             return self.async_abort(reason="no_pairing_code")
 
-        result = await self._async_prepare_discovery(discovery)
+        result = await self._async_prepare_discovery(discovery, allow_repair=True)
         if result is not None:
             return result
 
@@ -288,12 +301,21 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         domain_data = self.hass.data.setdefault(DOMAIN, {})
         return domain_data.setdefault(DISCOVERY_CACHE, {})
 
-    async def _async_prepare_discovery(self, discovery: PCPowerDiscoveryInfo):
+    async def _async_prepare_discovery(
+        self,
+        discovery: PCPowerDiscoveryInfo,
+        *,
+        allow_repair: bool = False,
+    ):
         """Store discovery data and abort if the device already exists."""
         self._discovered_items[discovery.machine_id] = discovery
         self._discovery_info = discovery
+        self._repair_entry = None
 
-        if existing_entry := self._find_existing_entry_by_mac(discovery.mac_addresses):
+        if existing_entry := self._find_existing_entry_for_discovery(discovery):
+            if allow_repair and discovery.pairing_code_active:
+                self._repair_entry = existing_entry
+                return None
             data = {**existing_entry.data, **self._build_discovery_updates(discovery)}
             self.hass.config_entries.async_update_entry(
                 existing_entry,
@@ -305,6 +327,20 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(discovery.machine_id)
         self._abort_if_unique_id_configured(updates=self._build_discovery_updates(discovery))
         return None
+
+    def _find_existing_entry_for_discovery(
+        self,
+        discovery: PCPowerDiscoveryInfo,
+    ) -> ConfigEntry | None:
+        """Find an existing entry by machine ID first, then by MAC."""
+        for entry in self._async_current_entries():
+            entry_machine_id = str(
+                entry.data.get(CONF_MACHINE_ID) or entry.unique_id or ""
+            ).strip().lower()
+            if entry_machine_id and entry_machine_id == discovery.machine_id:
+                return entry
+
+        return self._find_existing_entry_by_mac(discovery.mac_addresses)
 
     def _build_discovery_updates(self, discovery: PCPowerDiscoveryInfo) -> dict[str, Any]:
         """Build the config entry updates derived from discovery."""

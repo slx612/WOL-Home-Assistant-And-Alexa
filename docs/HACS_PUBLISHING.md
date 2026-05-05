@@ -4,9 +4,9 @@ Use this checklist to keep the repository aligned with the current HACS situatio
 
 ## Current status
 
-- Latest GitHub prerelease already published: `v0.2.0-beta.4`
+- Latest GitHub prerelease already published: `v0.2.0-beta.5`
 - HACS default submission already open: `hacs/default#7156`
-- Repository code and release assets are now being prepared for `v0.2.0-beta.5`
+- Repository code and release assets are now being prepared for `v0.2.0-beta.6`
 
 ## 1. Repository metadata on GitHub
 
@@ -42,7 +42,7 @@ For the next prerelease:
 3. Attach release notes
 4. Attach the current release assets
 
-Current planned assets for `v0.2.0-beta.5`:
+Current planned assets for `v0.2.0-beta.6`:
 
 - `pcpowerfree-windows-x64-setup.exe`
 - `PCPowerAgent.exe`
@@ -50,12 +50,13 @@ Current planned assets for `v0.2.0-beta.5`:
 - `PCPowerSetup.exe`
 - `pcpowerfree-home-assistant-integration.zip`
 - `pcpowerfree-linux-agent.tar.gz`
+- `pcpowerfree-dsm-noarch-0.2.0-0006.spk`
 
 Suggested release path from this point:
 
 - Keep using prereleases until `Alexa + Home Assistant` has been validated on a real setup
 - Keep Linux marked as experimental until it has packaging beyond the source bundle
-- Do not present DSM as published support yet
+- Keep DSM marked as experimental until shutdown, restart, and wake have been validated on real hardware
 
 ## 4. HACS default repository submission
 
@@ -79,10 +80,11 @@ Already validated on real setups:
 - Windows path with Home Assistant
 - Linux path with Home Assistant
 - Linux power-off from Home Assistant
+- DSM 7 package install, service start, discovery, and pairing
 
 Still pending:
 
 - Real Wake-on-LAN boot validation on Linux hardware if that path is going to be advertised broadly
 - Real restart validation on Linux hardware
 - Real Alexa test through Home Assistant
-- DSM packaging and DSM privilege model
+- DSM shutdown, restart, and wake validation

@@ -31,8 +31,8 @@ from network_info import AdapterInfo, detect_primary_adapter, normalize_mac
 
 APP_TITLE = "PC Power Free Setup"
 APP_DIR_NAME = "PC Power Free"
-APP_VERSION = "0.2.0-beta.4"
-DEFAULT_AGENT_PORT = 8777
+APP_VERSION = "0.2.0-beta.6"
+DEFAULT_AGENT_PORT = 58477
 DEFAULT_TASK_NAME = "PC Power Agent"
 DEFAULT_RULE_NAME = "PC Power Agent"
 TRAY_RUN_VALUE_NAME = "PC Power Free Tray"

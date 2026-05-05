@@ -1,13 +1,9 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-import os
-
-project_root = os.path.abspath(os.path.join(SPECPATH, os.pardir))
-
 
 a = Analysis(
     ['pc_power_agent.py'],
-    pathex=[project_root],
+    pathex=['C:\\Users\\sergi\\Desktop\\wake on lan'],
     binaries=[],
     datas=[],
     hiddenimports=['agent_core.common'],

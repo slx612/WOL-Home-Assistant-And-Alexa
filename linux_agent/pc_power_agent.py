@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import math
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -15,6 +16,9 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from agent_core.common import PowerActionError, run_agent
 from network_info import AdapterInfo, detect_primary_adapter, get_local_mac_addresses
+
+DEFAULT_PLATFORM_ID = "linux"
+SUPPORTED_PLATFORM_IDS = {"linux", "dsm"}
 
 
 def build_linux_command(action: str, *, delay_seconds: int, force: bool) -> list[str]:
@@ -52,19 +56,26 @@ def get_system_uptime_seconds() -> int | None:
 class LinuxPlatformAdapter:
     """Linux-specific hooks consumed by the shared agent runtime."""
 
-    platform_id = "linux"
     capabilities = ("shutdown", "restart", "guard", "pairing", "discovery")
 
+    def __init__(self, platform_id: str = DEFAULT_PLATFORM_ID) -> None:
+        """Store the effective platform ID exposed by this runtime."""
+        self.platform_id = platform_id
+
     def detect_primary_adapter(self) -> AdapterInfo:
+        """Return the adapter used for discovery and Wake-on-LAN."""
         return detect_primary_adapter()
 
     def get_mac_addresses(self) -> list[str]:
+        """Return MAC addresses for the local Linux host."""
         return get_local_mac_addresses()
 
     def get_system_uptime_seconds(self) -> int | None:
+        """Return the Linux uptime in seconds."""
         return get_system_uptime_seconds()
 
     def execute_power_action(self, action: str, *, delay_seconds: int, force: bool) -> None:
+        """Run the local Linux shutdown or restart command."""
         command = build_linux_command(action, delay_seconds=delay_seconds, force=force)
         try:
             subprocess.run(command, check=True, capture_output=True, text=True)
@@ -81,18 +92,23 @@ class LinuxPlatformAdapter:
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments."""
     parser = argparse.ArgumentParser(description="Run the PC Power Free Linux agent")
     parser.add_argument("--config", required=True, help="Path to config.json")
     return parser.parse_args()
 
 
 def main() -> int:
+    """Start the Linux agent runtime."""
     args = parse_args()
     config_path = Path(args.config).expanduser().resolve()
+    platform_id = os.environ.get("PC_POWER_PLATFORM_ID", DEFAULT_PLATFORM_ID).strip().lower()
+    if platform_id not in SUPPORTED_PLATFORM_IDS:
+        platform_id = DEFAULT_PLATFORM_ID
     return run_agent(
         config_path=config_path,
-        platform=LinuxPlatformAdapter(),
-        logger_name="pc_power_agent.linux",
+        platform=LinuxPlatformAdapter(platform_id=platform_id),
+        logger_name=f"pc_power_agent.{platform_id}",
     )
 
 

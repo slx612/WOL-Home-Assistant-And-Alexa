@@ -19,8 +19,10 @@ from agent_core.common import AdapterInfo
 import ifaddr
 
 
-@dataclass(slots=True)
+@dataclass
 class _AdapterCandidate:
+    """Candidate adapter plus metadata used for ranking."""
+
     adapter_info: AdapterInfo
     has_default_route: bool
     is_link_local: bool
@@ -29,6 +31,7 @@ class _AdapterCandidate:
 
 
 def normalize_mac(value: str) -> str:
+    """Normalize a MAC address into AA:BB:CC:DD:EE:FF."""
     cleaned = "".join(character for character in value if character.isalnum())
     if len(cleaned) != 12:
         raise ValueError("The detected MAC address is invalid")
@@ -36,6 +39,7 @@ def normalize_mac(value: str) -> str:
 
 
 def _detect_primary_ipv4_address() -> str | None:
+    """Return the IPv4 address Linux would currently use for outbound traffic."""
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as udp_socket:
             udp_socket.connect(("8.8.8.8", 80))
@@ -51,6 +55,7 @@ def _detect_primary_ipv4_address() -> str | None:
 
 
 def _load_default_route_interfaces() -> set[str]:
+    """Return the interfaces that currently own a default IPv4 route."""
     route_file = Path("/proc/net/route")
     if not route_file.exists():
         return set()
@@ -71,6 +76,7 @@ def _load_default_route_interfaces() -> set[str]:
 
 
 def _read_interface_mac(interface_name: str) -> str | None:
+    """Return the normalized MAC for an interface, if available."""
     address_path = Path("/sys/class/net") / interface_name / "address"
     try:
         raw = address_path.read_text(encoding="utf-8").strip()
@@ -85,6 +91,7 @@ def _read_interface_mac(interface_name: str) -> str | None:
 
 
 def _looks_virtual_interface(*values: str) -> bool:
+    """Best-effort detection for virtual-only adapters."""
     combined = " ".join(value.lower() for value in values if value)
     virtual_keywords = (
         "docker",
@@ -105,6 +112,7 @@ def _looks_virtual_interface(*values: str) -> bool:
 
 
 def detect_primary_adapter() -> AdapterInfo:
+    """Detect the active adapter to use for Wake-on-LAN and discovery."""
     hostname = socket.gethostname() or "PC Linux"
     primary_ip = _detect_primary_ipv4_address()
     default_route_interfaces = _load_default_route_interfaces()
@@ -169,6 +177,7 @@ def detect_primary_adapter() -> AdapterInfo:
 
 
 def get_local_mac_addresses() -> list[str]:
+    """Return the MAC addresses that identify this Linux machine."""
     mac_addresses: list[str] = []
     interfaces_dir = Path("/sys/class/net")
     if interfaces_dir.exists():
@@ -188,6 +197,7 @@ def get_local_mac_addresses() -> list[str]:
 
 
 def _format_mac_int(value: int) -> str | None:
+    """Format an integer MAC address."""
     if value <= 0 or value >= 1 << 48:
         return None
     raw = f"{value:012x}"

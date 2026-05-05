@@ -9,20 +9,24 @@ Idioma:
 
 Solucion local y sin suscripcion para controlar el encendido, apagado y reinicio de equipos Windows y Linux desde Home Assistant y Alexa.
 
-Estado actual: `0.2.0-beta.5 ya publicado en GitHub, rutas Windows y Linux con Home Assistant validadas en instalaciones reales, ruta Alexa aun pendiente de validacion real`.
+Estado actual: `0.2.0-beta.5 ya publicado en GitHub, rutas Windows y Linux con Home Assistant validadas en instalaciones reales, paquete DSM validado en DSM 7.2 para instalacion/descubrimiento/vinculacion, ruta Alexa y validacion de acciones de energia DSM aun pendientes`.
 
 Estado de publicacion:
 
-- El codigo del repositorio apunta ahora a `v0.2.0-beta.5`
+- El codigo del repositorio apunta ahora a `v0.2.0-beta.6`
 - La ultima prerelease publicada en GitHub es `v0.2.0-beta.5`, del 25 de abril de 2026
+- La siguiente prerelease preparada localmente es `v0.2.0-beta.6`
 - La solicitud para el repositorio `default` de HACS ya esta abierta en `hacs/default#7156`
 - Las rutas previstas de distribucion son: instalacion manual, custom repository de HACS, descargas prerelease de GitHub, instalador de Windows e instalacion experimental en Linux desde codigo fuente
-- La unica validacion real que sigue pendiente es `Alexa + Home Assistant`
+- Las validaciones reales que siguen pendientes son `Alexa + Home Assistant`, apagado DSM, reinicio DSM y wake DSM
 
 Novedades recientes:
 
 - Runtime experimental para Linux con el mismo protocolo de descubrimiento y vinculacion que Windows
 - Flujo de Home Assistant ya validado tanto contra Windows como contra Linux
+- Scaffold DSM ya validado en un NAS DSM 7.2 real para instalacion, arranque del servicio, descubrimiento y vinculacion
+- El rediscovery de Home Assistant ya no sondea la subred enviando el token guardado
+- El pairing ahora invalida el codigo temporal tras varios intentos fallidos
 - Puerto local por defecto movido a `58477`
 - La app de Windows mantiene la proteccion desde bandeja y la comprobacion de actualizaciones
 
@@ -266,19 +270,19 @@ LICENSE
 ### Ejecutables de Windows
 
 ```powershell
-.\\windows_agent\\build-exe.ps1 -Clean
+.\windows_agent\build-exe.ps1 -Clean
 ```
 
 ### Instalador de Windows
 
 ```powershell
-.\\windows_agent\\build-installer.ps1
+.\windows_agent\build-installer.ps1
 ```
 
 ### Assets de release
 
 ```powershell
-.\\build-release-assets.ps1
+.\build-release-assets.ps1
 ```
 
 ## Seguridad
@@ -294,9 +298,10 @@ Estado actual para el repositorio `default` de HACS:
 
 - PR de envio ya abierta: `hacs/default#7156`
 - ultima prerelease ya publicada: `v0.2.0-beta.5`
+- siguiente prerelease local preparada: `v0.2.0-beta.6`
 - pendiente de revision por los maintainers de HACS
 
 Pendiente antes de considerarlo realmente final:
 
 - prueba real con Alexa via `emulated_hue`
-- paquete DSM y modelo de privilegios
+- modelo de privilegios para acciones de energia DSM

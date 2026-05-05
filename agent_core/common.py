@@ -13,9 +13,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import secrets
 import socket
+import threading
 import time
 import uuid
-from typing import Any, Protocol
+from typing import Any, Protocol, Union
 
 try:
     from zeroconf import IPVersion, ServiceInfo, Zeroconf
@@ -24,7 +25,7 @@ except ImportError:  # pragma: no cover - optional during source-only use
     ServiceInfo = None
     Zeroconf = None
 
-AGENT_VERSION = "0.2.0-beta.5"
+AGENT_VERSION = "0.2.0-beta.6"
 DEFAULT_HOST = "0.0.0.0"
 DEFAULT_PORT = 58477
 DEFAULT_ALLOWED_SUBNETS = ("127.0.0.1/32",)
@@ -35,12 +36,13 @@ DEFAULT_GUARD_STATE_FILE = "guard_state.json"
 PAIRING_CODE_TTL_SECONDS = 600
 PAIRING_CODE_MIN_LENGTH = 6
 PAIRING_CODE_DIGITS = 6
+PAIRING_CODE_MAX_ATTEMPTS = 5
 ZEROCONF_SERVICE_TYPE = "_pcpowerfree._tcp.local."
 COMMAND_GUARD_ALLOW = "allow"
 COMMAND_GUARD_IGNORE_MANUAL = "ignore_manual"
 COMMAND_GUARD_IGNORE_UNTIL = "ignore_until"
 
-AllowedNetwork = ipaddress.IPv4Network | ipaddress.IPv6Network
+AllowedNetwork = Union[ipaddress.IPv4Network, ipaddress.IPv6Network]
 
 
 class AgentConfigError(ValueError):
@@ -55,7 +57,7 @@ class PowerActionError(RuntimeError):
         self.details = details
 
 
-@dataclass(slots=True)
+@dataclass
 class AdapterInfo:
     """Detected network adapter settings."""
 
@@ -87,7 +89,7 @@ class PlatformAdapter(Protocol):
         """Run the local shutdown or restart action."""
 
 
-@dataclass(slots=True)
+@dataclass
 class CommandGuardState:
     """Persistent state that can temporarily block power commands."""
 
@@ -164,6 +166,7 @@ class AgentConfig:
         machine_id: str,
         pairing_code_hash: str | None,
         pairing_code_expires_at: float | None,
+        pairing_code_failed_attempts: int,
     ) -> None:
         self.host = host
         self.port = port
@@ -175,6 +178,7 @@ class AgentConfig:
         self.machine_id = machine_id
         self.pairing_code_hash = pairing_code_hash
         self.pairing_code_expires_at = pairing_code_expires_at
+        self.pairing_code_failed_attempts = pairing_code_failed_attempts
 
     @classmethod
     def from_dict(
@@ -217,6 +221,14 @@ class AgentConfig:
         else:
             pairing_code_expires_at = float(pairing_code_expires_at_raw)
 
+        try:
+            pairing_code_failed_attempts = max(
+                0,
+                int(payload.get("pairing_code_failed_attempts", 0)),
+            )
+        except (TypeError, ValueError):
+            pairing_code_failed_attempts = 0
+
         return (
             cls(
                 host=str(payload.get("host", DEFAULT_HOST)),
@@ -232,6 +244,7 @@ class AgentConfig:
                 machine_id=machine_id,
                 pairing_code_hash=pairing_code_hash,
                 pairing_code_expires_at=pairing_code_expires_at,
+                pairing_code_failed_attempts=pairing_code_failed_attempts,
             ),
             changed,
         )
@@ -249,6 +262,7 @@ class AgentConfig:
             "machine_id": self.machine_id,
             "pairing_code_hash": self.pairing_code_hash,
             "pairing_code_expires_at": self.pairing_code_expires_at,
+            "pairing_code_failed_attempts": self.pairing_code_failed_attempts,
         }
 
 
@@ -272,6 +286,7 @@ class PCPowerHTTPServer(ThreadingHTTPServer):
         self.config_mtime_ns = _get_config_mtime_ns(config_path)
         self.logger = logger
         self.platform = platform
+        self.config_lock = threading.Lock()
         self.hostname = socket.gethostname()
         self.last_command: str | None = None
         self.last_command_at: float | None = None
@@ -280,6 +295,7 @@ class PCPowerHTTPServer(ThreadingHTTPServer):
         self.guard_state_mtime_ns = _get_config_mtime_ns(self.guard_state_path)
 
     def refresh_config_if_needed(self) -> None:
+        """Reload the config if it has changed on disk."""
         current_mtime = _get_config_mtime_ns(self.config_path)
         if current_mtime == self.config_mtime_ns:
             return
@@ -298,10 +314,12 @@ class PCPowerHTTPServer(ThreadingHTTPServer):
         self.logger.info("Reloaded config from disk")
 
     def persist_config(self) -> None:
+        """Persist the current config to disk."""
         save_config(self.config_path, self.config)
         self.config_mtime_ns = _get_config_mtime_ns(self.config_path)
 
     def refresh_guard_state_if_needed(self) -> None:
+        """Reload the command guard state if it changed on disk."""
         current_mtime = _get_config_mtime_ns(self.guard_state_path)
         if current_mtime == self.guard_state_mtime_ns:
             return
@@ -311,10 +329,12 @@ class PCPowerHTTPServer(ThreadingHTTPServer):
         self.logger.info("Reloaded command guard state from disk")
 
     def persist_guard_state(self) -> None:
+        """Persist the current command guard state."""
         save_guard_state(self.guard_state_path, self.guard_state)
         self.guard_state_mtime_ns = _get_config_mtime_ns(self.guard_state_path)
 
     def get_effective_guard_state(self) -> CommandGuardState:
+        """Return the effective command guard state, clearing expired windows."""
         effective_state = self.guard_state.effective()
         if effective_state.to_dict() != self.guard_state.to_dict():
             self.guard_state = effective_state
@@ -322,6 +342,7 @@ class PCPowerHTTPServer(ThreadingHTTPServer):
         return effective_state
 
     def build_guard_status_payload(self) -> dict[str, Any]:
+        """Return the current command guard state as JSON."""
         state = self.get_effective_guard_state()
         return {
             "active": state.mode != COMMAND_GUARD_ALLOW,
@@ -341,13 +362,14 @@ class ServiceAdvertiser:
         self._service_info: ServiceInfo | None = None
 
     def start(self) -> None:
+        """Register the mDNS service."""
         if Zeroconf is None or ServiceInfo is None or IPVersion is None:
             self._logger.warning("Zeroconf is not available; LAN discovery disabled")
             return
 
         try:
             adapter = self._server.platform.detect_primary_adapter()
-        except Exception as err:  # pragma: no cover
+        except Exception as err:  # pragma: no cover - depends on host networking
             self._logger.warning("Unable to detect primary adapter for discovery: %s", err)
             return
 
@@ -375,13 +397,14 @@ class ServiceAdvertiser:
         )
 
     def stop(self) -> None:
+        """Unregister the mDNS service."""
         if self._zeroconf is None:
             return
 
         if self._service_info is not None:
             try:
                 self._zeroconf.unregister_service(self._service_info)
-            except Exception:
+            except Exception:  # pragma: no cover - best effort on shutdown
                 self._logger.exception("Failed to unregister mDNS service")
         self._zeroconf.close()
         self._zeroconf = None
@@ -395,6 +418,7 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
     server_version = f"PCPowerAgent/{AGENT_VERSION}"
 
     def do_GET(self) -> None:
+        """Handle GET requests."""
         self.server.refresh_config_if_needed()
         self.server.refresh_guard_state_if_needed()
 
@@ -419,6 +443,7 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.NOT_FOUND, {"error": "Not found"})
 
     def do_POST(self) -> None:
+        """Handle POST requests."""
         self.server.refresh_config_if_needed()
         self.server.refresh_guard_state_if_needed()
 
@@ -448,9 +473,11 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.NOT_FOUND, {"error": "Not found"})
 
     def log_message(self, format: str, *args: Any) -> None:
+        """Route HTTP logs through the agent logger."""
         self.server.logger.info("%s - %s", self.client_address[0], format % args)
 
     def _authorize_network(self) -> bool:
+        """Authorize the client by source network only."""
         client_ip = ipaddress.ip_address(self.client_address[0])
         if not any(client_ip in subnet for subnet in self.server.config.allowed_subnets):
             self._send_json(HTTPStatus.FORBIDDEN, {"error": "Client IP is not allowed"})
@@ -458,11 +485,13 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
         return True
 
     def _authorize(self) -> bool:
+        """Authorize the request by source network and token."""
         if not self._authorize_network():
             return False
 
         header = self.headers.get("Authorization", "")
-        token = header.removeprefix("Bearer ").strip()
+        token = header[len("Bearer ") :] if header.startswith("Bearer ") else header
+        token = token.strip()
         if not secrets.compare_digest(token, self.server.config.token):
             self._send_json(HTTPStatus.UNAUTHORIZED, {"error": "Invalid token"})
             return False
@@ -470,6 +499,7 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
         return True
 
     def _authorize_local(self) -> bool:
+        """Authorize a loopback-only local control request."""
         if not self._authorize():
             return False
 
@@ -480,6 +510,7 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
         return True
 
     def _handle_power_action(self, action: str) -> None:
+        """Run a power action if the request is valid."""
         guard_state = self.server.get_effective_guard_state()
         if guard_state.is_blocking():
             self.server.logger.warning(
@@ -530,6 +561,7 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
         )
 
     def _handle_guard_update(self) -> None:
+        """Update the command guard mode from a local request."""
         try:
             payload = self._read_json()
         except ValueError:
@@ -580,6 +612,7 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, self.server.build_guard_status_payload())
 
     def _handle_pairing_exchange(self) -> None:
+        """Exchange a valid pairing code for the long-lived API token."""
         try:
             payload = self._read_json()
         except ValueError:
@@ -598,20 +631,47 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
             return
 
         if expires_at < time.time():
-            self.server.config.pairing_code_hash = None
-            self.server.config.pairing_code_expires_at = None
-            self.server.persist_config()
+            with self.server.config_lock:
+                self.server.config.pairing_code_hash = None
+                self.server.config.pairing_code_expires_at = None
+                self.server.config.pairing_code_failed_attempts = 0
+                self.server.persist_config()
             self._send_json(HTTPStatus.GONE, {"error": "Pairing code expired"})
             return
 
         if not secrets.compare_digest(expected_hash, hash_pairing_code(pairing_code)):
-            self._send_json(HTTPStatus.UNAUTHORIZED, {"error": "Invalid pairing code"})
+            with self.server.config_lock:
+                failed_attempts = self.server.config.pairing_code_failed_attempts + 1
+                self.server.config.pairing_code_failed_attempts = failed_attempts
+                if failed_attempts >= PAIRING_CODE_MAX_ATTEMPTS:
+                    self.server.config.pairing_code_hash = None
+                    self.server.config.pairing_code_expires_at = None
+                    self.server.config.pairing_code_failed_attempts = 0
+                    self.server.persist_config()
+                    self._send_json(
+                        HTTPStatus.TOO_MANY_REQUESTS,
+                        {"error": "Pairing code blocked after too many attempts"},
+                    )
+                    return
+
+                self.server.persist_config()
+                remaining_attempts = PAIRING_CODE_MAX_ATTEMPTS - failed_attempts
+
+            self._send_json(
+                HTTPStatus.UNAUTHORIZED,
+                {
+                    "error": "Invalid pairing code",
+                    "remaining_attempts": remaining_attempts,
+                },
+            )
             return
 
         discovery_payload = self._build_discovery_payload()
-        self.server.config.pairing_code_hash = None
-        self.server.config.pairing_code_expires_at = None
-        self.server.persist_config()
+        with self.server.config_lock:
+            self.server.config.pairing_code_hash = None
+            self.server.config.pairing_code_expires_at = None
+            self.server.config.pairing_code_failed_attempts = 0
+            self.server.persist_config()
         self.server.logger.info("Pairing completed for %s", self.client_address[0])
         self._send_json(
             HTTPStatus.OK,
@@ -623,6 +683,7 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
         )
 
     def _read_json(self) -> dict[str, Any]:
+        """Parse the JSON request body."""
         content_length = int(self.headers.get("Content-Length", "0"))
         if content_length == 0:
             return {}
@@ -637,6 +698,7 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
         return payload
 
     def _send_json(self, status_code: HTTPStatus, payload: dict[str, Any]) -> None:
+        """Send a JSON response."""
         encoded = json.dumps(payload).encode("utf-8")
         self.send_response(status_code)
         self.send_header("Content-Type", "application/json")
@@ -645,6 +707,7 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(encoded)
 
     def _build_status_payload(self) -> dict[str, Any]:
+        """Build the authenticated status payload."""
         guard_state = self.server.get_effective_guard_state()
         uptime_seconds = self.server.platform.get_system_uptime_seconds()
         booted_at = (time.time() - uptime_seconds) if uptime_seconds is not None else None
@@ -666,6 +729,7 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
         }
 
     def _build_discovery_payload(self) -> dict[str, Any]:
+        """Build the discovery payload returned before pairing."""
         try:
             adapter = self.server.platform.detect_primary_adapter()
         except Exception:
@@ -699,6 +763,7 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
         }
 
     def _pairing_code_is_active(self) -> bool:
+        """Return whether there is a valid pairing code configured."""
         return bool(
             self.server.config.pairing_code_hash
             and self.server.config.pairing_code_expires_at
@@ -707,24 +772,29 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
 
 
 def generate_token() -> str:
+    """Return a URL-safe random token."""
     return secrets.token_urlsafe(32)
 
 
 def generate_pairing_code() -> str:
+    """Return a short numeric pairing code."""
     return "".join(secrets.choice("0123456789") for _ in range(PAIRING_CODE_DIGITS))
 
 
 def hash_pairing_code(pairing_code: str) -> str:
+    """Hash a pairing code before storing or comparing it."""
     return hashlib.sha256(pairing_code.strip().encode("utf-8")).hexdigest()
 
 
 def _pick_primary_mac(adapter: AdapterInfo | None, mac_addresses: list[str]) -> str | None:
+    """Select the best MAC address to identify the device."""
     if adapter is not None:
         return adapter.mac_address
     return mac_addresses[0] if mac_addresses else None
 
 
 def _get_config_mtime_ns(config_path: Path) -> int:
+    """Return the modification timestamp of the config file."""
     try:
         return config_path.stat().st_mtime_ns
     except FileNotFoundError:
@@ -732,6 +802,7 @@ def _get_config_mtime_ns(config_path: Path) -> int:
 
 
 def load_config(config_path: Path) -> tuple[AgentConfig, bool]:
+    """Load the JSON configuration from disk."""
     raw = json.loads(config_path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise AgentConfigError("Config file must contain a JSON object")
@@ -739,11 +810,14 @@ def load_config(config_path: Path) -> tuple[AgentConfig, bool]:
 
 
 def save_config(config_path: Path, config: AgentConfig) -> None:
+    """Persist the JSON configuration to disk."""
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text(json.dumps(config.to_dict(), indent=2), encoding="utf-8")
+    _set_private_permissions(config_path)
 
 
 def load_guard_state(state_path: Path) -> CommandGuardState:
+    """Load the persisted command guard state from disk."""
     try:
         raw = json.loads(state_path.read_text(encoding="utf-8"))
     except FileNotFoundError:
@@ -755,11 +829,22 @@ def load_guard_state(state_path: Path) -> CommandGuardState:
 
 
 def save_guard_state(state_path: Path, guard_state: CommandGuardState) -> None:
+    """Persist the command guard state to disk."""
     state_path.parent.mkdir(parents=True, exist_ok=True)
     state_path.write_text(json.dumps(guard_state.to_dict(), indent=2), encoding="utf-8")
+    _set_private_permissions(state_path)
+
+
+def _set_private_permissions(file_path: Path) -> None:
+    """Best-effort hardening for local state files containing agent secrets."""
+    try:
+        file_path.chmod(0o600)
+    except OSError:
+        return
 
 
 def create_logger(log_file: Path, *, logger_name: str = "pc_power_agent") -> logging.Logger:
+    """Create the rotating logger for the agent."""
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.INFO)
     logger.handlers.clear()
@@ -784,6 +869,7 @@ def run_agent(
     platform: PlatformAdapter,
     logger_name: str = "pc_power_agent",
 ) -> int:
+    """Start the shared HTTP server for a specific platform runtime."""
     config, changed = load_config(config_path)
     if changed:
         save_config(config_path, config)

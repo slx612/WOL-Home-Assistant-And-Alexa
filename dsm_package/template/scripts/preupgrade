@@ -1,0 +1,15 @@
+#!/bin/sh
+
+PKG_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+STATE_DIR="${SYNOPKG_PKGVAR:-${PKG_ROOT}/var}"
+BACKUP_DIR="${SYNOPKG_TEMP_UPGRADE_FOLDER}/pcpowerfree-state"
+
+mkdir -p "${BACKUP_DIR}"
+
+for name in config.json guard_state.json setup-output.txt; do
+    if [ -f "${STATE_DIR}/${name}" ]; then
+        cp "${STATE_DIR}/${name}" "${BACKUP_DIR}/${name}"
+    fi
+done
+
+exit 0

@@ -1,6 +1,6 @@
 param(
     [string]$ConfigPath = "",
-    [int]$AgentPort = 8777,
+    [int]$AgentPort = 58477,
     [string]$TaskName = "PC Power Agent"
 )
 

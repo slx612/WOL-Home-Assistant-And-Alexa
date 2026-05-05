@@ -32,6 +32,7 @@ def build_allowed_subnets(home_assistant_ip: str, subnet_cidr: str) -> list[str]
 
 
 def load_existing_config(config_path: Path) -> dict[str, object]:
+    """Load the existing config if present."""
     if not config_path.exists():
         return {}
 
@@ -54,6 +55,7 @@ def write_config(
     pairing_code_hash: str,
     pairing_code_expires_at: float,
 ) -> None:
+    """Write the agent JSON config."""
     payload = {
         "host": "0.0.0.0",
         "port": port,
@@ -71,6 +73,7 @@ def write_config(
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments."""
     parser = argparse.ArgumentParser(description="Configure the PC Power Free Linux agent")
     parser.add_argument(
         "--config",
@@ -107,6 +110,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    """Generate a Linux agent config and show the pairing summary."""
     args = parse_args()
     config_path = Path(args.config).expanduser().resolve()
     existing_config = load_existing_config(config_path)

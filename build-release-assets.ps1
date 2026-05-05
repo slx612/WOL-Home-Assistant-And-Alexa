@@ -64,6 +64,10 @@ tar -czf $linuxBundlePath `
     agent_core `
     linux_agent
 
+if (Test-Path $stageDir) {
+    Remove-Item -LiteralPath $stageDir -Recurse -Force
+}
+
 Write-Host ""
 Write-Host "Release assets generated:" -ForegroundColor Green
 Write-Host $integrationZipPath -ForegroundColor Green

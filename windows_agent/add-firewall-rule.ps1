@@ -1,6 +1,6 @@
 param(
     [string]$RuleName = "PC Power Agent",
-    [int]$Port = 8777,
+    [int]$Port = 58477,
     [string[]]$RemoteAddresses
 )
 

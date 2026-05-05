@@ -35,6 +35,7 @@
       "invalid_response": "The agent returned invalid discovery data",
       "network_not_allowed": "Home Assistant is not allowed by the device firewall or subnet restrictions",
       "no_pairing_code": "The device has no active pairing code. Open the local configurator and generate one",
+      "pairing_code_blocked": "Too many invalid attempts. Generate a new pairing code in the local setup",
       "pairing_code_expired": "The pairing code has expired. Generate a new one in the local setup"
     },
     "abort": {
@@ -42,7 +43,8 @@
       "cannot_connect": "Unable to reach the local agent",
       "invalid_response": "The agent returned invalid discovery data",
       "network_not_allowed": "Home Assistant is not allowed by the device firewall or subnet restrictions",
-      "no_pairing_code": "Device discovered, but it does not have an active pairing code"
+      "no_pairing_code": "Device discovered, but it does not have an active pairing code",
+      "repair_successful": "The existing device was updated successfully"
     }
   },
   "options": {
