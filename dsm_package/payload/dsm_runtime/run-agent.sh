@@ -13,7 +13,7 @@ if [ ! -x "${INIT_SCRIPT}" ]; then
     exit 1
 fi
 
-"${INIT_SCRIPT}" --ensure-config >/dev/null
+"${INIT_SCRIPT}" --ensure-config >/dev/null || exit 1
 
 PYTHON_BIN="$("${PYTHON_FINDER}")" || exit 1
 PYTHONPATH="${VENDOR_PATH}:${APP_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"

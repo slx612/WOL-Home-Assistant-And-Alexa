@@ -4,10 +4,9 @@ Use this checklist to keep the repository aligned with the current HACS situatio
 
 ## Current status
 
-- Latest GitHub prerelease already published: `v0.2.0-beta.6`
-- Release assets already attached for `v0.2.0-beta.6`
-- HACS default submission already open: `hacs/default#7156`
-- Repository code and release assets are now aligned with `v0.2.0-beta.6`
+- Current prerelease: [v0.2.0-beta.7](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.7)
+- HACS default submission [#7156 was merged](https://github.com/hacs/default/pull/7156); current default-list membership verified on September 7, 2026.
+- Beta.7 preserves beta.6 pairing when both components are updated; follow the [upgrade guide](UPGRADE-beta.7.md).
 
 ## 1. Repository metadata on GitHub
 
@@ -43,7 +42,7 @@ For each new prerelease:
 3. Attach release notes
 4. Attach the current release assets
 
-Current published assets for `v0.2.0-beta.6`:
+Release assets for `v0.2.0-beta.7`:
 
 - `pcpowerfree-windows-x64-setup.exe`
 - `PCPowerAgent.exe`
@@ -51,7 +50,8 @@ Current published assets for `v0.2.0-beta.6`:
 - `PCPowerSetup.exe`
 - `pcpowerfree-home-assistant-integration.zip`
 - `pcpowerfree-linux-agent.tar.gz`
-- `pcpowerfree-dsm-noarch-0.2.0-0006.spk`
+- `pcpowerfree-dsm-noarch-0.2.0-0007.spk`
+- `SHA256SUMS.txt`
 
 Suggested release path from this point:
 
@@ -61,20 +61,11 @@ Suggested release path from this point:
 
 ## 4. HACS default repository submission
 
-The submission step itself is already done:
-
-1. The repository was already added in a PR to `hacs/default`
-2. The PR is already open as `#7156`
-3. The remaining step is HACS maintainer review and merge
-
-Important:
-
-- Default-list review can take a long time
-- The project can already be installed before that as a normal HACS custom repository
+The submission is accepted and merged. No new default-list submission is needed for beta.7. Keep metadata and validation workflows correct, publish a full prerelease with its assets, and retain the same integration domain and device identifiers.
 
 ## 5. Recommended validation status
 
-Already validated on real setups:
+Earlier-beta real-setup validation (not evidence of beta.7 hardware validation):
 
 - Home Assistant discovery
 - Pairing code flow
@@ -85,6 +76,7 @@ Already validated on real setups:
 
 Still pending:
 
+- Real beta.7 in-place Windows upgrade and HA device/automation preservation; local regression evidence is in [the validation report](VALIDATION-beta.7.md).
 - Real Wake-on-LAN boot validation on Linux hardware if that path is going to be advertised broadly
 - Real restart validation on Linux hardware
 - Real Alexa test through Home Assistant

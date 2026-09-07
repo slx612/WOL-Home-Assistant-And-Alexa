@@ -5,7 +5,7 @@ a = Analysis(
     ['setup_wizard_gui.py'],
     pathex=['C:\\Users\\sergi\\Desktop\\wake on lan'],
     binaries=[],
-    datas=[],
+    datas=[('install-task.ps1', '.')],
     hiddenimports=['agent_core.common'],
     hookspath=[],
     hooksconfig={},

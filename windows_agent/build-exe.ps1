@@ -31,11 +31,8 @@ Invoke-PythonCommand -StepName "La instalacion de dependencias de build" -Argume
     "-m",
     "pip",
     "install",
-    "--upgrade",
-    "pyinstaller",
-    "zeroconf",
-    "pillow",
-    "pystray"
+    "-r",
+    (Join-Path $agentDir "requirements-build.txt")
 )
 
 Push-Location $agentDir
@@ -79,6 +76,8 @@ try {
     ) + $sharedPyInstallerArgs + @(
         "--windowed",
         "--uac-admin",
+        "--add-data",
+        "install-task.ps1;.",
         "--name",
         "PCPowerSetup",
         "setup_wizard_gui.py"

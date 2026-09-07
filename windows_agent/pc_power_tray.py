@@ -10,6 +10,7 @@ import locale
 import os
 from pathlib import Path
 import re
+import ssl
 import subprocess
 import sys
 import threading
@@ -25,7 +26,7 @@ import pystray
 APP_NAME = "PC Power Free"
 APP_TITLE = "PC Power Free Tray"
 APP_DIR_NAME = "PC Power Free"
-APP_VERSION = "0.2.0-beta.6"
+APP_VERSION = "0.2.0-beta.7"
 DEFAULT_AGENT_PORT = 58477
 CONFIG_FILENAME = "config.json"
 COMMAND_GUARD_ALLOW = "allow"
@@ -245,6 +246,7 @@ def load_runtime_config(config_path: Path) -> dict[str, Any]:
     raw = json.loads(config_path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise RuntimeError("config.json does not contain a JSON object")
+    raw["_certificate_path"] = str(config_path.parent / "agent-cert.pem")
     return raw
 
 
@@ -270,16 +272,28 @@ def build_local_api_request(
         headers["Content-Type"] = "application/json"
 
     request = urllib_request.Request(
-        f"http://127.0.0.1:{agent_port}{path}",
+        f"https://127.0.0.1:{agent_port}{path}",
         data=body,
         method=method,
         headers=headers,
     )
-    with urllib_request.urlopen(request, timeout=timeout) as response:
+    context = ssl.create_default_context(cafile=config["_certificate_path"])
+    with urllib_request.urlopen(request, timeout=timeout, context=context) as response:
         raw = json.loads(response.read().decode("utf-8"))
     if not isinstance(raw, dict):
         raise RuntimeError("The agent returned an invalid JSON payload")
     return raw
+
+
+def launch_configurator(path: Path) -> None:
+    """Ask Windows to elevate, including when launched by a normal-login tray."""
+    launch = ctypes.windll.shell32.ShellExecuteW
+    launch.argtypes = [ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_wchar_p,
+                      ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_int]
+    launch.restype = ctypes.c_void_p
+    result = launch(None, "runas", str(path), None, str(path.parent), 1)
+    if not result or result <= 32:
+        raise OSError(f"Windows did not open the configurator (code {result})")
 
 
 def build_tray_image(*, mode: str | None, available: bool) -> Image.Image:
@@ -505,7 +519,7 @@ class TrayApp:
         setup_script = agent_dir / "setup_wizard_gui.py"
         try:
             if setup_exe.exists():
-                subprocess.Popen([str(setup_exe)])
+                launch_configurator(setup_exe)
                 return
             subprocess.Popen([sys.executable, str(setup_script)])
         except Exception as err:  # pragma: no cover - depends on local Windows runtime

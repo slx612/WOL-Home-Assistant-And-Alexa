@@ -4,7 +4,7 @@ This directory contains the experimental Linux runtime for `PC Power Free`.
 
 Current scope:
 
-- shared HTTP API with the Windows agent
+- shared HTTPS API with the Windows agent and persistent certificate pinning
 - same `zeroconf` service type and pairing flow
 - CLI setup that generates `config.json` and a temporary pairing code
 - example `systemd` unit for persistent installs
@@ -20,9 +20,10 @@ Quick install on Ubuntu or Debian:
 
 ```bash
 sudo mkdir -p /opt/pc-power-free /etc/pc-power-free
+sudo chmod 700 /etc/pc-power-free
 sudo tar -xzf pcpowerfree-linux-agent.tar.gz -C /opt/pc-power-free
 sudo python3 -m venv /opt/pc-power-free/.venv
-sudo /opt/pc-power-free/.venv/bin/python -m pip install --upgrade pip ifaddr zeroconf
+sudo /opt/pc-power-free/.venv/bin/python -m pip install ifaddr zeroconf cryptography
 sudo /opt/pc-power-free/.venv/bin/python /opt/pc-power-free/linux_agent/setup_cli.py --config /etc/pc-power-free/config.json
 sudo cp /opt/pc-power-free/linux_agent/pcpowerfree-agent.service /etc/systemd/system/pcpowerfree-agent.service
 sudo systemctl daemon-reload
@@ -39,7 +40,7 @@ What the setup step does:
 Useful follow-up commands:
 
 ```bash
-curl http://127.0.0.1:58477/v1/discovery
+sudo curl --cacert /etc/pc-power-free/agent-cert.pem https://127.0.0.1:58477/v1/discovery
 sudo journalctl -u pcpowerfree-agent.service -n 50 --no-pager
 sudo systemctl restart pcpowerfree-agent.service
 sudo /opt/pc-power-free/.venv/bin/python /opt/pc-power-free/linux_agent/setup_cli.py --config /etc/pc-power-free/config.json
@@ -48,6 +49,9 @@ sudo /opt/pc-power-free/.venv/bin/python /opt/pc-power-free/linux_agent/setup_cl
 Notes:
 
 - the default local port is `58477`
+- beta.7 upgrades existing pairing automatically once both components are updated; keep `config.json`, the data directory and any existing TLS files, then restart the service (no new code or HTTP fallback)
+- TLS certificate generation requires `cryptography` or native OpenSSL 1.1.1+ (used on DSM)
+- stop the agent before rerunning setup, then restart it to apply network/port changes
 - rerun `setup_cli.py` if you need a fresh pairing code
 - if you use `ufw`, allow at least `58477/tcp`
 - the shipped `systemd` unit expects the files to live under `/opt/pc-power-free`

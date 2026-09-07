@@ -4,15 +4,20 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import hmac
+import re
 import ipaddress
 import json
 import logging
+import os
 from logging.handlers import RotatingFileHandler
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import secrets
 import socket
+import ssl
+import tempfile
 import threading
 import time
 import uuid
@@ -25,7 +30,7 @@ except ImportError:  # pragma: no cover - optional during source-only use
     ServiceInfo = None
     Zeroconf = None
 
-AGENT_VERSION = "0.2.0-beta.6"
+AGENT_VERSION = "0.2.0-beta.7"
 DEFAULT_HOST = "0.0.0.0"
 DEFAULT_PORT = 58477
 DEFAULT_ALLOWED_SUBNETS = ("127.0.0.1/32",)
@@ -41,6 +46,9 @@ ZEROCONF_SERVICE_TYPE = "_pcpowerfree._tcp.local."
 COMMAND_GUARD_ALLOW = "allow"
 COMMAND_GUARD_IGNORE_MANUAL = "ignore_manual"
 COMMAND_GUARD_IGNORE_UNTIL = "ignore_until"
+MAX_REQUEST_BODY = 4096
+REQUEST_TIMEOUT_SECONDS = 5
+MAX_CONNECTIONS = 32
 
 AllowedNetwork = Union[ipaddress.IPv4Network, ipaddress.IPv6Network]
 
@@ -279,6 +287,8 @@ class PCPowerHTTPServer(ThreadingHTTPServer):
         config_path: Path,
         logger: logging.Logger,
         platform: PlatformAdapter,
+        *,
+        tls_context: ssl.SSLContext | None = None,
     ) -> None:
         super().__init__(server_address, request_handler_class)
         self.config = config
@@ -286,7 +296,13 @@ class PCPowerHTTPServer(ThreadingHTTPServer):
         self.config_mtime_ns = _get_config_mtime_ns(config_path)
         self.logger = logger
         self.platform = platform
-        self.config_lock = threading.Lock()
+        self.config_lock = threading.RLock()
+        self._connections = threading.BoundedSemaphore(MAX_CONNECTIONS)
+        self._tls_context = tls_context
+        self.certificate_fingerprint = None
+        if tls_context is not None:
+            certificate = (config_path.parent / "agent-cert.pem").read_text(encoding="ascii")
+            self.certificate_fingerprint = hashlib.sha256(ssl.PEM_cert_to_DER_cert(certificate)).digest()
         self.hostname = socket.gethostname()
         self.last_command: str | None = None
         self.last_command_at: float | None = None
@@ -296,6 +312,13 @@ class PCPowerHTTPServer(ThreadingHTTPServer):
 
     def refresh_config_if_needed(self) -> None:
         """Reload the config if it has changed on disk."""
+        with self.config_lock:
+            try:
+                self._refresh_config()
+            except (OSError, ValueError, TypeError):
+                self.logger.exception("Unable to reload config; retaining last valid settings")
+
+    def _refresh_config(self) -> None:
         current_mtime = _get_config_mtime_ns(self.config_path)
         if current_mtime == self.config_mtime_ns:
             return
@@ -315,31 +338,57 @@ class PCPowerHTTPServer(ThreadingHTTPServer):
 
     def persist_config(self) -> None:
         """Persist the current config to disk."""
-        save_config(self.config_path, self.config)
-        self.config_mtime_ns = _get_config_mtime_ns(self.config_path)
+        with self.config_lock:
+            save_config(self.config_path, self.config)
+            self.config_mtime_ns = _get_config_mtime_ns(self.config_path)
 
     def refresh_guard_state_if_needed(self) -> None:
         """Reload the command guard state if it changed on disk."""
-        current_mtime = _get_config_mtime_ns(self.guard_state_path)
-        if current_mtime == self.guard_state_mtime_ns:
-            return
-
-        self.guard_state = load_guard_state(self.guard_state_path)
-        self.guard_state_mtime_ns = current_mtime
-        self.logger.info("Reloaded command guard state from disk")
+        with self.config_lock:
+            current_mtime = _get_config_mtime_ns(self.guard_state_path)
+            if current_mtime == self.guard_state_mtime_ns:
+                return
+            self.guard_state = load_guard_state(self.guard_state_path, missing_blocks=True)
+            self.guard_state_mtime_ns = current_mtime
+            self.logger.info("Reloaded command guard state from disk")
 
     def persist_guard_state(self) -> None:
         """Persist the current command guard state."""
-        save_guard_state(self.guard_state_path, self.guard_state)
-        self.guard_state_mtime_ns = _get_config_mtime_ns(self.guard_state_path)
+        with self.config_lock:
+            save_guard_state(self.guard_state_path, self.guard_state)
+            self.guard_state_mtime_ns = _get_config_mtime_ns(self.guard_state_path)
 
     def get_effective_guard_state(self) -> CommandGuardState:
         """Return the effective command guard state, clearing expired windows."""
-        effective_state = self.guard_state.effective()
-        if effective_state.to_dict() != self.guard_state.to_dict():
-            self.guard_state = effective_state
-            self.persist_guard_state()
-        return effective_state
+        with self.config_lock:
+            effective_state = self.guard_state.effective()
+            if effective_state.to_dict() != self.guard_state.to_dict():
+                self.guard_state = effective_state
+                self.persist_guard_state()
+            return effective_state
+
+    def process_request(self, request, client_address) -> None:
+        """Bound worker count, including clients that stall before sending headers."""
+        request.settimeout(REQUEST_TIMEOUT_SECONDS)
+        if not self._connections.acquire(blocking=False):
+            self.shutdown_request(request)
+            return
+        try:
+            super().process_request(request, client_address)
+        except Exception:
+            self._connections.release()
+            raise
+
+    def process_request_thread(self, request, client_address) -> None:
+        try:
+            if self._tls_context is not None:
+                request = self._tls_context.wrap_socket(request, server_side=True, do_handshake_on_connect=False)
+                request.do_handshake()
+            super().process_request_thread(request, client_address)
+        except (OSError, ssl.SSLError):
+            self.shutdown_request(request)
+        finally:
+            self._connections.release()
 
     def build_guard_status_payload(self) -> dict[str, Any]:
         """Return the current command guard state as JSON."""
@@ -360,8 +409,25 @@ class ServiceAdvertiser:
         self._logger = logger
         self._zeroconf: Zeroconf | None = None
         self._service_info: ServiceInfo | None = None
+        self._address: str | None = None
+        self._stopped = threading.Event()
+        self._thread: threading.Thread | None = None
 
     def start(self) -> None:
+        """Retry advertisement when networking comes up or the DHCP address changes."""
+        self._thread = threading.Thread(target=self._run, name="pcpower-discovery", daemon=True)
+        self._thread.start()
+
+    def _run(self) -> None:
+        while not self._stopped.is_set():
+            try:
+                self._refresh()
+            except Exception:
+                self._logger.exception("Unable to advertise agent; retrying in 30 seconds")
+                self._close()
+            self._stopped.wait(30)
+
+    def _refresh(self) -> None:
         """Register the mDNS service."""
         if Zeroconf is None or ServiceInfo is None or IPVersion is None:
             self._logger.warning("Zeroconf is not available; LAN discovery disabled")
@@ -373,6 +439,9 @@ class ServiceAdvertiser:
             self._logger.warning("Unable to detect primary adapter for discovery: %s", err)
             return
 
+        if self._address == adapter.ipv4_address and self._zeroconf is not None:
+            return
+        self._close()
         service_name = f"{self._server.hostname}-{self._server.config.machine_id[:8]}.{ZEROCONF_SERVICE_TYPE}"
         self._service_info = ServiceInfo(
             ZEROCONF_SERVICE_TYPE,
@@ -390,6 +459,7 @@ class ServiceAdvertiser:
         )
         self._zeroconf = Zeroconf(ip_version=IPVersion.V4Only)
         self._zeroconf.register_service(self._service_info, allow_name_change=True)
+        self._address = adapter.ipv4_address
         self._logger.info(
             "Registered mDNS service %s on %s",
             ZEROCONF_SERVICE_TYPE,
@@ -398,6 +468,12 @@ class ServiceAdvertiser:
 
     def stop(self) -> None:
         """Unregister the mDNS service."""
+        self._stopped.set()
+        if self._thread is not None:
+            self._thread.join()
+        self._close()
+
+    def _close(self) -> None:
         if self._zeroconf is None:
             return
 
@@ -409,6 +485,7 @@ class ServiceAdvertiser:
         self._zeroconf.close()
         self._zeroconf = None
         self._service_info = None
+        self._address = None
 
 
 class PCPowerRequestHandler(BaseHTTPRequestHandler):
@@ -447,6 +524,12 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
         self.server.refresh_config_if_needed()
         self.server.refresh_guard_state_if_needed()
 
+        if self.path == "/v1/pairing/upgrade":
+            if not self._authorize_network():
+                return
+            self._handle_tls_upgrade()
+            return
+
         if self.path == "/v1/pairing/exchange":
             if not self._authorize_network():
                 return
@@ -471,6 +554,25 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
             return
 
         self._send_json(HTTPStatus.NOT_FOUND, {"error": "Not found"})
+
+    def _handle_tls_upgrade(self) -> None:
+        """Prove the new TLS identity using an existing pairing, without disclosing it."""
+        if not isinstance(self.connection, ssl.SSLSocket) or not self.server.certificate_fingerprint:
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "TLS required"})
+            return
+        try:
+            nonce = self._read_json().get("nonce")
+            if not isinstance(nonce, str) or not re.fullmatch(r"[0-9a-f]{64}", nonce):
+                raise ValueError("Expected a 32-byte hexadecimal nonce")
+        except ValueError as err:
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(err)})
+            return
+        # Always bind to OUR certificate, never to a fingerprint supplied by a peer.
+        transcript = (b"pc-power-free/tls-upgrade/v1\0" + bytes.fromhex(nonce)
+                      + self.server.certificate_fingerprint)
+        with self.server.config_lock:
+            proof = hmac.digest(self.server.config.token.encode("utf-8"), transcript, "sha256").hex()
+        self._send_json(HTTPStatus.OK, {"proof": proof})
 
     def log_message(self, format: str, *args: Any) -> None:
         """Route HTTP logs through the agent logger."""
@@ -511,6 +613,16 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_power_action(self, action: str) -> None:
         """Run a power action if the request is valid."""
+        try:
+            payload = self._read_json()
+        except (ValueError, TimeoutError):
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Invalid JSON body"})
+            return
+        with self.server.config_lock:
+            self.server.refresh_guard_state_if_needed()
+            self._execute_power_action(action, payload)
+
+    def _execute_power_action(self, action: str, payload: dict[str, Any]) -> None:
         guard_state = self.server.get_effective_guard_state()
         if guard_state.is_blocking():
             self.server.logger.warning(
@@ -530,18 +642,19 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            payload = self._read_json()
             delay_seconds = max(
                 0,
                 int(payload.get("delay_seconds", self.server.config.shutdown_delay_seconds)),
             )
-            force = bool(payload.get("force", self.server.config.shutdown_force))
+            force = payload.get("force", self.server.config.shutdown_force)
+            if not isinstance(force, bool):
+                raise ValueError("force must be a boolean")
             self.server.platform.execute_power_action(
                 action,
                 delay_seconds=delay_seconds,
                 force=force,
             )
-        except ValueError:
+        except (TypeError, ValueError):
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Invalid JSON body"})
             return
         except PowerActionError as err:
@@ -568,6 +681,11 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Invalid JSON body"})
             return
 
+        with self.server.config_lock:
+            self._update_guard(payload)
+
+    def _update_guard(self, payload: dict[str, Any]) -> None:
+        previous = self.server.guard_state
         mode = str(payload.get("mode", "")).strip().lower()
         now = time.time()
 
@@ -603,7 +721,13 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Unsupported guard mode"})
             return
 
-        self.server.persist_guard_state()
+        try:
+            self.server.persist_guard_state()
+        except OSError:
+            self.server.guard_state = previous
+            self.server.logger.exception("Unable to save command guard")
+            self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": "Unable to save command guard"})
+            return
         self.server.logger.info(
             "Updated command guard from %s to %s",
             self.client_address[0],
@@ -619,8 +743,12 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Invalid JSON body"})
             return
 
+        with self.server.config_lock:
+            self._exchange_pairing_code(payload)
+
+    def _exchange_pairing_code(self, payload: dict[str, Any]) -> None:
         pairing_code = str(payload.get("pairing_code", "")).strip()
-        if len(pairing_code) < PAIRING_CODE_MIN_LENGTH:
+        if len(pairing_code) != PAIRING_CODE_DIGITS or not pairing_code.isascii() or not pairing_code.isdigit():
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Invalid pairing code"})
             return
 
@@ -685,10 +813,15 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
     def _read_json(self) -> dict[str, Any]:
         """Parse the JSON request body."""
         content_length = int(self.headers.get("Content-Length", "0"))
+        if self.headers.get("Transfer-Encoding") or not 0 <= content_length <= MAX_REQUEST_BODY:
+            raise ValueError("Unsupported body length or transfer encoding")
         if content_length == 0:
             return {}
 
-        raw_body = self.rfile.read(content_length).decode("utf-8")
+        raw = self.rfile.read(content_length)
+        if len(raw) != content_length:
+            raise ValueError("Incomplete request body")
+        raw_body = raw.decode("utf-8")
         if not raw_body.strip():
             return {}
 
@@ -811,28 +944,46 @@ def load_config(config_path: Path) -> tuple[AgentConfig, bool]:
 
 def save_config(config_path: Path, config: AgentConfig) -> None:
     """Persist the JSON configuration to disk."""
-    config_path.parent.mkdir(parents=True, exist_ok=True)
-    config_path.write_text(json.dumps(config.to_dict(), indent=2), encoding="utf-8")
-    _set_private_permissions(config_path)
+    atomic_write_json(config_path, config.to_dict())
 
 
-def load_guard_state(state_path: Path) -> CommandGuardState:
+def load_guard_state(state_path: Path, *, missing_blocks: bool = False) -> CommandGuardState:
     """Load the persisted command guard state from disk."""
     try:
         raw = json.loads(state_path.read_text(encoding="utf-8"))
     except FileNotFoundError:
-        return CommandGuardState()
+        return CommandGuardState(mode=COMMAND_GUARD_IGNORE_MANUAL if missing_blocks else COMMAND_GUARD_ALLOW)
     except (OSError, ValueError):
-        return CommandGuardState()
+        return CommandGuardState(mode=COMMAND_GUARD_IGNORE_MANUAL)
 
-    return CommandGuardState.from_dict(raw if isinstance(raw, dict) else None)
+    if not isinstance(raw, dict) or raw.get("mode") not in {
+        COMMAND_GUARD_ALLOW, COMMAND_GUARD_IGNORE_MANUAL, COMMAND_GUARD_IGNORE_UNTIL
+    }:
+        return CommandGuardState(mode=COMMAND_GUARD_IGNORE_MANUAL)
+    state = CommandGuardState.from_dict(raw)
+    if state.mode == COMMAND_GUARD_IGNORE_UNTIL and state.until_ts is None:
+        return CommandGuardState(mode=COMMAND_GUARD_IGNORE_MANUAL)
+    return state
 
 
 def save_guard_state(state_path: Path, guard_state: CommandGuardState) -> None:
     """Persist the command guard state to disk."""
-    state_path.parent.mkdir(parents=True, exist_ok=True)
-    state_path.write_text(json.dumps(guard_state.to_dict(), indent=2), encoding="utf-8")
-    _set_private_permissions(state_path)
+    atomic_write_json(state_path, guard_state.to_dict())
+
+
+def atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
+    """Replace a complete private file; readers never observe partial JSON."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            json.dump(payload, stream, indent=2, allow_nan=False)
+            stream.flush()
+            os.fsync(stream.fileno())
+        _set_private_permissions(Path(temporary))
+        os.replace(temporary, path)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
 
 
 def _set_private_permissions(file_path: Path) -> None:
@@ -870,6 +1021,8 @@ def run_agent(
     logger_name: str = "pc_power_agent",
 ) -> int:
     """Start the shared HTTP server for a specific platform runtime."""
+    from agent_core.tls import create_server_context
+
     config, changed = load_config(config_path)
     if changed:
         save_config(config_path, config)
@@ -886,12 +1039,13 @@ def run_agent(
         config_path,
         logger,
         platform,
+        tls_context=create_server_context(config_path.parent),
     )
     advertiser = ServiceAdvertiser(server, logger)
-    advertiser.start()
 
     try:
-        logger.info("Listening on http://%s:%s", config.host, config.port)
+        advertiser.start()
+        logger.info("Listening on https://%s:%s", config.host, config.port)
         server.serve_forever()
     except KeyboardInterrupt:
         logger.info("Stopping agent")

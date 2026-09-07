@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import sys
+import ssl
 import time
 import uuid
 
@@ -20,8 +22,11 @@ from agent_core.common import (
     generate_pairing_code,
     generate_token,
     hash_pairing_code,
+    atomic_write_json,
+    AgentConfig,
 )
 from network_info import detect_primary_adapter
+from agent_core.tls import create_server_context
 
 
 def build_allowed_subnets(home_assistant_ip: str, subnet_cidr: str) -> list[str]:
@@ -68,8 +73,10 @@ def write_config(
         "pairing_code_hash": pairing_code_hash,
         "pairing_code_expires_at": pairing_code_expires_at,
     }
-    config_path.parent.mkdir(parents=True, exist_ok=True)
-    config_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    AgentConfig.from_dict(payload, config_dir=config_path.parent)
+    if not 1 <= port <= 65535:
+        raise ValueError("Port must be between 1 and 65535")
+    atomic_write_json(config_path, payload)
 
 
 def parse_args() -> argparse.Namespace:
@@ -137,6 +144,9 @@ def main() -> int:
         pairing_code_hash=hash_pairing_code(pairing_code),
         pairing_code_expires_at=time.time() + PAIRING_CODE_TTL_SECONDS,
     )
+    create_server_context(config_path.parent)
+    certificate = (config_path.parent / "agent-cert.pem").read_text(encoding="ascii")
+    fingerprint = hashlib.sha256(ssl.PEM_cert_to_DER_cert(certificate)).hexdigest()
 
     print("PC Power Free Linux setup completed.")
     print()
@@ -149,6 +159,7 @@ def main() -> int:
     print(f"Agent port: {args.port}")
     print(f"Machine ID: {machine_id}")
     print(f"Pairing code: {pairing_code}")
+    print(f"TLS SHA-256: {fingerprint}")
     print(f"Config written to: {config_path}")
     print()
     print("Next steps:")

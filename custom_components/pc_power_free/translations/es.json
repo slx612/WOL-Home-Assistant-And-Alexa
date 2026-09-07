@@ -20,7 +20,7 @@
       },
       "pair": {
         "title": "Vincular dispositivo",
-        "description": "Introduce el codigo temporal que muestra la configuracion local para {name} ({host}, {platform}).",
+        "description": "Introduce el codigo temporal de {name} ({host}, {platform}). Vincula solo en una red de confianza. Compara esta huella TLS con la del configurador local antes de introducir el codigo: {fingerprint}",
         "data": {
           "name": "Nombre del dispositivo",
           "pairing_code": "Codigo de vinculacion",

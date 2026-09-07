@@ -60,9 +60,16 @@ Compress-Archive -Path (Join-Path $stageDir "custom_components") -DestinationPat
 tar -czf $linuxBundlePath `
     --exclude='__pycache__' `
     --exclude='*.pyc' `
+    --exclude='config.json' `
+    --exclude='agent-key.pem' `
+    --exclude='agent-cert.pem' `
+    --exclude='guard_state.json' `
+    --exclude='*.log' `
+    --exclude='.venv' `
     -C $repoRoot `
     agent_core `
     linux_agent
+if ($LASTEXITCODE -ne 0) { throw "Failed to create Linux source archive" }
 
 if (Test-Path $stageDir) {
     Remove-Item -LiteralPath $stageDir -Recurse -Force

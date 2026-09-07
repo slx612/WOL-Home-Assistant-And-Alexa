@@ -77,6 +77,7 @@ class PCPowerSwitch(CoordinatorEntity, SwitchEntity):
             STATUS_COMMAND_GUARD_MODE: data.get(STATUS_COMMAND_GUARD_MODE),
             STATUS_COMMAND_GUARD_UNTIL_TS: data.get(STATUS_COMMAND_GUARD_UNTIL_TS),
             STATUS_REACHABLE: data.get(STATUS_REACHABLE, False),
+            "upgrade_pending": data.get("upgrade_pending", False),
             STATUS_LAST_COMMAND: data.get(STATUS_LAST_COMMAND),
             STATUS_LAST_COMMAND_AT: data.get(STATUS_LAST_COMMAND_AT),
             STATUS_MAC_ADDRESSES: ", ".join(data.get(STATUS_MAC_ADDRESSES, [])),

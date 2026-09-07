@@ -1,5 +1,10 @@
 __pycache__/
 *.pyc
+.review-*/
+.ruff_cache/
+**/agent-key.pem
+**/agent-cert.pem
+**/guard_state.json
 custom_components/**/__pycache__/
 windows_agent/config.json
 windows_agent/pc_power_agent.log

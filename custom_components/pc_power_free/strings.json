@@ -20,7 +20,7 @@
       },
       "pair": {
         "title": "Pair device",
-        "description": "Enter the temporary pairing code shown by the local setup for {name} ({host}, {platform}).",
+        "description": "Enter the temporary code for {name} ({host}, {platform}). Pair only on a trusted network. Compare this TLS fingerprint with the local setup before entering the code: {fingerprint}",
         "data": {
           "name": "Device name",
           "pairing_code": "Pairing code",

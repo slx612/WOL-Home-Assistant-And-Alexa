@@ -62,7 +62,9 @@ function Copy-FilteredTree {
 
         if (
             $relativePath -match '(^|\\)(__pycache__|build|dist|\.venv)(\\|$)' -or
-            $relativePath -match '\.pyc$'
+            $relativePath -match '\.pyc$' -or
+            $_.Name -in @('config.json', 'agent-key.pem', 'agent-cert.pem', 'guard_state.json', 'setup-output.txt') -or
+            $_.Name -like '*.log'
         ) {
             return
         }
@@ -168,7 +170,6 @@ $packageName = "pcpowerfree"
 $packageFileName = "pcpowerfree-dsm-noarch-$dsmPackageVersion.spk"
 
 Remove-Item -LiteralPath $buildRoot -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item -LiteralPath $distRoot -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $buildRoot, $distRoot | Out-Null
 
 $spkRoot = Join-Path $buildRoot "spk"
@@ -212,6 +213,7 @@ Copy-Item -LiteralPath $iconSource -Destination (Join-Path $spkRoot "PACKAGE_ICO
 
 $packageTgz = Join-Path $buildRoot "package.tgz"
 tar -czf $packageTgz -C $payloadStage .
+if ($LASTEXITCODE -ne 0) { throw "Failed to create DSM payload archive" }
 Copy-Item -LiteralPath $packageTgz -Destination (Join-Path $spkRoot "package.tgz") -Force
 
 $finalSpk = Join-Path $distRoot $packageFileName

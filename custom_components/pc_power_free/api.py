@@ -5,13 +5,18 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Iterable
 from dataclasses import dataclass
+import hashlib
+import hmac
 import ipaddress
+from itertools import islice
 import re
+import secrets
 import socket
+import ssl
 import time
 from typing import Any
 
-from aiohttp import ClientError, ClientSession
+from aiohttp import ClientError, ClientSession, Fingerprint, ServerFingerprintMismatch
 
 from .const import (
     DEFAULT_AGENT_PORT,
@@ -33,6 +38,8 @@ MAC_REGEX = re.compile(r"^[0-9a-fA-F]{12}$")
 DISCOVERY_TIMEOUT_SECONDS = 0.75
 DISCOVERY_COOLDOWN_SECONDS = 300
 DISCOVERY_CONCURRENCY = 32
+DISCOVERY_MAX_ADDRESSES = 4096
+DISCOVERY_DEADLINE_SECONDS = 12
 
 
 class PCPowerError(Exception):
@@ -82,6 +89,7 @@ class PCPowerDiscoveryInfo:
     platform: str | None
     capabilities: tuple[str, ...]
     pairing_code_active: bool
+    certificate_fingerprint: str = ""
 
     @property
     def discovery_subnets_text(self) -> str:
@@ -100,7 +108,7 @@ class PCPowerPairingResult:
 
 def normalize_mac(mac_address: str) -> str:
     """Normalize a MAC address to 12 hexadecimal characters."""
-    cleaned = re.sub(r"[^0-9a-fA-F]", "", mac_address)
+    cleaned = re.sub(r"[:.\-]", "", mac_address.strip())
     if not MAC_REGEX.fullmatch(cleaned):
         raise PCPowerError("Invalid MAC address")
     return cleaned.lower()
@@ -150,16 +158,20 @@ def _normalize_discovery_payload(
     fallback_port: int,
 ) -> PCPowerDiscoveryInfo:
     """Validate and normalize discovery data."""
+    if not isinstance(payload, dict):
+        raise PCPowerDiscoveryError("invalid_response")
     machine_id = str(payload.get("machine_id", "")).strip().lower()
     if not machine_id:
         raise PCPowerDiscoveryError("invalid_response")
 
-    host = str(payload.get("host") or fallback_host).strip()
+    host = fallback_host.strip()
     if not host:
         raise PCPowerDiscoveryError("invalid_response")
 
     try:
-        agent_port = int(payload.get("agent_port", fallback_port))
+        agent_port = int(fallback_port)
+        if not 1 <= agent_port <= 65535:
+            raise ValueError("Invalid port")
     except (TypeError, ValueError) as err:
         raise PCPowerDiscoveryError("invalid_response") from err
 
@@ -194,7 +206,7 @@ def _normalize_discovery_payload(
         discovery_subnets = tuple(
             str(network) for network in parse_discovery_subnets(raw_discovery_subnets)
         )
-    except PCPowerError as err:
+    except (PCPowerError, ValueError) as err:
         raise PCPowerDiscoveryError("invalid_response") from err
 
     broadcast_address = str(
@@ -218,19 +230,47 @@ def _normalize_discovery_payload(
     )
 
 
+def _pin(fingerprint: str | None) -> Fingerprint:
+    """Never send credentials until the stored TLS identity has been checked."""
+    try:
+        value = bytes.fromhex(fingerprint or "")
+        if len(value) != 32:
+            raise ValueError("Missing SHA-256 identity")
+        return Fingerprint(value)
+    except ValueError as err:
+        raise PCPowerAuthError("Pair again to establish a secure connection") from err
+
+
+async def _enrollment_fingerprint(host: str, port: int) -> str:
+    """Read an untrusted identity; enrollment or an existing secret must verify it."""
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
+    _, writer = await asyncio.open_connection(host, port, ssl=context)
+    try:
+        certificate = writer.get_extra_info("ssl_object").getpeercert(binary_form=True)
+        return hashlib.sha256(certificate).hexdigest()
+    finally:
+        writer.close()
+        await writer.wait_closed()
+
+
 async def async_fetch_discovery_info(
     session: ClientSession,
     *,
     host: str,
     agent_port: int = DEFAULT_AGENT_PORT,
     timeout: int = 5,
+    certificate_fingerprint: str | None = None,
 ) -> PCPowerDiscoveryInfo:
     """Fetch pre-pairing discovery data from the local agent."""
     try:
         async with asyncio.timeout(timeout):
+            fingerprint = certificate_fingerprint or await _enrollment_fingerprint(host, agent_port)
             async with session.get(
-                f"http://{host}:{agent_port}/v1/discovery",
+                f"https://{host}:{agent_port}/v1/discovery",
                 headers={"Accept": "application/json"},
+                ssl=_pin(fingerprint), allow_redirects=False,
             ) as response:
                 if response.status == 403:
                     raise PCPowerDiscoveryError("network_not_allowed")
@@ -240,12 +280,46 @@ async def async_fetch_discovery_info(
         raise
     except TimeoutError as err:
         raise PCPowerDiscoveryError("cannot_connect") from err
-    except ClientError as err:
+    except (ClientError, OSError) as err:
         raise PCPowerDiscoveryError("cannot_connect") from err
     except ValueError as err:
         raise PCPowerDiscoveryError("invalid_response") from err
 
-    return _normalize_discovery_payload(payload, fallback_host=host, fallback_port=agent_port)
+    discovery = _normalize_discovery_payload(payload, fallback_host=host, fallback_port=agent_port)
+    discovery.certificate_fingerprint = fingerprint
+    return discovery
+
+
+async def async_verify_upgrade(
+    session: ClientSession,
+    *,
+    discovery: PCPowerDiscoveryInfo,
+    api_token: str,
+    timeout: float = 5,
+) -> bool:
+    """Authenticate a legacy pairing's TLS identity without sending the old secret."""
+    if not api_token:
+        return False
+    nonce = secrets.token_hex(32)
+    try:
+        async with asyncio.timeout(timeout):
+            async with session.post(
+                f"https://{discovery.host}:{discovery.agent_port}/v1/pairing/upgrade",
+                headers={"Accept": "application/json"}, json={"nonce": nonce},
+                ssl=_pin(discovery.certificate_fingerprint), allow_redirects=False,
+            ) as response:
+                if response.status != 200:
+                    return False
+                payload = await response.json()
+        proof = payload.get("proof") if isinstance(payload, dict) else None
+        if not isinstance(proof, str) or not re.fullmatch(r"[0-9a-f]{64}", proof):
+            return False
+        transcript = (b"pc-power-free/tls-upgrade/v1\0" + bytes.fromhex(nonce)
+                      + bytes.fromhex(discovery.certificate_fingerprint))
+        expected = hmac.digest(api_token.encode("utf-8"), transcript, "sha256").hex()
+        return hmac.compare_digest(proof, expected)
+    except (TimeoutError, ClientError, OSError, ValueError, PCPowerAuthError):
+        return False
 
 
 async def async_exchange_pairing_code(
@@ -254,14 +328,16 @@ async def async_exchange_pairing_code(
     host: str,
     agent_port: int = DEFAULT_AGENT_PORT,
     pairing_code: str,
+    certificate_fingerprint: str,
     timeout: int = 5,
 ) -> PCPowerPairingResult:
     """Exchange a temporary pairing code for the long-lived API token."""
     try:
         async with asyncio.timeout(timeout):
             async with session.post(
-                f"http://{host}:{agent_port}/v1/pairing/exchange",
+                f"https://{host}:{agent_port}/v1/pairing/exchange",
                 headers={"Accept": "application/json"},
+                ssl=_pin(certificate_fingerprint), allow_redirects=False,
                 json={"pairing_code": pairing_code},
             ) as response:
                 if response.status == 400:
@@ -287,11 +363,14 @@ async def async_exchange_pairing_code(
     except ValueError as err:
         raise PCPowerPairingError("invalid_response") from err
 
+    if not isinstance(payload, dict):
+        raise PCPowerPairingError("invalid_response")
     api_token = str(payload.get("api_token", "")).strip()
     if len(api_token) < 16:
         raise PCPowerPairingError("invalid_response")
 
     discovery = _normalize_discovery_payload(payload, fallback_host=host, fallback_port=agent_port)
+    discovery.certificate_fingerprint = certificate_fingerprint
     try:
         broadcast_port = int(payload.get("broadcast_port", DEFAULT_BROADCAST_PORT))
     except (TypeError, ValueError) as err:
@@ -319,6 +398,7 @@ class PCPowerClient:
         broadcast_port: int,
         discovery_subnets: str | Iterable[str] | None = None,
         machine_id: str | None = None,
+        certificate_fingerprint: str | None = None,
         timeout: int = 5,
     ) -> None:
         self._session = session
@@ -331,6 +411,7 @@ class PCPowerClient:
         self._broadcast_port = broadcast_port
         self._discovery_subnets = parse_discovery_subnets(discovery_subnets)
         self._machine_id = str(machine_id or "").strip().lower() or None
+        self._certificate_fingerprint = certificate_fingerprint
         self._timeout = timeout
         self._next_discovery_at = 0.0
 
@@ -345,9 +426,14 @@ class PCPowerClient:
         return self._agent_port
 
     @property
+    def certificate_fingerprint(self) -> str | None:
+        """Return the pinned or secret-authenticated TLS identity."""
+        return self._certificate_fingerprint
+
+    @property
     def base_url(self) -> str:
         """Return the base URL for the local agent."""
-        return f"http://{self._host}:{self._agent_port}"
+        return f"https://{self._host}:{self._agent_port}"
 
     async def async_wake(self) -> None:
         """Send the magic packet to the PC."""
@@ -359,13 +445,15 @@ class PCPowerClient:
         )
         self._next_discovery_at = 0.0
 
-    async def async_shutdown(self, *, force: bool = False, delay_seconds: int = 0) -> None:
+    async def async_shutdown(self, *, force: bool | None = None, delay_seconds: int | None = None) -> None:
         """Ask the agent to shut the PC down."""
-        await self._async_post("shutdown", {"force": force, "delay_seconds": delay_seconds})
+        await self._async_post("shutdown", {key: value for key, value in
+            {"force": force, "delay_seconds": delay_seconds}.items() if value is not None})
 
-    async def async_restart(self, *, force: bool = False, delay_seconds: int = 0) -> None:
+    async def async_restart(self, *, force: bool | None = None, delay_seconds: int | None = None) -> None:
         """Ask the agent to restart the PC."""
-        await self._async_post("restart", {"force": force, "delay_seconds": delay_seconds})
+        await self._async_post("restart", {key: value for key, value in
+            {"force": force, "delay_seconds": delay_seconds}.items() if value is not None})
 
     async def async_get_status(self) -> dict[str, Any]:
         """Return the latest online status.
@@ -375,17 +463,22 @@ class PCPowerClient:
         """
         payload = await self._async_get_status_payload()
         if payload is None:
-            return {"online": False, "reachable": False}
+            return {"online": False, "reachable": False,
+                    "upgrade_pending": not bool(self._certificate_fingerprint)}
         return self._normalize_status_payload(payload)
 
     async def _async_post(self, action: str, payload: dict[str, Any]) -> None:
         """Send an authenticated POST action to the agent."""
+        # Locate and authenticate before sending a non-idempotent power command.
+        if await self._async_get_status_payload() is None:
+            raise PCPowerCommandError("Unable to reach the local agent")
         try:
             async with asyncio.timeout(self._timeout):
                 async with self._session.post(
                     f"{self.base_url}/v1/power/{action}",
                     headers=self._headers(),
                     json=payload,
+                    ssl=_pin(self._certificate_fingerprint), allow_redirects=False,
                 ) as response:
                     if response.status in (401, 403):
                         raise PCPowerAuthError("The agent rejected the token")
@@ -394,18 +487,22 @@ class PCPowerClient:
                             "Power commands are currently blocked by the local guard"
                         )
 
-                    response.raise_for_status()
+                    if response.status != 202:
+                        try:
+                            error = await response.json()
+                        except (ValueError, ClientError):
+                            error = {}
+                        detail = error.get("error") if isinstance(error, dict) else None
+                        raise PCPowerCommandError(detail or f"Agent rejected command (HTTP {response.status})")
                     return
         except PCPowerAuthError:
             raise
         except TimeoutError as err:
-            if await self.async_discover_host(force=True):
-                return await self._async_post(action, payload)
-            raise PCPowerCommandError("The agent did not respond in time") from err
+            raise PCPowerCommandError("Command response timed out; result unknown, not retried") from err
+        except ServerFingerprintMismatch as err:
+            raise PCPowerAuthError("The agent certificate changed; pair again") from err
         except ClientError as err:
-            if await self.async_discover_host(force=True):
-                return await self._async_post(action, payload)
-            raise PCPowerCommandError("Unable to reach the local agent") from err
+            raise PCPowerCommandError("Connection lost; command result unknown, not retried") from err
 
     def _headers(self) -> dict[str, str]:
         """Build the auth headers for the agent."""
@@ -416,12 +513,19 @@ class PCPowerClient:
 
     async def _async_get_status_payload(self) -> dict[str, Any] | None:
         """Fetch the status payload, retrying with discovery if needed."""
-        payload = await self._async_fetch_status_from_host(self._host)
+        auth_error = None
+        try:
+            payload = await self._async_fetch_status_from_host(self._host)
+        except PCPowerAuthError as err:
+            auth_error = err
+            payload = None
         if payload is not None:
             return payload
 
         discovered_host = await self.async_discover_host()
         if not discovered_host:
+            if auth_error:
+                raise auth_error
             return None
 
         return await self._async_fetch_status_from_host(discovered_host)
@@ -431,24 +535,35 @@ class PCPowerClient:
         if not host:
             return None
 
+        if not self._certificate_fingerprint and not await self._async_upgrade_identity(host, self._timeout):
+            return None
+
         try:
             async with asyncio.timeout(self._timeout):
                 async with self._session.get(
-                    f"http://{host}:{self._agent_port}/v1/status",
+                    f"https://{host}:{self._agent_port}/v1/status",
                     headers=self._headers(),
+                    ssl=_pin(self._certificate_fingerprint), allow_redirects=False,
                 ) as response:
                     if response.status in (401, 403):
-                        raise PCPowerAuthError("The agent rejected the token")
+                        raise PCPowerAuthError("Token rejected" if response.status == 401 else "Client network is not allowed")
 
-                    response.raise_for_status()
+                    if response.status != 200:
+                        raise PCPowerCommandError(f"Agent status failed (HTTP {response.status})")
                     payload = await response.json()
         except PCPowerAuthError:
             raise
+        except ServerFingerprintMismatch as err:
+            raise PCPowerAuthError("The agent certificate changed; pair again") from err
         except (TimeoutError, ClientError):
             return None
         except ValueError as err:
             raise PCPowerCommandError("The agent returned invalid JSON") from err
 
+        if not isinstance(payload, dict):
+            raise PCPowerCommandError("The agent returned a non-object status")
+        if self._machine_id and payload.get(STATUS_MACHINE_ID) != self._machine_id:
+            raise PCPowerAuthError("The agent identity changed; pair again")
         self._host = host
         return payload
 
@@ -465,21 +580,26 @@ class PCPowerClient:
             return None
 
         semaphore = asyncio.Semaphore(DISCOVERY_CONCURRENCY)
-        tasks = [
-            asyncio.create_task(self._async_probe_candidate(str(ip_address), semaphore))
-            for subnet in subnets
-            for ip_address in subnet.hosts()
-        ]
+        addresses = iter(islice((str(address) for subnet in subnets for address in subnet.hosts()),
+                                DISCOVERY_MAX_ADDRESSES))
+        async def worker():
+            for host in addresses:
+                result = await self._async_probe_candidate(host, semaphore)
+                if result:
+                    return result
+            return None
+        tasks = [asyncio.create_task(worker()) for _ in range(DISCOVERY_CONCURRENCY)]
 
         try:
-            for completed_task in asyncio.as_completed(tasks):
-                result = await completed_task
-                if result is None:
-                    continue
-
-                self._host = result
-                self._next_discovery_at = 0.0
-                return result
+            async with asyncio.timeout(DISCOVERY_DEADLINE_SECONDS):
+                for completed_task in asyncio.as_completed(tasks):
+                    result = await completed_task
+                    if result is not None:
+                        self._host = result
+                        self._next_discovery_at = 0.0
+                        return result
+        except TimeoutError:
+            return None
         finally:
             for task in tasks:
                 if not task.done():
@@ -498,24 +618,32 @@ class PCPowerClient:
             return None
 
         async with semaphore:
+            if not self._certificate_fingerprint:
+                return host if await self._async_upgrade_identity(host, DISCOVERY_TIMEOUT_SECONDS) else None
             try:
                 async with asyncio.timeout(DISCOVERY_TIMEOUT_SECONDS):
                     async with self._session.get(
-                        f"http://{host}:{self._agent_port}/v1/discovery",
+                        f"https://{host}:{self._agent_port}/v1/discovery",
                         headers={"Accept": "application/json"},
+                        ssl=_pin(self._certificate_fingerprint), allow_redirects=False,
                     ) as response:
                         if response.status != 200:
                             return None
                         payload = await response.json()
-            except (TimeoutError, ClientError, ValueError):
+            except (TimeoutError, ClientError, ValueError, PCPowerAuthError):
                 return None
 
+        if not isinstance(payload, dict):
+            return None
         payload_machine_id = str(payload.get(STATUS_MACHINE_ID, "")).strip().lower()
         if self._machine_id and payload_machine_id:
             return host if payload_machine_id == self._machine_id else None
 
         candidate_macs: set[str] = set()
-        for item in payload.get("mac_addresses", []):
+        raw_macs = payload.get("mac_addresses", [])
+        if not isinstance(raw_macs, list):
+            return None
+        for item in raw_macs:
             if not isinstance(item, str):
                 continue
             try:
@@ -525,6 +653,27 @@ class PCPowerClient:
         if self._normalized_mac_address in candidate_macs:
             return host
         return None
+
+    async def _async_upgrade_identity(self, host: str, timeout: float) -> bool:
+        """Upgrade without re-pairing; failure stays pending, never falls back to HTTP."""
+        try:
+            async with asyncio.timeout(timeout):
+                discovery = await async_fetch_discovery_info(
+                    self._session, host=host, agent_port=self._agent_port)
+                if self._machine_id:
+                    if discovery.machine_id != self._machine_id:
+                        return False
+                elif self._mac_address not in discovery.mac_addresses:
+                    return False
+                if not await async_verify_upgrade(self._session, discovery=discovery, api_token=self._api_token):
+                    return False
+        except (TimeoutError, PCPowerDiscoveryError, OSError):
+            return False
+        # A concurrent discovery must not replace an identity already established.
+        if self._certificate_fingerprint and self._certificate_fingerprint != discovery.certificate_fingerprint:
+            return False
+        self._certificate_fingerprint = discovery.certificate_fingerprint
+        return True
 
     def _infer_discovery_subnets(self) -> tuple[ipaddress.IPv4Network, ...]:
         """Infer discovery subnets from the current host when possible."""

@@ -2,7 +2,9 @@ param(
     [string]$TaskName = "PC Power Agent",
     [string]$PythonExe = "",
     [string]$ConfigPath = "",
-    [string]$ExecutablePath = ""
+    [string]$ExecutablePath = "",
+    [string]$CommandPrefix = "",
+    [ValidateSet("Install", "Upgrade", "Stop", "Remove")][string]$Mode = "Install"
 )
 
 $ErrorActionPreference = "Stop"
@@ -12,6 +14,23 @@ $scriptPath = Join-Path $agentDir "pc_power_agent.py"
 $defaultExePath = Join-Path $agentDir "PCPowerAgent.exe"
 $programDataDir = Join-Path $env:ProgramData "PC Power Free"
 $programDataConfig = Join-Path $programDataDir "config.json"
+
+$existing = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+if ($Mode -eq "Upgrade" -and (-not $existing -or $existing.State -eq "Disabled")) {
+    exit 3
+}
+if ($existing) {
+    Stop-ScheduledTask -TaskName $TaskName
+    $deadline = (Get-Date).AddSeconds(15)
+    while ((Get-ScheduledTask -TaskName $TaskName).State -eq 'Running') {
+        if ((Get-Date) -gt $deadline) { throw "Agent task did not stop" }
+        Start-Sleep -Milliseconds 200
+    }
+    if ($Mode -eq "Remove") {
+        Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
+    }
+}
+if ($Mode -notin @("Install", "Upgrade")) { exit 0 }
 
 function Test-IsInstalledLocation {
     param([string]$PathToCheck)
@@ -61,7 +80,7 @@ if ($ExecutablePath -and -not (Test-Path $ExecutablePath)) {
 }
 
 if ($ExecutablePath) {
-    $action = New-ScheduledTaskAction -Execute $ExecutablePath -Argument "--config `"$ConfigPath`""
+    $action = New-ScheduledTaskAction -Execute $ExecutablePath -Argument "$CommandPrefix --config `"$ConfigPath`""
 }
 else {
     $pythonPrefix = ""
@@ -73,7 +92,7 @@ else {
 }
 $trigger = New-ScheduledTaskTrigger -AtStartup
 $principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
-$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
+$settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
 
 if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
     Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
@@ -81,5 +100,9 @@ if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
 
 Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings | Out-Null
 Start-ScheduledTask -TaskName $TaskName
+Start-Sleep -Milliseconds 500
+if ((Get-ScheduledTask -TaskName $TaskName).State -ne 'Running') {
+    throw "Agent task did not remain running. Check pc_power_agent.log."
+}
 
 Write-Host "Tarea instalada y arrancada: $TaskName"

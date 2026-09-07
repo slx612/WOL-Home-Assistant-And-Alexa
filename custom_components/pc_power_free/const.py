@@ -4,6 +4,7 @@ DOMAIN = "pc_power_free"
 
 CONF_AGENT_PORT = "agent_port"
 CONF_API_TOKEN = "api_token"
+CONF_CERTIFICATE_FINGERPRINT = "certificate_fingerprint"
 CONF_BROADCAST_ADDRESS = "broadcast_address"
 CONF_BROADCAST_PORT = "broadcast_port"
 CONF_CAPABILITIES = "capabilities"
@@ -11,6 +12,9 @@ CONF_DISCOVERY_SUBNETS = "discovery_subnets"
 CONF_MACHINE_ID = "machine_id"
 CONF_PLATFORM = "platform"
 CONF_SCAN_INTERVAL = "scan_interval"
+CONNECTION_KEYS = ("host", "mac", CONF_AGENT_PORT, CONF_API_TOKEN,
+                   CONF_CERTIFICATE_FINGERPRINT, CONF_MACHINE_ID,
+                   CONF_BROADCAST_ADDRESS, CONF_BROADCAST_PORT, CONF_DISCOVERY_SUBNETS)
 
 DISCOVERY_CACHE = "discoveries"
 MANUAL_DISCOVERY_OPTION = "__manual__"

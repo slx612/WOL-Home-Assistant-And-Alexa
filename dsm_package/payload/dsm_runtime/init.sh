@@ -9,6 +9,7 @@ PYTHON_FINDER="${SCRIPT_DIR}/find-python.sh"
 VENDOR_PATH="${APP_ROOT}/vendor"
 
 mkdir -p "${VAR_DIR}"
+umask 077
 
 fail() {
     echo "$1" >&2
@@ -29,19 +30,25 @@ export PYTHONPATH
 ensure_config() {
     if [ -f "${CONFIG_PATH}" ]; then
         echo "Existing config detected at ${CONFIG_PATH}"
-        return 0
+        "${PYTHON_BIN}" -c 'import sys; from pathlib import Path; from agent_core.common import load_config; from agent_core.tls import create_server_context; p=Path(sys.argv[1]); load_config(p); create_server_context(p.parent)' "${CONFIG_PATH}"
+        return $?
     fi
 
-    "${PYTHON_BIN}" "${APP_ROOT}/linux_agent/setup_cli.py" --config "${CONFIG_PATH}" | tee "${SUMMARY_PATH}"
+    "${PYTHON_BIN}" "${APP_ROOT}/linux_agent/setup_cli.py" --config "${CONFIG_PATH}" >"${SUMMARY_PATH}" 2>&1
+    result=$?
+    cat "${SUMMARY_PATH}"
+    [ "${result}" -eq 0 ] || return "${result}"
+    "${PYTHON_BIN}" -c 'import sys; from pathlib import Path; from agent_core.common import load_config; load_config(Path(sys.argv[1]))' "${CONFIG_PATH}"
 }
 
 case "$1" in
     --check)
         [ -f "${CONFIG_PATH}" ] || fail "Config file missing at ${CONFIG_PATH}"
+        ensure_config || fail "Invalid agent configuration or TLS identity."
         echo "python3 and DSM agent config are available."
         ;;
     --ensure-config|"")
-        ensure_config
+        ensure_config || fail "Initial agent configuration failed. See setup-output.txt."
         ;;
     *)
         fail "Unknown argument: $1"

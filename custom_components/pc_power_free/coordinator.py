@@ -13,7 +13,7 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import PCPowerAuthError, PCPowerClient, PCPowerCommandError
-from .const import CONF_MACHINE_ID, CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN
+from .const import CONF_CERTIFICATE_FINGERPRINT, CONF_MACHINE_ID, CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,6 +24,7 @@ class PCPowerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry, client: PCPowerClient) -> None:
         """Initialize the coordinator."""
         self._client = client
+        self._entry = entry
 
         scan_interval = entry.options.get(
             CONF_SCAN_INTERVAL,
@@ -40,8 +41,15 @@ class PCPowerCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch the latest device data."""
         try:
-            return await self._client.async_get_status()
+            status = await self._client.async_get_status()
         except PCPowerAuthError as err:
             raise ConfigEntryAuthFailed(str(err)) from err
         except PCPowerCommandError as err:
             raise UpdateFailed(str(err)) from err
+        fingerprint = self._client.certificate_fingerprint
+        if status.get("reachable") and fingerprint and not self._entry.data.get(CONF_CERTIFICATE_FINGERPRINT):
+            self.hass.config_entries.async_update_entry(self._entry, data={
+                **self._entry.data, CONF_CERTIFICATE_FINGERPRINT: fingerprint,
+                CONF_HOST: self._client.host,
+            })
+        return status

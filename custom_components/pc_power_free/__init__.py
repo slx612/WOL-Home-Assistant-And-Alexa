@@ -18,9 +18,14 @@ from .const import (
     CONF_BROADCAST_ADDRESS,
     CONF_BROADCAST_PORT,
     CONF_CAPABILITIES,
+    CONF_CERTIFICATE_FINGERPRINT,
+    CONNECTION_KEYS,
     CONF_DISCOVERY_SUBNETS,
     CONF_MACHINE_ID,
     CONF_PLATFORM,
+    DEFAULT_AGENT_PORT,
+    DEFAULT_BROADCAST_ADDRESS,
+    DEFAULT_BROADCAST_PORT,
     DISCOVERY_CACHE,
     DOMAIN,
 )
@@ -48,7 +53,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up PC Power Free from a config entry."""
     session = async_get_clientsession(hass)
-    config = {**entry.data, **entry.options}
+    config = {**entry.options, **entry.data}
+    if entry.options:
+        config.update({key: value for key, value in entry.options.items() if key not in CONNECTION_KEYS})
+        hass.config_entries.async_update_entry(entry, data=config, options={})
 
     client = PCPowerClient(
         session,
@@ -60,6 +68,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         broadcast_port=config[CONF_BROADCAST_PORT],
         discovery_subnets=config.get(CONF_DISCOVERY_SUBNETS, ""),
         machine_id=config.get(CONF_MACHINE_ID),
+        certificate_fingerprint=config.get(CONF_CERTIFICATE_FINGERPRINT),
     )
 
     coordinator = PCPowerCoordinator(hass, entry, client)
@@ -85,8 +94,20 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Reload a config entry."""
-    await async_unload_entry(hass, entry)
-    await async_setup_entry(hass, entry)
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Preserve the published configuration; authenticate TLS when the PC is ready."""
+    if entry.version > 3:
+        return False
+    if entry.version < 3:
+        data = {CONF_AGENT_PORT: DEFAULT_AGENT_PORT,
+                CONF_BROADCAST_ADDRESS: DEFAULT_BROADCAST_ADDRESS,
+                CONF_BROADCAST_PORT: DEFAULT_BROADCAST_PORT,
+                **entry.data, **entry.options}
+        hass.config_entries.async_update_entry(entry, data=data, options={}, version=3)
+    return True
 
 
 def _sync_entry_metadata_from_status(

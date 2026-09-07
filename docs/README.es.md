@@ -9,26 +9,25 @@ Idioma:
 
 Solucion local y sin suscripcion para controlar el encendido, apagado y reinicio de equipos Windows y Linux desde Home Assistant y Alexa.
 
-Estado actual: `0.2.0-beta.6 ya publicado en GitHub el 6 de mayo de 2026, rutas Windows y Linux con Home Assistant validadas en instalaciones reales, paquete DSM validado en DSM 7.2 para instalacion/descubrimiento/vinculacion, ruta Alexa y validacion de acciones de energia DSM aun pendientes`.
+Beta actual: `0.2.0-beta.7`, version preliminar de seguridad y correcciones pendiente de validar en hardware real. Las pruebas de la beta.6 no validan esta version. Las [instrucciones de actualizacion](UPGRADE-beta.7.md#espanol) conservan la vinculacion, los dispositivos y las automatizaciones de beta.6: actualiza ambos componentes, sin desinstalar ni introducir otro codigo.
+
+**Descargas:** [Instalador Windows](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/download/v0.2.0-beta.7/pcpowerfree-windows-x64-setup.exe) | [Integracion Home Assistant](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/download/v0.2.0-beta.7/pcpowerfree-home-assistant-integration.zip) | [Todas las descargas y notas](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.7)
 
 Estado de publicacion:
 
-- El codigo del repositorio apunta ahora a `v0.2.0-beta.6`
-- La ultima prerelease publicada en GitHub es `v0.2.0-beta.6`, del 6 de mayo de 2026
-- Los assets actuales de la prerelease ya estan publicados: instalador de Windows, binarios Windows, zip de Home Assistant, bundle Linux y paquete DSM `.spk`
-- La solicitud para el repositorio `default` de HACS ya esta abierta en `hacs/default#7156`
+- Version preliminar actual: [v0.2.0-beta.7](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.7)
+- Descargas: instalador de Windows, binarios Windows, ZIP de Home Assistant, paquete Linux, DSM experimental `.spk` y sumas SHA-256
+- Incluido en la lista predeterminada de HACS: [la solicitud #7156 fue aceptada](https://github.com/hacs/default/pull/7156). Selecciona beta.7 expresamente si HACS no ofrece versiones preliminares automaticamente.
 - Las rutas previstas de distribucion son: instalacion manual, custom repository de HACS, descargas prerelease de GitHub, instalador de Windows e instalacion experimental en Linux desde codigo fuente
-- Las validaciones reales que siguen pendientes son `Alexa + Home Assistant`, apagado DSM, reinicio DSM y wake DSM
+- En beta.7 sigue pendiente validar la actualizacion real de Windows, Home Assistant/Alexa, los ciclos de energia y las acciones de energia en DSM. Consulta el [informe de validacion](VALIDATION-beta.7.md).
 
-Novedades recientes:
+Novedades de beta.7:
 
-- Runtime experimental para Linux con el mismo protocolo de descubrimiento y vinculacion que Windows
-- Flujo de Home Assistant ya validado tanto contra Windows como contra Linux
-- Scaffold DSM ya validado en un NAS DSM 7.2 real para instalacion, arranque del servicio, descubrimiento y vinculacion
-- El rediscovery de Home Assistant ya no sondea la subred enviando el token guardado
-- El pairing ahora invalida el codigo temporal tras varios intentos fallidos
-- Puerto local por defecto movido a `58477`
-- La app de Windows mantiene la proteccion desde bandeja y la comprobacion de actualizaciones
+- La vinculacion de beta.6 se migra automaticamente sin nuevos codigos ni dispositivos.
+- HTTPS, verificacion del certificado guardado, proteccion del estado y descubrimiento con limites.
+- El instalador conserva los ajustes y actualiza las tareas habilitadas sin repetir el asistente.
+- 56 comprobaciones locales, incluidas pruebas de ambos ordenes de actualizacion con el codigo publicado de beta.6.
+- Las pruebas DSM de instalacion, arranque, descubrimiento y vinculacion de beta.6 no validan este nuevo paquete en hardware real.
 
 ## Que es
 
@@ -135,7 +134,7 @@ Ejemplo para Ubuntu o Debian:
 sudo mkdir -p /opt/pc-power-free /etc/pc-power-free
 sudo tar -xzf pcpowerfree-linux-agent.tar.gz -C /opt/pc-power-free
 sudo python3 -m venv /opt/pc-power-free/.venv
-sudo /opt/pc-power-free/.venv/bin/python -m pip install --upgrade pip ifaddr zeroconf
+sudo /opt/pc-power-free/.venv/bin/python -m pip install ifaddr zeroconf cryptography
 sudo /opt/pc-power-free/.venv/bin/python /opt/pc-power-free/linux_agent/setup_cli.py --config /etc/pc-power-free/config.json
 sudo cp /opt/pc-power-free/linux_agent/pcpowerfree-agent.service /etc/systemd/system/pcpowerfree-agent.service
 sudo systemctl daemon-reload
@@ -152,7 +151,7 @@ Despues de arrancar el servicio:
 Comprobaciones utiles en Linux:
 
 ```bash
-curl http://127.0.0.1:58477/v1/discovery
+curl --cacert /etc/pc-power-free/agent-cert.pem https://127.0.0.1:58477/v1/discovery
 sudo journalctl -u pcpowerfree-agent.service -n 50 --no-pager
 ```
 
@@ -176,20 +175,13 @@ Notas:
 
 El repositorio esta preparado para HACS con [`hacs.json`](../hacs.json).
 
-1. En HACS, abre `Custom repositories`
-2. Anade la URL de este repositorio
-3. Tipo: `Integration`
-4. Instala `PC Power Free`
-5. Reinicia Home Assistant
-6. Activa las betas o prereleases para este repositorio si quieres recibir avisos de actualizacion de la rama prerelease actual
+1. En HACS, busca `PC Power Free` en la lista de integraciones.
+2. Instala la integracion, seleccionando beta.7 como explica la [guia de actualizacion](UPGRADE-beta.7.md#espanol).
+3. Reinicia Home Assistant. Si ya estaba instalada, se conserva la vinculacion.
 
 Si la tarjeta de la integracion sigue mostrando el icono generico, lo normal es que tu Home Assistant sea anterior a `2026.3`, que es la primera version con soporte para assets `brand/` incluidos dentro de una custom integration.
 
-Para el listado `default` de HACS, la publicacion ya esta en marcha:
-
-1. La ultima prerelease ya publicada en GitHub es `v0.2.0-beta.6`
-2. La PR de envio ya esta abierta en `hacs/default#7156`
-3. Lo unico pendiente ahi es la revision y el merge por parte del equipo de HACS
+El repositorio ya figura en la lista predeterminada de HACS: [la solicitud #7156 fue aceptada](https://github.com/hacs/default/pull/7156). Anadir un repositorio personalizado es una alternativa, no un requisito.
 
 Checklist: [`docs/HACS_PUBLISHING.md`](HACS_PUBLISHING.md)
 
@@ -296,12 +288,10 @@ LICENSE
 
 Estado actual para el repositorio `default` de HACS:
 
-- PR de envio ya abierta: `hacs/default#7156`
-- ultima prerelease ya publicada: `v0.2.0-beta.6`
-- assets de la release actual ya adjuntos en GitHub
-- pendiente de revision por los maintainers de HACS
+- Incluido en HACS default tras [aceptarse la solicitud #7156](https://github.com/hacs/default/pull/7156).
+- Version preliminar actual: `v0.2.0-beta.7`, con descargas al principio de este README.
 
 Pendiente antes de considerarlo realmente final:
 
-- prueba real con Alexa via `emulated_hue`
+- Pruebas reales de instalacion/actualizacion beta.7, HA/Alexa y ciclos de energia.
 - modelo de privilegios para acciones de energia DSM

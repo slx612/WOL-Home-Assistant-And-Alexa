@@ -7,7 +7,7 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_MAC, CONF_NAME
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -20,6 +20,7 @@ from .api import (
     PCPowerPairingError,
     async_exchange_pairing_code,
     async_fetch_discovery_info,
+    async_verify_upgrade,
     normalize_mac,
     parse_discovery_subnets,
 )
@@ -29,6 +30,7 @@ from .const import (
     CONF_BROADCAST_ADDRESS,
     CONF_BROADCAST_PORT,
     CONF_CAPABILITIES,
+    CONF_CERTIFICATE_FINGERPRINT,
     CONF_DISCOVERY_SUBNETS,
     CONF_MACHINE_ID,
     CONF_PLATFORM,
@@ -133,12 +135,23 @@ def _extract_zeroconf_host(discovery_info: ZeroconfServiceInfo) -> str:
 class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for PC Power Free."""
 
-    VERSION = 2
+    VERSION = 3
 
     def __init__(self) -> None:
         """Initialize the config flow."""
         self._discovery_info: PCPowerDiscoveryInfo | None = None
         self._repair_entry: ConfigEntry | None = None
+        self._reauth_entry: ConfigEntry | None = None
+
+    async def async_step_reauth(self, entry_data: dict[str, Any]):
+        """Pair again without deleting entities or automations."""
+        self._reauth_entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+        return await self.async_step_manual()
+
+    async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None):
+        """Allow changing host and re-establishing the trusted identity."""
+        self._reauth_entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+        return await self.async_step_manual(user_input)
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
         """Handle the initial step."""
@@ -197,7 +210,7 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="manual",
-            data_schema=_manual_schema(user_input),
+            data_schema=_manual_schema(user_input or (dict(self._reauth_entry.data) if self._reauth_entry else None)),
             errors=errors,
         )
 
@@ -215,6 +228,7 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     host=self._discovery_info.host,
                     agent_port=self._discovery_info.agent_port,
                     pairing_code=user_input["pairing_code"],
+                    certificate_fingerprint=self._discovery_info.certificate_fingerprint,
                 )
             except PCPowerPairingError as err:
                 errors["base"] = err.reason
@@ -226,6 +240,7 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_HOST: discovery.host,
                     CONF_MAC: discovery.primary_mac,
                     CONF_API_TOKEN: pairing_result.api_token,
+                    CONF_CERTIFICATE_FINGERPRINT: discovery.certificate_fingerprint,
                     CONF_AGENT_PORT: discovery.agent_port,
                     CONF_BROADCAST_ADDRESS: discovery.broadcast_address,
                     CONF_BROADCAST_PORT: pairing_result.broadcast_port,
@@ -245,7 +260,10 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         data={**repair_entry.data, **entry_data},
                         title=entry_data[CONF_NAME],
                         unique_id=discovery.machine_id,
+                        options={},
                     )
+                    if repair_entry.state != ConfigEntryState.LOADED:
+                        await self.hass.config_entries.async_reload(repair_entry.entry_id)
                     return self.async_abort(reason="repair_successful")
 
                 result = await self._async_prepare_discovery(discovery, allow_repair=True)
@@ -265,6 +283,7 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "name": self._discovery_info.name,
                 "host": self._discovery_info.host,
                 "platform": platform_label(self._discovery_info.platform),
+                "fingerprint": self._discovery_info.certificate_fingerprint,
             },
             errors=errors,
         )
@@ -312,10 +331,37 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._discovery_info = discovery
         self._repair_entry = None
 
+        if self._reauth_entry is not None:
+            expected_id = self._reauth_entry.data.get(CONF_MACHINE_ID)
+            if expected_id and expected_id != discovery.machine_id:
+                return self.async_abort(reason="invalid_response")
+            if not expected_id and normalize_mac(self._reauth_entry.data[CONF_MAC]) not in {
+                normalize_mac(mac) for mac in discovery.mac_addresses
+            }:
+                return self.async_abort(reason="invalid_response")
+            self._repair_entry = self._reauth_entry
+            return None
+
         if existing_entry := self._find_existing_entry_for_discovery(discovery):
             if allow_repair and discovery.pairing_code_active:
                 self._repair_entry = existing_entry
                 return None
+            if not existing_entry.data.get(CONF_CERTIFICATE_FINGERPRINT):
+                machine_id = existing_entry.data.get(CONF_MACHINE_ID)
+                if machine_id and machine_id != discovery.machine_id:
+                    return self.async_abort(reason="invalid_response")
+                if not await async_verify_upgrade(async_get_clientsession(self.hass),
+                    discovery=discovery, api_token=existing_entry.data.get(CONF_API_TOKEN, "")):
+                    return self.async_abort(reason="invalid_response")
+                # Preserve registry identifiers and preferences; only migrate the connection.
+                self.hass.config_entries.async_update_entry(existing_entry, data={
+                    **existing_entry.data, **existing_entry.options,
+                    CONF_HOST: discovery.host, CONF_AGENT_PORT: discovery.agent_port,
+                    CONF_CERTIFICATE_FINGERPRINT: discovery.certificate_fingerprint,
+                }, options={})
+                return self.async_abort(reason="already_configured")
+            if existing_entry.data.get(CONF_CERTIFICATE_FINGERPRINT) != discovery.certificate_fingerprint:
+                return self.async_abort(reason="invalid_response")
             data = {**existing_entry.data, **self._build_discovery_updates(discovery)}
             self.hass.config_entries.async_update_entry(
                 existing_entry,
@@ -371,10 +417,6 @@ class PCPowerFreeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         }
 
         for entry in self._async_current_entries():
-            entry_machine_id = entry.data.get(CONF_MACHINE_ID) or entry.unique_id
-            if entry_machine_id in normalized_candidates:
-                continue
-
             entry_mac = entry.data.get(CONF_MAC)
             if not entry_mac:
                 continue
@@ -413,7 +455,10 @@ class PCPowerOptionsFlow(config_entries.OptionsFlow):
             except Exception:
                 errors["base"] = "invalid_input"
             else:
-                return self.async_create_entry(title="", data=user_input)
+                self.hass.config_entries.async_update_entry(
+                    self._config_entry, data={**self._config_entry.data, **user_input}
+                )
+                return self.async_create_entry(title="", data={})
 
         current_values = {**self._config_entry.data, **self._config_entry.options}
         return self.async_show_form(

@@ -1,0 +1,13 @@
+{
+  "host": "0.0.0.0",
+  "port": 58477,
+  "token": "test-only-token-not-a-real-credential",
+  "allowed_subnets": ["127.0.0.1/32"],
+  "shutdown_delay_seconds": 12,
+  "shutdown_force": false,
+  "log_file": "pc_power_agent.log",
+  "machine_id": "test-machine",
+  "pairing_code_hash": null,
+  "pairing_code_expires_at": null,
+  "pairing_code_failed_attempts": 0
+}

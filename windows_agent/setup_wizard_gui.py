@@ -9,11 +9,13 @@ import hashlib
 import ipaddress
 import json
 import locale
+import logging
 import os
 from pathlib import Path
 import re
 import secrets
 import shutil
+import ssl
 import subprocess
 import sys
 import threading
@@ -29,9 +31,15 @@ from typing import Any
 
 from network_info import AdapterInfo, detect_primary_adapter, normalize_mac
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+from agent_core.common import atomic_write_json, load_config
+from agent_core.tls import create_server_context
+
 APP_TITLE = "PC Power Free Setup"
 APP_DIR_NAME = "PC Power Free"
-APP_VERSION = "0.2.0-beta.6"
+APP_VERSION = "0.2.0-beta.7"
 DEFAULT_AGENT_PORT = 58477
 DEFAULT_TASK_NAME = "PC Power Agent"
 DEFAULT_RULE_NAME = "PC Power Agent"
@@ -436,7 +444,7 @@ def write_config(
         "pairing_code_hash": pairing_code_hash,
         "pairing_code_expires_at": pairing_code_expires_at,
     }
-    config_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    atomic_write_json(config_path, payload)
 
 
 def configure_firewall(rule_name: str, *, port: int, remote_addresses: list[str]) -> None:
@@ -473,37 +481,59 @@ def configure_firewall(rule_name: str, *, port: int, remote_addresses: list[str]
 
 def install_startup_task(task_name: str, *, command_exe: str, command_prefix: str, config_path: Path) -> None:
     """Install a scheduled task that starts the agent at boot."""
-    task_command = build_command_line(command_exe, command_prefix, config_path)
+    arguments = ["-ExecutablePath", command_exe, "-ConfigPath", str(config_path)]
+    if command_prefix:
+        arguments.extend(["-CommandPrefix", command_prefix])
+    run_task_script(task_name, "Install", *arguments)
 
-    create_result = subprocess.run(
-        [
-            "schtasks",
-            "/Create",
-            "/TN",
-            task_name,
-            "/SC",
-            "ONSTART",
-            "/RL",
-            "HIGHEST",
-            "/RU",
-            "SYSTEM",
-            "/TR",
-            task_command,
-            "/F",
-        ],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    if create_result.returncode != 0:
-        raise RuntimeError(create_result.stderr.strip() or create_result.stdout.strip() or "Unable to create the scheduled task")
 
-    subprocess.run(
-        ["schtasks", "/Run", "/TN", task_name],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
+def run_task_script(task_name: str, mode: str, *arguments: str) -> bool:
+    """Keep GUI and manual installs on the same Task Scheduler settings."""
+    app_dir = Path(sys._MEIPASS) if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
+    result = subprocess.run([
+        "powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+        "-File", str(app_dir / "install-task.ps1"), "-TaskName", task_name,
+        "-Mode", mode, *arguments,
+    ], capture_output=True, text=True, timeout=45, creationflags=subprocess.CREATE_NO_WINDOW)
+    if mode == "Upgrade" and result.returncode == 3:
+        return False  # Keep disabled or absent automatic startup disabled.
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr.strip() or result.stdout.strip() or "Task configuration failed")
+    return True
+
+
+def upgrade_existing_installation(agent_dir: Path, config_path: Path) -> None:
+    """Reuse published settings verbatim; never replace credentials during an update."""
+    _, changed = load_config(config_path)
+    if changed:
+        raise ValueError("Existing machine identity is missing. Restore the configuration backup.")
+    create_server_context(config_path.parent)
+    command_exe, command_prefix = resolve_agent_command(agent_dir)
+    arguments = ["-ExecutablePath", command_exe, "-ConfigPath", str(config_path)]
+    if command_prefix:
+        arguments.extend(["-CommandPrefix", command_prefix])
+    if run_task_script(DEFAULT_TASK_NAME, "Upgrade", *arguments):
+        wait_for_agent(config_path)
+
+
+def wait_for_agent(config_path: Path) -> None:
+    """Report success only after the configured TLS endpoint actually responds."""
+    config = load_existing_config(config_path)
+    context = ssl.create_default_context(cafile=str(config_path.parent / "agent-cert.pem"))
+    request = urllib_request.Request(f"https://127.0.0.1:{config['port']}/v1/status",
+        headers={"Authorization": f"Bearer {config['token']}"})
+    deadline = time.monotonic() + 15
+    while True:
+        try:
+            with urllib_request.urlopen(request, context=context, timeout=2) as response:
+                status = json.load(response)
+                if status.get("machine_id") == config["machine_id"]:
+                    return
+        except (OSError, ValueError):
+            pass
+        if time.monotonic() >= deadline:
+            raise RuntimeError("The agent did not start on the configured port. Check pc_power_agent.log.")
+        time.sleep(.5)
 
 
 def configure_tray_startup(
@@ -558,6 +588,9 @@ def parse_args() -> argparse.Namespace:
     """Parse CLI arguments."""
     parser = argparse.ArgumentParser(description="Run the PC Power Free setup wizard")
     parser.add_argument("--lang", choices=tuple(TRANSLATIONS), help="UI language")
+    parser.add_argument("--upgrade-existing", action="store_true",
+                        help="Update existing settings without running the pairing wizard")
+    parser.add_argument("--config", type=Path, help="Override the configuration path for --upgrade-existing")
     return parser.parse_args()
 
 
@@ -977,7 +1010,7 @@ class SetupApplication:
             messagebox.showerror(APP_TITLE, self._t("validation_failed", error=err))
             return
 
-        privileged_action = self.firewall_var.get() or self.install_task_var.get()
+        privileged_action = True  # Removing or stopping a previous SYSTEM task also requires elevation.
         if privileged_action and not is_admin():
             messagebox.showerror(APP_TITLE, self._t("admin_required"))
             return
@@ -986,6 +1019,7 @@ class SetupApplication:
 
         try:
             self.data_dir.mkdir(parents=True, exist_ok=True)
+            run_task_script(DEFAULT_TASK_NAME, "Stop")
             write_config(
                 self.config_path,
                 port=port,
@@ -996,6 +1030,7 @@ class SetupApplication:
                 pairing_code_hash=hash_pairing_code(pairing_code),
                 pairing_code_expires_at=time.time() + PAIRING_CODE_TTL_SECONDS,
             )
+            create_server_context(self.data_dir)
 
             command_exe, command_prefix = resolve_agent_command(self.agent_dir)
             tray_command_exe, tray_command_prefix = resolve_tray_command(self.agent_dir)
@@ -1010,6 +1045,9 @@ class SetupApplication:
                     command_prefix=command_prefix,
                     config_path=self.config_path,
                 )
+                wait_for_agent(self.config_path)
+            else:
+                run_task_script(DEFAULT_TASK_NAME, "Remove")
 
             configure_tray_startup(
                 enabled=self.install_task_var.get(),
@@ -1040,6 +1078,8 @@ class SetupApplication:
 
     def _build_summary(self, adapter: AdapterInfo, pairing_code: str, port: int) -> str:
         """Create the Home Assistant summary text."""
+        certificate = (self.data_dir / "agent-cert.pem").read_text(encoding="ascii")
+        fingerprint = hashlib.sha256(ssl.PEM_cert_to_DER_cert(certificate)).hexdigest()
         return (
             f"{self._t('summary_title')}\n\n"
             f"{self._t('summary_name')}: {adapter.hostname}\n"
@@ -1047,6 +1087,7 @@ class SetupApplication:
             f"{self._t('summary_mac')}: {adapter.mac_address}\n"
             f"{self._t('summary_machine_id')}: {self.machine_id}\n"
             f"{self._t('summary_pairing')}: {pairing_code}\n"
+            f"TLS SHA-256: {fingerprint}\n"
             f"{self._t('summary_port')}: {port}\n"
             f"{self._t('summary_broadcast')}: {adapter.broadcast_address}\n"
             f"{self._t('summary_subnet')}: {adapter.subnet_cidr}\n\n"
@@ -1063,6 +1104,21 @@ class SetupApplication:
 def main() -> int:
     """Run the Tkinter application."""
     args = parse_args()
+    if args.upgrade_existing:
+        agent_dir = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
+        config_path = args.config or resolve_data_dir(agent_dir) / "config.json"
+        if not config_path.exists():
+            return 3  # First install: let the installer offer the normal configurator.
+        try:
+            upgrade_existing_installation(agent_dir, config_path)
+        except Exception as err:
+            try:
+                logging.basicConfig(filename=config_path.with_name("upgrade.log"), level=logging.ERROR)
+                logging.error("Existing installation upgrade failed: %s", err)
+            except OSError:
+                pass
+            return 1
+        return 0
     root = tk.Tk()
     style = ttk.Style(root)
     if "vista" in style.theme_names():

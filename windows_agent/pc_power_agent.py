@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import ctypes
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -36,7 +37,10 @@ def build_windows_command(action: str, *, delay_seconds: int, force: bool) -> li
 def get_system_uptime_seconds() -> int | None:
     """Return the Windows uptime in whole seconds."""
     try:
-        return int(ctypes.windll.kernel32.GetTickCount64() // 1000)
+        ticks = ctypes.windll.kernel32.GetTickCount64
+        ticks.argtypes = []
+        ticks.restype = ctypes.c_ulonglong
+        return int(ticks() // 1000)
     except (AttributeError, OSError):
         return None
 
@@ -78,8 +82,8 @@ def get_local_mac_addresses() -> list[str]:
 
 def _normalize_mac_string(value: str) -> str | None:
     """Normalize a MAC string into AA:BB:CC:DD:EE:FF."""
-    cleaned = "".join(character for character in value if character.isalnum())
-    if len(cleaned) != 12:
+    cleaned = re.sub(r"[:.\-]", "", value.strip())
+    if not re.fullmatch(r"[0-9a-fA-F]{12}", cleaned):
         return None
     return ":".join(cleaned[index : index + 2] for index in range(0, 12, 2)).upper()
 
