@@ -90,6 +90,9 @@ class FlowTests(unittest.IsolatedAsyncioTestCase):
             def async_show_form(self, **kwargs):
                 return {"type": "form", **kwargs}
 
+            def async_show_menu(self, **kwargs):
+                return {"type": "menu", **kwargs}
+
             def async_create_entry(self, **kwargs):
                 return {"type": "create_entry", **kwargs}
 
@@ -112,6 +115,7 @@ class FlowTests(unittest.IsolatedAsyncioTestCase):
         self.env.update(CONF_HOST="host", CONF_MAC="mac", CONF_NAME="name", vol=vol,
             cv=types.SimpleNamespace(string=str), callback=lambda fn: fn,
             ConfigEntryState=types.SimpleNamespace(LOADED="loaded"),
+            er=types.SimpleNamespace(async_get=lambda hass: hass.entity_registry),
             config_entries=types.SimpleNamespace(ConfigFlow=FlowBase, OptionsFlow=FlowBase),
             async_get_clientsession=lambda hass: None, platform_label=lambda value: value or "PC")
         exec(compile(ast.Module(body=selected, type_ignores=[]), str(source), "exec"), self.env)
@@ -123,7 +127,10 @@ class FlowTests(unittest.IsolatedAsyncioTestCase):
                 setattr(entry, key, value)
         self.hass = types.SimpleNamespace(data={}, config_entries=types.SimpleNamespace(
             async_get_entry=lambda _: self.entry, async_entries=lambda: [self.entry],
-            async_update_entry=Mock(side_effect=update), async_reload=AsyncMock()))
+            async_update_entry=Mock(side_effect=update), async_reload=AsyncMock()),
+            entity_registry=types.SimpleNamespace(
+                async_get_entity_id=lambda *args: "switch.renamed_pc_power",
+                async_get=lambda entity_id: types.SimpleNamespace(disabled_by=None)))
         self.flow = self.env["PCPowerFreeConfigFlow"]()
         self.flow.hass = self.hass
         self.flow.context = {"entry_id": "keep-me"}
@@ -178,9 +185,45 @@ class FlowTests(unittest.IsolatedAsyncioTestCase):
     async def test_options_do_not_create_stale_connection_overrides(self):
         flow = self.env["PCPowerOptionsFlow"](self.entry)
         flow.hass = self.hass
-        result = await flow.async_step_init({"host": "192.0.2.3", "scan_interval": 20})
+        result = await flow.async_step_device({"host": "192.0.2.3", "scan_interval": 20})
         self.assertEqual(result["data"], {})
         self.assertEqual(self.entry.data["host"], "192.0.2.3")
+
+    async def test_options_menu_keeps_device_settings_and_alexa_separate(self):
+        flow = self.env["PCPowerOptionsFlow"](self.entry)
+        flow.hass = self.hass
+        result = await flow.async_step_init()
+        self.assertEqual(result["type"], "menu")
+        self.assertEqual(result["menu_options"], ["device", "alexa"])
+        self.hass.config_entries.async_update_entry.assert_not_called()
+
+    async def test_alexa_guide_uses_renamed_power_entity_without_mutating_pairing(self):
+        flow = self.env["PCPowerOptionsFlow"](self.entry)
+        flow.hass = self.hass
+        result = await flow.async_step_alexa()
+        self.assertEqual(result["description_placeholders"]["entity_id"], "switch.renamed_pc_power")
+        self.assertEqual(result["step_id"], "alexa")
+        self.assertEqual((await flow.async_step_alexa({}))["step_id"], "alexa_plugin")
+        self.assertEqual((await flow.async_step_alexa_plugin({}))["step_id"], "alexa_filter")
+        self.assertEqual((await flow.async_step_alexa_filter({}))["step_id"], "alexa_pair")
+        self.assertEqual((await flow.async_step_alexa_pair({}))["reason"], "guide_finished")
+        self.hass.config_entries.async_update_entry.assert_not_called()
+        self.assertNotIn("token", repr(result).lower())
+
+    async def test_alexa_guide_stops_if_power_entity_is_missing(self):
+        self.hass.entity_registry.async_get_entity_id = lambda *args: None
+        flow = self.env["PCPowerOptionsFlow"](self.entry)
+        flow.hass = self.hass
+        result = await flow.async_step_alexa()
+        self.assertEqual(result["reason"], "power_entity_missing")
+        self.hass.config_entries.async_update_entry.assert_not_called()
+
+    async def test_alexa_guide_stops_if_power_entity_is_disabled(self):
+        self.hass.entity_registry.async_get = lambda entity_id: types.SimpleNamespace(disabled_by="user")
+        flow = self.env["PCPowerOptionsFlow"](self.entry)
+        flow.hass = self.hass
+        result = await flow.async_step_alexa()
+        self.assertEqual(result["reason"], "power_entity_missing")
 
 
 class CoordinatorTests(unittest.IsolatedAsyncioTestCase):

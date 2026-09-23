@@ -12,6 +12,7 @@ from homeassistant.const import CONF_HOST, CONF_MAC, CONF_NAME
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
+import homeassistant.helpers.entity_registry as er
 from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 from .api import (
@@ -443,8 +444,24 @@ class PCPowerOptionsFlow(config_entries.OptionsFlow):
         """Store the config entry."""
         self._config_entry = config_entry
 
+    def _power_entity_id(self) -> str | None:
+        registry = er.async_get(self.hass)
+        entity_id = registry.async_get_entity_id(
+            "switch", DOMAIN, f"{self._config_entry.entry_id}_power"
+        )
+        if not entity_id:
+            return None
+        entity = registry.async_get(entity_id)
+        return entity_id if entity is not None and entity.disabled_by is None else None
+
     async def async_step_init(self, user_input: dict[str, Any] | None = None):
-        """Manage the options."""
+        """Choose between device settings and the optional Alexa guide."""
+        if user_input is not None:
+            return await self.async_step_device(user_input)
+        return self.async_show_menu(step_id="init", menu_options=["device", "alexa"])
+
+    async def async_step_device(self, user_input: dict[str, Any] | None = None):
+        """Manage the existing device options."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -462,7 +479,45 @@ class PCPowerOptionsFlow(config_entries.OptionsFlow):
 
         current_values = {**self._config_entry.data, **self._config_entry.options}
         return self.async_show_form(
-            step_id="init",
+            step_id="device",
             data_schema=_options_schema(current_values),
             errors=errors,
         )
+
+    async def async_step_alexa(self, user_input: dict[str, Any] | None = None):
+        """Start a read-only guide for exporting this PC to Matterbridge."""
+        entity_id = self._power_entity_id()
+        if entity_id is None:
+            return self.async_abort(reason="power_entity_missing")
+        if user_input is not None:
+            return await self.async_step_alexa_plugin()
+        return self.async_show_form(
+            step_id="alexa",
+            data_schema=vol.Schema({}),
+            description_placeholders={"entity_id": entity_id},
+        )
+
+    async def async_step_alexa_plugin(self, user_input: dict[str, Any] | None = None):
+        """Explain installation and authentication without handling a HA token."""
+        if user_input is not None:
+            return await self.async_step_alexa_filter()
+        return self.async_show_form(step_id="alexa_plugin", data_schema=vol.Schema({}))
+
+    async def async_step_alexa_filter(self, user_input: dict[str, Any] | None = None):
+        """Explain the restrictive export and preview check."""
+        if user_input is not None:
+            return await self.async_step_alexa_pair()
+        entity_id = self._power_entity_id()
+        if entity_id is None:
+            return self.async_abort(reason="power_entity_missing")
+        return self.async_show_form(
+            step_id="alexa_filter",
+            data_schema=vol.Schema({}),
+            description_placeholders={"entity_id": entity_id},
+        )
+
+    async def async_step_alexa_pair(self, user_input: dict[str, Any] | None = None):
+        """Explain Alexa commissioning; never mark it verified automatically."""
+        if user_input is not None:
+            return self.async_abort(reason="guide_finished")
+        return self.async_show_form(step_id="alexa_pair", data_schema=vol.Schema({}))

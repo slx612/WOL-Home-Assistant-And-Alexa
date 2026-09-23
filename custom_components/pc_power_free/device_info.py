@@ -25,6 +25,6 @@ def build_device_info(entry: ConfigEntry) -> DeviceInfo:
         identifiers={(DOMAIN, device_identifier)},
         connections=connections,
         name=device_name,
-        manufacturer="PC Power Free",
+        manufacturer="WakeLink",
         model=platform_model(platform),
     )

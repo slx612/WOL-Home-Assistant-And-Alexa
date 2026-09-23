@@ -1,5 +1,5 @@
 {
-  "title": "PC Power Free",
+  "title": "WakeLink",
   "config": {
     "flow_title": "{name}",
     "step": {
@@ -50,7 +50,14 @@
   "options": {
     "step": {
       "init": {
-        "title": "Opciones de PC Power Free",
+        "title": "Opciones de WakeLink",
+        "menu_options": {
+          "device": "Ajustes del PC",
+          "alexa": "Conectar con Alexa (prueba Matter)"
+        }
+      },
+      "device": {
+        "title": "Ajustes del PC",
         "data": {
           "name": "Nombre del dispositivo",
           "host": "IP o host actual del dispositivo",
@@ -60,7 +67,27 @@
           "broadcast_port": "Puerto de Wake-on-LAN",
           "scan_interval": "Intervalo de actualizacion del estado (segundos)"
         }
+      },
+      "alexa": {
+        "title": "Conectar con Alexa: antes de empezar",
+        "description": "Tu PC sigue vinculado a WakeLink en Home Assistant. Esta guia no envia ordenes de encendido o apagado ni cambia la vinculacion. Home Assistant y Matterbridge deben seguir encendidos cuando el PC este apagado. El codigo de Windows **no** es un codigo Matter. El interruptor de este PC es `{entity_id}`. Si ya has expuesto este PC por Emulated Hue, quita esa exposicion antes de vincular Matter para evitar duplicados en Alexa. Continua solo cuando quieras configurar la aplicacion independiente Matterbridge."
+      },
+      "alexa_plugin": {
+        "title": "Conectar Matterbridge con Home Assistant",
+        "description": "Abre **Configuracion > Aplicaciones > Matterbridge**, o [instala la aplicacion oficial](https://github.com/Luligu/matterbridge-home-assistant-addon/blob/main/DOCS.md) si falta. Antes de instalar `matterbridge-hass`, comprueba que Matterbridge **no esta vinculado** a otro controlador: al principio puede exportar todas las entidades de Home Assistant hasta configurar los filtros. Si ya esta vinculado, detente y configura primero filtros seguros. En el complemento, usa la direccion WebSocket real: `wss://` si Home Assistant sirve HTTPS con certificado de confianza; `ws://homeassistant.local:8123` solo en una red local de confianza porque envia el token sin cifrar. Se necesita un token de larga duracion; crealo en Seguridad de tu perfil y pegalo **solo en la interfaz del complemento**. Da acceso amplio a Home Assistant; nunca lo introduzcas en WakeLink. No desactives la verificacion del certificado para `wss://`. [Instrucciones del complemento](https://github.com/Luligu/matterbridge-hass/blob/main/README.md). No vincules Alexa todavia."
+      },
+      "alexa_filter": {
+        "title": "Exponer solo el interruptor de este PC",
+        "description": "Antes de vincular, limita `matterbridge-hass`: pon **Domain Whitelist** en `switch`; anade `{entity_id}` tanto a **Split Entities** como a **Whitelist**. Split Entities esta obsoleto en el complemento, pero se necesita para esta prueba. Nunca dejes Whitelist vacia: un filtro vacio puede exponer otros dispositivos de Home Assistant. Reinicia el complemento y revisa su lista de dispositivos. Continua solo si aparece exactamente el interruptor previsto, sin otros PC ni entidades de Home Assistant. Si tu version ya no ofrece Split Entities, detente y sigue sus instrucciones actuales de Split By Label en lugar de improvisar."
+      },
+      "alexa_pair": {
+        "title": "Vincular con Alexa",
+        "description": "En **Settings** de Matterbridge, elige como interfaz Matter mDNS la que aparece en **Home Assistant > Configuracion > Sistema > Red** (por ejemplo `end0` en algunos equipos HAOS). Luego busca el QR Matter o codigo de configuracion de Matterbridge. **No** es el codigo de seis cifras de WakeLink para el PC. En la app Alexa, anade un dispositivo Matter y escanea ese QR con un Echo compatible en la misma red. Dale al PC un nombre distinto. Terminar esta guia solo cierra las instrucciones; **no** significa que Alexa este verificada. Comprueba primero su estado. Prueba el apagado solo tras guardar tu trabajo y decidir apagar el PC."
       }
+    },
+    "abort": {
+      "power_entity_missing": "Falta el interruptor de encendido de este PC o esta deshabilitado. Activalo en Home Assistant antes de conectar Alexa.",
+      "guide_finished": "Guia Matter cerrada. La vinculacion del PC no ha cambiado; verifica Alexa por separado."
     },
     "error": {
       "invalid_input": "La subred de descubrimiento no es valida"

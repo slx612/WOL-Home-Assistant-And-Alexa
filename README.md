@@ -2,7 +2,7 @@
 
 [English](README.md) | [Espanol](docs/README.es.md)
 
-Local, subscription-free power control for Windows PCs and Linux hosts through Home Assistant. WakeLink is the new Windows app name; existing `PC Power Free` installation paths, settings and Home Assistant integration names remain unchanged.
+Local, subscription-free power control for Windows PCs and Linux hosts through Home Assistant. WakeLink is the visible name of the Windows app and Home Assistant integration. Existing `PC Power Free` installation paths and the `pc_power_free` integration ID stay unchanged so updates keep paired devices.
 
 ## Download
 
@@ -10,7 +10,7 @@ Local, subscription-free power control for Windows PCs and Linux hosts through H
 
 Use one Windows installer, not the individual executables. It installs the WakeLink dashboard, agent and tray app together.
 
-**Home Assistant is separate:** install `PC Power Free` through [HACS](#hacs). Other platforms, the manual integration ZIP and checksums are on the [beta.10 release page](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.10).
+**Home Assistant is separate:** install or update WakeLink through [HACS](#hacs). The Matter guide is in the beta.11 Home Assistant preview; Windows remains beta.10. [Installation and rollback instructions](docs/MATTER-PREVIEW-beta.11.md#english). Other platforms and the beta.10 manual integration ZIP are on the [beta.10 release page](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.10).
 
 ### Beta.10 update
 
@@ -18,7 +18,7 @@ Use one Windows installer, not the individual executables. It installs the WakeL
 
 Upgrading from beta.5 through beta.9 uses the existing installation: **do not uninstall, reset credentials or pair again**. Keep the port, token, machine ID and existing TLS certificate/key. See the [beta.10 instructions](docs/WINDOWS-beta.10.md).
 
-Manual Windows installation, hardware power cycles and Home Assistant checks are still required for beta.10. No Alexa or Matter configuration is changed or claimed validated.
+Manual Windows installation and hardware power cycles are still required to validate beta.10. Beta.11 only changes the Home Assistant integration and does not claim Alexa control is validated.
 
 ## What this is
 
@@ -31,7 +31,7 @@ This project covers the full local flow:
 - Shut it down or restart it over the local network
 - Expose it to Alexa through Home Assistant without paying for a third-party subscription
 
-No cloud dependency. No open internet ports required.
+Home Assistant control is local and needs no subscription or open internet ports. Alexa voice recognition can still require Amazon connectivity.
 
 ## Included
 
@@ -157,14 +157,14 @@ Notes:
 1. Copy `custom_components/pc_power_free` into `/config/custom_components/`
 2. Restart Home Assistant
 3. Go to `Settings > Devices & services`
-4. Add `PC Power Free`
+4. Add `WakeLink`
 
 ### HACS
 
 The repository is prepared for HACS with [`hacs.json`](hacs.json).
 
-1. In HACS, search for `PC Power Free` in the integrations list.
-2. Install the latest prerelease (beta.10). If updating an older beta, keep the existing device and pairing; the [beta.7 upgrade guide](docs/UPGRADE-beta.7.md) explains the HTTPS migration from beta.5/6.
+1. In HACS, search for `WakeLink` in the integrations list.
+2. Install the latest Home Assistant prerelease (beta.11 for the Matter guide). If updating an older beta, keep the existing device and pairing; the [beta.7 upgrade guide](docs/UPGRADE-beta.7.md) explains the HTTPS migration from beta.5/6.
 3. Restart Home Assistant. Existing installations keep their pairing.
 
 If the integration tile still shows the generic placeholder icon, your Home Assistant version is likely older than `2026.3`, which is the first release that supports bundled `brand/` assets for custom integrations.
@@ -190,7 +190,7 @@ Checklist: [`docs/HACS_PUBLISHING.md`](docs/HACS_PUBLISHING.md)
 There is also a manual IP flow:
 
 1. `Add integration`
-2. `PC Power Free`
+2. `WakeLink`
 3. `Set up by IP manually`
 4. Enter the current host IP and agent port
 5. Enter the pairing code
@@ -202,10 +202,9 @@ If the code expires:
 
 ## Alexa
 
-The supported design path is `Alexa + Home Assistant`.
-It is not yet validated end-to-end on a real installation, so treat the Alexa route as `experimental` until that test is complete.
+The experimental beta.11 route is `Alexa + Matterbridge + Home Assistant`. Open **Configure > Connect with Alexa (Matter preview)** on an existing WakeLink PC. This guide does not install Matterbridge automatically; see [the detailed setup and rollback guide](docs/MATTER-PREVIEW-beta.11.md#english). Do not expose other Home Assistant entities unintentionally. Alexa control is not yet validated end-to-end.
 
-The simplest local route is `emulated_hue`.
+The earlier `emulated_hue` route remains an experimental manual fallback. Do not expose the same PC through both bridges at once.
 
 Example:
 
@@ -277,7 +276,7 @@ LICENSE
 Current `default HACS repository` status:
 
 - Included in HACS default following [merged submission #7156](https://github.com/hacs/default/pull/7156).
-- Current prerelease: `v0.2.0-beta.10`, with downloads linked at the top of this README. Its [manual checks](docs/WINDOWS-beta.10.md) remain pending.
+- Windows installer: `v0.2.0-beta.10`. Home Assistant Matter guide preview: `v0.2.0-beta.11`. The [Windows manual checks](docs/WINDOWS-beta.10.md) remain pending.
 
 Still pending before calling it truly final:
 

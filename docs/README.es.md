@@ -2,7 +2,7 @@
 
 [English](../README.md) | [Espanol](README.es.md)
 
-Control local y sin suscripcion del encendido, apagado y reinicio de equipos Windows y Linux desde Home Assistant. WakeLink es el nuevo nombre de la app de Windows; se conservan las rutas, los ajustes y el nombre de la integracion `PC Power Free`.
+Control local y sin suscripcion del encendido, apagado y reinicio de equipos Windows y Linux desde Home Assistant. WakeLink es el nombre visible de la app de Windows y de la integracion de Home Assistant. Se conservan las rutas `PC Power Free` y el identificador `pc_power_free` para no perder los dispositivos vinculados.
 
 ## Descarga
 
@@ -10,7 +10,7 @@ Control local y sin suscripcion del encendido, apagado y reinicio de equipos Win
 
 Usa un unico instalador, no los ejecutables por separado. Instala juntos el panel WakeLink, el agente y la bandeja.
 
-**Home Assistant va por separado:** instala `PC Power Free` mediante [HACS](#hacs). Las otras plataformas, el ZIP de instalacion manual y las sumas de comprobacion estan en la [publicacion beta.10](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.10).
+**Home Assistant va por separado:** instala o actualiza WakeLink mediante [HACS](#hacs). La guia Matter esta en la prueba beta.11 para Home Assistant; Windows sigue en beta.10. [Instalacion y vuelta atras](MATTER-PREVIEW-beta.11.md#espanol). Las otras plataformas y el ZIP manual beta.10 estan en la [publicacion beta.10](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.10).
 
 ### Actualizacion beta.10
 
@@ -18,7 +18,7 @@ Usa un unico instalador, no los ejecutables por separado. Instala juntos el pane
 
 La actualizacion desde beta.5 hasta beta.9 reutiliza la instalacion: **no desinstales, no restablezcas las credenciales ni vuelvas a vincular**. Conserva puerto, token, identificador de equipo y certificado/clave TLS existentes. Consulta la [guia beta.10](WINDOWS-beta.10.md#espanol).
 
-Siguen pendientes las pruebas manuales de beta.10, los ciclos de energia y la comprobacion con Home Assistant. No se cambia la configuracion de Alexa ni Matter, ni se da por validada.
+Siguen pendientes las pruebas manuales y los ciclos de energia de beta.10. Beta.11 solo cambia la integracion de Home Assistant y no da por validado el control desde Alexa.
 
 ## Que es
 
@@ -31,7 +31,7 @@ Este proyecto cubre el flujo local completo:
 - Apagarlo o reiniciarlo por red local
 - Exponerlo a Alexa a traves de Home Assistant sin pagar una suscripcion de terceros
 
-No depende de la nube. No requiere abrir puertos a Internet.
+El control desde Home Assistant es local, sin suscripcion ni puertos abiertos a Internet. El reconocimiento de voz de Alexa puede requerir conexion con Amazon.
 
 ## Incluye
 
@@ -157,14 +157,14 @@ Notas:
 1. Copia `custom_components/pc_power_free` dentro de `/config/custom_components/`
 2. Reinicia Home Assistant
 3. Ve a `Ajustes > Dispositivos y servicios`
-4. Anade `PC Power Free`
+4. Anade `WakeLink`
 
 ### HACS
 
 El repositorio esta preparado para HACS con [`hacs.json`](../hacs.json).
 
-1. En HACS, busca `PC Power Free` en la lista de integraciones.
-2. Instala la ultima version preliminar (beta.10). Si actualizas desde una beta anterior, conserva el dispositivo y la vinculacion; la [guia beta.7](UPGRADE-beta.7.md#espanol) explica la migracion HTTPS desde beta.5/6.
+1. En HACS, busca `WakeLink` en la lista de integraciones.
+2. Instala la ultima version preliminar de Home Assistant (beta.11 para la guia Matter). Si actualizas desde una beta anterior, conserva el dispositivo y la vinculacion; la [guia beta.7](UPGRADE-beta.7.md#espanol) explica la migracion HTTPS desde beta.5/6.
 3. Reinicia Home Assistant. Si ya estaba instalada, se conserva la vinculacion.
 
 Si la tarjeta de la integracion sigue mostrando el icono generico, lo normal es que tu Home Assistant sea anterior a `2026.3`, que es la primera version con soporte para assets `brand/` incluidos dentro de una custom integration.
@@ -190,7 +190,7 @@ Checklist: [`docs/HACS_PUBLISHING.md`](HACS_PUBLISHING.md)
 Tambien hay un flujo manual por IP:
 
 1. `Anadir integracion`
-2. `PC Power Free`
+2. `WakeLink`
 3. `Configurar por IP manualmente`
 4. Introduce la IP actual del host y el puerto del agente
 5. Introduce el codigo de vinculacion
@@ -202,10 +202,10 @@ Si el codigo caduca:
 
 ## Alexa
 
-La ruta prevista es `Alexa + Home Assistant`.
+La ruta experimental de beta.11 es `Alexa + Matterbridge + Home Assistant`. Abre **Configurar > Conectar con Alexa (prueba Matter)** en el PC ya vinculado. La guia no instala Matterbridge automaticamente; consulta [los pasos detallados y la vuelta atras](MATTER-PREVIEW-beta.11.md#espanol). No expongas por error otras entidades de Home Assistant. Aun no se ha validado el control completo con Alexa.
 Todavia no esta validada de extremo a extremo en una instalacion real, asi que ahora mismo debe considerarse `experimental`.
 
-La opcion local mas simple es `emulated_hue`.
+La antigua opcion manual `emulated_hue` queda como alternativa experimental. No expongas el mismo PC por los dos puentes a la vez.
 
 Ejemplo:
 
@@ -277,7 +277,7 @@ LICENSE
 Estado actual para el repositorio `default` de HACS:
 
 - Incluido en HACS default tras [aceptarse la solicitud #7156](https://github.com/hacs/default/pull/7156).
-- Version preliminar actual: `v0.2.0-beta.10`, con descargas al principio de este README. Sus [pruebas manuales](WINDOWS-beta.10.md#espanol) siguen pendientes.
+- Instalador Windows: `v0.2.0-beta.10`. Prueba de la guia Matter en Home Assistant: `v0.2.0-beta.11`. Siguen pendientes las [pruebas manuales de Windows](WINDOWS-beta.10.md#espanol).
 
 Pendiente antes de considerarlo realmente final:
 

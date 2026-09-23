@@ -1,5 +1,5 @@
 {
-  "title": "PC Power Free",
+  "title": "WakeLink",
   "config": {
     "flow_title": "{name}",
     "step": {
@@ -50,7 +50,14 @@
   "options": {
     "step": {
       "init": {
-        "title": "PC Power Free options",
+        "title": "WakeLink options",
+        "menu_options": {
+          "device": "Device settings",
+          "alexa": "Connect with Alexa (Matter preview)"
+        }
+      },
+      "device": {
+        "title": "Device settings",
         "data": {
           "name": "Device name",
           "host": "Current device host or IP",
@@ -60,7 +67,27 @@
           "broadcast_port": "Wake-on-LAN port",
           "scan_interval": "Status update interval (seconds)"
         }
+      },
+      "alexa": {
+        "title": "Connect with Alexa: before you start",
+        "description": "Your WakeLink PC stays paired with Home Assistant. This guide does not send power commands or change that pairing. Home Assistant and Matterbridge must remain on when the PC is off. Your Windows pairing code is **not** a Matter code. The power entity for this PC is `{entity_id}`. If this PC is already exposed through Emulated Hue, remove that exposure before pairing Matter to avoid duplicate Alexa devices. Continue only when you are ready to configure the separate Matterbridge app."
+      },
+      "alexa_plugin": {
+        "title": "Connect Matterbridge to Home Assistant",
+        "description": "Open **Settings > Apps > Matterbridge**, or [install the official Matterbridge app](https://github.com/Luligu/matterbridge-home-assistant-addon/blob/main/DOCS.md) if it is missing. Before installing `matterbridge-hass`, check that Matterbridge is **not already paired** with another controller: on first start the plugin may export every Home Assistant entity until filtered. If it is already paired, stop and configure safe filters first. In the plugin, use your actual Home Assistant WebSocket URL: `wss://` when Home Assistant serves HTTPS with a trusted certificate; `ws://homeassistant.local:8123` only on a trusted local network because it sends the token without encryption. A Home Assistant long-lived access token is required; create it in your profile's Security page and paste it **only into the plugin's own interface**. This grants broad Home Assistant access; never enter it into WakeLink. Do not disable certificate validation for `wss://`. [Plugin instructions](https://github.com/Luligu/matterbridge-hass/blob/main/README.md). Do not pair with Alexa yet."
+      },
+      "alexa_filter": {
+        "title": "Expose only this PC's power switch",
+        "description": "Before pairing, restrict the `matterbridge-hass` plugin: set its **Domain Whitelist** to `switch`; add `{entity_id}` to **Split Entities** and to **Whitelist**. Split Entities is deprecated upstream but currently needed for this preview. Never leave the Whitelist empty: an empty filter can expose unrelated Home Assistant devices. Restart the plugin and inspect its device list. Continue only if it shows exactly the switch you intended, not other PCs or Home Assistant entities. If your plugin no longer offers Split Entities, stop and use its current Split By Label instructions instead of guessing."
+      },
+      "alexa_pair": {
+        "title": "Pair with Alexa",
+        "description": "In Matterbridge **Settings**, set the Matter mDNS interface to the network interface shown in **Home Assistant > Settings > System > Network** (for example `end0` on some HAOS hosts). Then find Matterbridge's Matter QR or setup code. This is **not** the six-digit WakeLink PC code. In the Alexa app, add a Matter device and scan that QR with a compatible Echo on the same network. Give the PC a distinct name. Finishing this guide only closes the instructions; it does **not** mean Alexa was verified. First check its reported state. Test shutdown only after saving work and deciding to shut the PC down."
       }
+    },
+    "abort": {
+      "power_entity_missing": "This PC's power switch is missing or disabled. Enable it in Home Assistant before connecting Alexa.",
+      "guide_finished": "Matter guide closed. The PC pairing is unchanged; verify Alexa separately."
     },
     "error": {
       "invalid_input": "Invalid discovery subnet"
