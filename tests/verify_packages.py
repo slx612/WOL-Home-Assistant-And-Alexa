@@ -1,5 +1,6 @@
 """Verify built archives/Windows code without installing or executing power actions."""
 import io
+import sys
 import json
 import marshal
 from pathlib import Path
@@ -43,6 +44,9 @@ def verify_sources(archive, prefix=""):
 
 def main():
     results = {}
+    if "--windows-only" in sys.argv:
+        print(json.dumps(verify_windows(), indent=2))
+        return
     with zipfile.ZipFile(ROOT / "release_assets/pcpowerfree-home-assistant-integration.zip") as archive:
         expected = {path.relative_to(ROOT).as_posix() for path in
                     (ROOT / "custom_components/pc_power_free").rglob("*")
@@ -72,6 +76,12 @@ def main():
                 if script.is_file():
                     assert inner.extractfile(f"./app/dsm_runtime/{script.name}").read() == script.read_bytes()
 
+    results.update(verify_windows())
+    print(json.dumps(results, indent=2))
+
+
+def verify_windows():
+    results = {}
     for exe, module in [("PCPowerAgent", "pc_power_agent"), ("PCPowerSetup", "setup_wizard_gui"),
                         ("PCPowerTray", "pc_power_tray")]:
         path = ROOT / f"windows_agent/dist/{exe}.exe"
@@ -83,8 +93,17 @@ def main():
         assert any("cryptography" in name and name.endswith(".pyd") for name in archive.toc), exe
         if exe == "PCPowerSetup":
             assert archive.extract("install-task.ps1") == (ROOT / "windows_agent/install-task.ps1").read_bytes()
+            for module_name in ("desktop_ui", "ui_preferences", "update_check", "setup_wizard_gui"):
+                assert signature(embedded.extract(module_name)) == source_signature(ROOT / f"windows_agent/{module_name}.py"), module_name
+            icon_name = next(name for name in archive.toc if name.replace("\\", "/") == "assets/wakelink.ico")
+            assert archive.extract(icon_name) == (ROOT / "windows_agent/assets/wakelink.ico").read_bytes()
+        if exe == "PCPowerTray":
+            for module_name in ("ui_preferences", "update_check"):
+                assert signature(embedded.extract(module_name)) == source_signature(ROOT / f"windows_agent/{module_name}.py"), module_name
         levels = []
         with pefile.PE(str(path)) as pe:
+            assert any(entry.id == 14 for entry in pe.DIRECTORY_ENTRY_RESOURCE.entries), "Missing icon"
+            assert pe.VS_FIXEDFILEINFO[0].FileVersionLS == 10, "Missing beta.10 product metadata"
             for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
                 if resource_type.id != 24:
                     continue
@@ -93,9 +112,9 @@ def main():
                         data = language.data.struct
                         xml = pe.get_data(data.OffsetToData, data.Size).decode("utf-8")
                         levels.extend(re.findall(r'requestedExecutionLevel[^>]*level="([^"]+)"', xml))
-        assert levels == ["requireAdministrator" if exe == "PCPowerSetup" else "asInvoker"]
+        assert levels == ["asInvoker"]
         results[exe] = "source/core/TLS match; crypto bundled; manifest checked"
-    print(json.dumps(results, indent=2))
+    return results
 
 
 if __name__ == "__main__":

@@ -3,9 +3,9 @@
 
 a = Analysis(
     ['setup_wizard_gui.py'],
-    pathex=['C:\\Users\\sergi\\Desktop\\wake on lan'],
+    pathex=['..'],
     binaries=[],
-    datas=[('install-task.ps1', '.')],
+    datas=[('assets/wakelink.ico', 'assets'), ('install-task.ps1', '.')],
     hiddenimports=['agent_core.common'],
     hookspath=[],
     hooksconfig={},
@@ -26,7 +26,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=False,
@@ -35,5 +35,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    uac_admin=True,
+    version='assets\\PCPowerSetup.version.txt',
+    icon=['assets/wakelink.ico'],
 )

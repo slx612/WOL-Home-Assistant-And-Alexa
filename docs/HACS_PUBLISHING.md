@@ -4,9 +4,9 @@ Use this checklist to keep the repository aligned with the current HACS situatio
 
 ## Current status
 
-- Current prerelease: [v0.2.0-beta.7](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.7)
+- Current prerelease: [v0.2.0-beta.10](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.10)
 - HACS default submission [#7156 was merged](https://github.com/hacs/default/pull/7156); current default-list membership verified on September 7, 2026.
-- Beta.7 preserves beta.6 pairing when both components are updated; follow the [upgrade guide](UPGRADE-beta.7.md).
+- Beta.10 keeps existing pairings; follow the [Windows update guide](WINDOWS-beta.10.md). The [beta.7 guide](UPGRADE-beta.7.md) still explains the beta.5/6 HTTPS migration.
 
 ## 1. Repository metadata on GitHub
 
@@ -42,7 +42,7 @@ For each new prerelease:
 3. Attach release notes
 4. Attach the current release assets
 
-Release assets for `v0.2.0-beta.7`:
+Release assets for `v0.2.0-beta.10`:
 
 - `pcpowerfree-windows-x64-setup.exe`
 - `PCPowerAgent.exe`
@@ -50,7 +50,7 @@ Release assets for `v0.2.0-beta.7`:
 - `PCPowerSetup.exe`
 - `pcpowerfree-home-assistant-integration.zip`
 - `pcpowerfree-linux-agent.tar.gz`
-- `pcpowerfree-dsm-noarch-0.2.0-0007.spk`
+- `pcpowerfree-dsm-noarch-0.2.0-0010.spk`
 - `SHA256SUMS.txt`
 
 Suggested release path from this point:
@@ -61,7 +61,7 @@ Suggested release path from this point:
 
 ## 4. HACS default repository submission
 
-The submission is accepted and merged. No new default-list submission is needed for beta.7. Keep metadata and validation workflows correct, publish a full prerelease with its assets, and retain the same integration domain and device identifiers.
+The submission is accepted and merged. No new default-list submission is needed for beta.10. Keep metadata and validation workflows correct, publish a full prerelease with its assets, and retain the same integration domain and device identifiers.
 
 ## 5. Recommended validation status
 

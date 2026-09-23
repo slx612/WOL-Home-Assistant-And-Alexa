@@ -35,12 +35,17 @@ Invoke-PythonCommand -StepName "La instalacion de dependencias de build" -Argume
     (Join-Path $agentDir "requirements-build.txt")
 )
 
+Invoke-PythonCommand -StepName "WakeLink assets" -Arguments @((Join-Path $agentDir "build_assets.py"))
+
 Push-Location $agentDir
 try {
     $sharedPyInstallerArgs = @(
         "--noconfirm",
         "--clean",
         "--onefile",
+        "--noupx",
+        "--icon",
+        (Join-Path $agentDir "assets\wakelink.ico"),
         "--paths",
         $projectRoot,
         "--hidden-import",
@@ -53,6 +58,8 @@ try {
     ) + $sharedPyInstallerArgs + @(
         "--name",
         "PCPowerAgent",
+        "--version-file",
+        "assets\PCPowerAgent.version.txt",
         "pc_power_agent.py"
     )
     Invoke-PythonCommand -StepName "La compilacion de PCPowerAgent" -Arguments $agentBuildArgs
@@ -64,6 +71,8 @@ try {
         "--windowed",
         "--name",
         "PCPowerTray",
+        "--version-file",
+        "assets\PCPowerTray.version.txt",
         "--hidden-import",
         "pystray._win32",
         "pc_power_tray.py"
@@ -75,7 +84,10 @@ try {
         "PyInstaller"
     ) + $sharedPyInstallerArgs + @(
         "--windowed",
-        "--uac-admin",
+        "--version-file",
+        "assets\PCPowerSetup.version.txt",
+        "--add-data",
+        "assets/wakelink.ico;assets",
         "--add-data",
         "install-task.ps1;.",
         "--name",

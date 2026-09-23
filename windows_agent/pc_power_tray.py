@@ -1,32 +1,38 @@
-"""System tray companion app for PC Power Free."""
+"""WakeLink system tray companion; existing PC Power Free identities retained."""
 
 from __future__ import annotations
 
 import argparse
 import ctypes
-from dataclasses import dataclass
 import json
-import locale
 import os
 from pathlib import Path
-import re
 import ssl
 import subprocess
 import sys
 import threading
 import time
 from typing import Any
-from urllib import error as urllib_error
 from urllib import request as urllib_request
 import webbrowser
 
 from PIL import Image, ImageDraw
 import pystray
 
-APP_NAME = "PC Power Free"
-APP_TITLE = "PC Power Free Tray"
+from ui_preferences import load_language
+from update_check import (
+    GitHubRelease,
+    fetch_latest_github_release,
+    format_update_error,
+    is_newer_version,
+    normalize_version_text,
+    parse_version_key,
+)
+
+APP_NAME = "WakeLink"
+APP_TITLE = "WakeLink"
 APP_DIR_NAME = "PC Power Free"
-APP_VERSION = "0.2.0-beta.7"
+APP_VERSION = "0.2.0-beta.10"
 DEFAULT_AGENT_PORT = 58477
 CONFIG_FILENAME = "config.json"
 COMMAND_GUARD_ALLOW = "allow"
@@ -37,18 +43,10 @@ MUTEX_NAME = "Local\\PCPowerFreeTraySingleton"
 UPDATE_STATE_FILENAME = "update_state.json"
 UPDATE_CHECK_INTERVAL_SECONDS = 6 * 60 * 60
 UPDATE_CHECK_STARTUP_DELAY_SECONDS = 5
-GITHUB_RELEASES_API_URL = (
-    "https://api.github.com/repos/slx612/WOL-Home-Assistant-And-Alexa/releases?per_page=10"
-)
-VERSION_REGEX = re.compile(
-    r"^v?(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)"
-    r"(?:[-.]?(?P<stage>alpha|beta|rc)(?:[.-]?(?P<stage_number>\d+))?)?$",
-    re.IGNORECASE,
-)
 
 TRANSLATIONS = {
     "en": {
-        "status_not_configured": "PC Power Free is not configured yet",
+        "status_not_configured": "WakeLink is not configured yet",
         "status_error": "Tray status: {error}",
         "status_waiting": "Tray status: waiting for the local agent",
         "status_allow": "Protection is off. Home Assistant requests are allowed.",
@@ -60,14 +58,16 @@ TRANSLATIONS = {
         "menu_ignore_60": "Ignore for 1 hour",
         "menu_ignore_manual": "Ignore until I re-enable it",
         "menu_check_updates": "Check for updates",
+        "menu_checking_updates": "Checking for updates...",
         "menu_refresh": "Refresh status",
-        "menu_open_setup": "Open configurator",
+        "menu_open_setup": "Open WakeLink",
         "menu_exit": "Exit tray icon",
         "notify_refresh_failed": "Could not refresh status: {error}",
         "notify_change_failed": "Could not change protection: {error}",
         "notify_update_check_running": "Update check already in progress.",
         "notify_update_check_failed": "Could not check updates: {error}",
-        "notify_up_to_date": "PC Power Free is already up to date: {version}",
+        "notify_up_to_date": "No newer Windows installer is available for WakeLink.\n\nInstalled version: {version}",
+        "update_browser_failed": "Could not open your browser. Download the installer manually:\n\n{url}",
         "notify_allow": "Home Assistant requests are allowed again.",
         "notify_ignore_15": "Home Assistant requests will be ignored for 15 minutes.",
         "notify_ignore_60": "Home Assistant requests will be ignored for 1 hour.",
@@ -75,14 +75,14 @@ TRANSLATIONS = {
         "notify_open_setup_failed": "Could not open the configurator: {error}",
         "update_available_title": "Update available",
         "update_available_message": (
-            "A newer version of PC Power Free is available.\n\n"
+            "A newer version of WakeLink with a Windows installer is available.\n\n"
             "Installed version: {current_version}\n"
             "Latest version: {latest_version}\n\n"
-            "Do you want to open the release page now?"
+            "Download the installer now? Save your work before running it."
         ),
     },
     "es": {
-        "status_not_configured": "PC Power Free todavia no esta configurado",
+        "status_not_configured": "WakeLink todavia no esta configurado",
         "status_error": "Estado de la bandeja: {error}",
         "status_waiting": "Estado de la bandeja: esperando al agente local",
         "status_allow": "La proteccion esta desactivada. Home Assistant puede enviar ordenes.",
@@ -94,14 +94,16 @@ TRANSLATIONS = {
         "menu_ignore_60": "Ignorar durante 1 hora",
         "menu_ignore_manual": "Ignorar hasta que yo lo reactive",
         "menu_check_updates": "Buscar actualizaciones",
+        "menu_checking_updates": "Buscando actualizaciones...",
         "menu_refresh": "Actualizar estado",
-        "menu_open_setup": "Abrir configurador",
+        "menu_open_setup": "Abrir WakeLink",
         "menu_exit": "Salir del icono de bandeja",
         "notify_refresh_failed": "No se pudo actualizar el estado: {error}",
         "notify_change_failed": "No se pudo cambiar la proteccion: {error}",
         "notify_update_check_running": "La comprobacion de actualizaciones ya esta en marcha.",
         "notify_update_check_failed": "No se pudieron comprobar las actualizaciones: {error}",
-        "notify_up_to_date": "PC Power Free ya esta al dia: {version}",
+        "notify_up_to_date": "No hay un instalador de Windows mas nuevo para WakeLink.\n\nVersion instalada: {version}",
+        "update_browser_failed": "No se pudo abrir el navegador. Descarga el instalador manualmente:\n\n{url}",
         "notify_allow": "Las ordenes de Home Assistant vuelven a estar permitidas.",
         "notify_ignore_15": "Las ordenes de Home Assistant se ignoraran durante 15 minutos.",
         "notify_ignore_60": "Las ordenes de Home Assistant se ignoraran durante 1 hora.",
@@ -109,106 +111,13 @@ TRANSLATIONS = {
         "notify_open_setup_failed": "No se pudo abrir el configurador: {error}",
         "update_available_title": "Actualizacion disponible",
         "update_available_message": (
-            "Hay una version mas nueva de PC Power Free.\n\n"
+            "Hay una version mas nueva de WakeLink con instalador de Windows.\n\n"
             "Version instalada: {current_version}\n"
             "Ultima version: {latest_version}\n\n"
-            "Quieres abrir ahora la pagina de la version?"
+            "Quieres descargar ahora el instalador? Guarda tu trabajo antes de ejecutarlo."
         ),
     },
 }
-
-
-@dataclass(slots=True)
-class GitHubRelease:
-    """Published GitHub release data used by the updater."""
-
-    version: str
-    html_url: str
-    name: str
-
-
-def normalize_version_text(version: str) -> str:
-    """Return a normalized version string without a leading v."""
-    return version.strip().lower().removeprefix("v")
-
-
-def parse_version_key(version: str) -> tuple[int, int, int, int, int] | None:
-    """Parse a release version into a sortable tuple."""
-    match = VERSION_REGEX.fullmatch(normalize_version_text(version))
-    if match is None:
-        return None
-
-    stage_order = {"alpha": 0, "beta": 1, "rc": 2, None: 3}
-    stage = match.group("stage")
-    return (
-        int(match.group("major")),
-        int(match.group("minor")),
-        int(match.group("patch")),
-        stage_order[stage.lower() if stage else None],
-        int(match.group("stage_number") or 0),
-    )
-
-
-def is_newer_version(candidate: str, current: str) -> bool:
-    """Return whether the candidate version is newer than the current one."""
-    candidate_key = parse_version_key(candidate)
-    current_key = parse_version_key(current)
-    if candidate_key is None or current_key is None:
-        return normalize_version_text(candidate) != normalize_version_text(current)
-    return candidate_key > current_key
-
-
-def format_update_error(err: Exception) -> str:
-    """Return a short, user-facing error message for update checks."""
-    if isinstance(err, urllib_error.HTTPError):
-        return f"GitHub HTTP {err.code}"
-    if isinstance(err, urllib_error.URLError):
-        reason = getattr(err, "reason", err)
-        return str(reason)
-    return str(err) or err.__class__.__name__
-
-
-def fetch_latest_github_release(timeout: int = 5) -> GitHubRelease:
-    """Return the latest published GitHub release, including prereleases."""
-    request = urllib_request.Request(
-        GITHUB_RELEASES_API_URL,
-        headers={
-            "Accept": "application/vnd.github+json",
-            "User-Agent": f"PCPowerFreeTray/{APP_VERSION}",
-        },
-    )
-    with urllib_request.urlopen(request, timeout=timeout) as response:
-        payload = json.loads(response.read().decode("utf-8"))
-
-    if not isinstance(payload, list):
-        raise RuntimeError("GitHub returned an invalid response")
-
-    ranked_releases: list[tuple[tuple[int, int, int, int, int], GitHubRelease]] = []
-    for item in payload:
-        if not isinstance(item, dict) or item.get("draft"):
-            continue
-
-        version = str(item.get("tag_name") or item.get("name") or "").strip()
-        version_key = parse_version_key(version)
-        if version_key is None:
-            continue
-
-        ranked_releases.append(
-            (
-                version_key,
-                GitHubRelease(
-                    version=normalize_version_text(version),
-                    html_url=str(item.get("html_url") or "").strip(),
-                    name=str(item.get("name") or version).strip(),
-                ),
-            )
-        )
-
-    if not ranked_releases:
-        raise RuntimeError("No published release was found")
-
-    ranked_releases.sort(key=lambda item: item[0], reverse=True)
-    return ranked_releases[0][1]
 
 
 def resolve_data_dir(app_dir: Path) -> Path:
@@ -235,10 +144,7 @@ def resolve_default_config_path() -> Path:
 
 def resolve_language() -> str:
     """Return the preferred UI language for the tray app."""
-    system_locale = locale.getlocale()[0] or ""
-    if system_locale.lower().startswith("es"):
-        return "es"
-    return "en"
+    return load_language()
 
 
 def load_runtime_config(config_path: Path) -> dict[str, Any]:
@@ -286,19 +192,19 @@ def build_local_api_request(
 
 
 def launch_configurator(path: Path) -> None:
-    """Ask Windows to elevate, including when launched by a normal-login tray."""
+    """Open the daily dashboard normally; it elevates only privileged actions."""
     launch = ctypes.windll.shell32.ShellExecuteW
     launch.argtypes = [ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_wchar_p,
                       ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_int]
     launch.restype = ctypes.c_void_p
-    result = launch(None, "runas", str(path), None, str(path.parent), 1)
+    result = launch(None, "open", str(path), None, str(path.parent), 1)
     if not result or result <= 32:
         raise OSError(f"Windows did not open the configurator (code {result})")
 
 
 def build_tray_image(*, mode: str | None, available: bool) -> Image.Image:
     """Return the tray icon image for the current protection state."""
-    background = "#3b82f6" if available else "#6b7280"
+    background = "#183b3a" if available else "#6b7280"
     accent = "#f59e0b" if mode and mode != COMMAND_GUARD_ALLOW else "#34d399"
 
     image = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
@@ -322,9 +228,20 @@ def load_update_state(path: Path) -> dict[str, Any]:
 
 
 def save_update_state(path: Path, payload: dict[str, Any]) -> None:
-    """Persist the updater state."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    """Cache update metadata without allowing storage failures to hide results."""
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    except OSError:
+        pass  # This cache is optional, unlike the agent's configuration.
+
+
+def show_update_message(message: str, *, error: bool = False) -> None:
+    """Show an explicit result even when Windows suppresses tray notifications."""
+    ctypes.windll.user32.MessageBoxW(
+        None, message, APP_TITLE,
+        (0x00000010 if error else 0x00000040) | 0x00010000 | 0x00040000,
+    )
 
 
 def ask_yes_no(title: str, message: str) -> bool:
@@ -356,12 +273,17 @@ class TrayApp:
 
     def __init__(self, config_path: Path) -> None:
         self._config_path = config_path
-        self._update_state_path = config_path.with_name(UPDATE_STATE_FILENAME)
+        cache_root = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
+        self._update_state_path = (
+            Path(cache_root) / APP_DIR_NAME / UPDATE_STATE_FILENAME
+            if cache_root else config_path.with_name(UPDATE_STATE_FILENAME)
+        )
         self._language_code = resolve_language()
         self._cached_state: dict[str, Any] | None = None
         self._last_error: str | None = None
         self._update_check_in_progress = False
-        self._icon = pystray.Icon(APP_NAME)
+        self._manual_update_requested = threading.Event()
+        self._icon = pystray.Icon(APP_DIR_NAME)
         self._icon.icon = build_tray_image(mode=None, available=False)
         self._icon.title = APP_TITLE
         self._icon.menu = pystray.Menu(
@@ -372,14 +294,18 @@ class TrayApp:
             pystray.MenuItem(lambda item: self._t("menu_ignore_60"), self._ignore_for_1_hour),
             pystray.MenuItem(lambda item: self._t("menu_ignore_manual"), self._ignore_manually),
             pystray.Menu.SEPARATOR,
-            pystray.MenuItem(lambda item: self._t("menu_check_updates"), self._check_updates_from_menu),
+            pystray.MenuItem(
+                lambda item: self._t("menu_checking_updates" if self._update_check_in_progress else "menu_check_updates"),
+                self._check_updates_from_menu,
+            ),
             pystray.MenuItem(lambda item: self._t("menu_refresh"), self._refresh_from_menu),
-            pystray.MenuItem(lambda item: self._t("menu_open_setup"), self._open_setup),
+            pystray.MenuItem(lambda item: self._t("menu_open_setup"), self._open_setup, default=True),
             pystray.MenuItem(lambda item: self._t("menu_exit"), self._quit),
         )
 
     def _t(self, key: str, **kwargs: Any) -> str:
         """Translate a tray string."""
+        self._language_code = resolve_language()
         return TRANSLATIONS[self._language_code][key].format(**kwargs)
 
     def run(self) -> None:
@@ -540,31 +466,38 @@ class TrayApp:
         """Start an asynchronous GitHub update check."""
         if self._update_check_in_progress:
             if manual:
-                self._notify(self._t("notify_update_check_running"))
+                self._manual_update_requested.set()
+                show_update_message(self._t("notify_update_check_running"))
             return
 
         self._update_check_in_progress = True
-        worker = threading.Thread(
-            target=self._update_check_worker,
-            args=(manual,),
-            daemon=True,
-        )
-        worker.start()
+        self._manual_update_requested.clear()
+        self._icon.update_menu()
+        try:
+            worker = threading.Thread(
+                target=self._update_check_worker,
+                args=(manual,),
+                daemon=True,
+            )
+            worker.start()
+        except Exception as err:
+            self._update_check_in_progress = False
+            self._icon.update_menu()
+            if manual:
+                show_update_message(self._t("notify_update_check_failed", error=format_update_error(err)), error=True)
 
     def _update_check_worker(self, manual: bool) -> None:
         """Run the update check without blocking the tray UI."""
         try:
             if not manual:
-                time.sleep(UPDATE_CHECK_STARTUP_DELAY_SECONDS)
-                if not self._should_auto_check_updates():
+                self._manual_update_requested.wait(UPDATE_CHECK_STARTUP_DELAY_SECONDS)
+                if not self._should_auto_check_updates() and not self._manual_update_requested.is_set():
                     return
 
             latest_release = fetch_latest_github_release()
             self._record_update_check(latest_release.version)
-
             if is_newer_version(latest_release.version, APP_VERSION):
-                if manual or self._should_prompt_for_release(latest_release.version):
-                    self._record_prompted_release(latest_release.version)
+                if self._should_prompt_for_release(latest_release.version) or manual or self._manual_update_requested.is_set():
                     should_open = ask_yes_no(
                         self._t("update_available_title"),
                         self._t(
@@ -573,19 +506,27 @@ class TrayApp:
                             latest_version=latest_release.version,
                         ),
                     )
-                    if should_open and latest_release.html_url:
-                        webbrowser.open(latest_release.html_url)
+                    self._record_prompted_release(latest_release.version)
+                    if should_open:
+                        try:
+                            opened = webbrowser.open(latest_release.installer_url)
+                        except Exception:
+                            opened = False
+                        if not opened:
+                            show_update_message(self._t("update_browser_failed", url=latest_release.installer_url), error=True)
                 return
 
-            if manual:
-                self._notify(self._t("notify_up_to_date", version=APP_VERSION))
+            if manual or self._manual_update_requested.is_set():
+                show_update_message(self._t("notify_up_to_date", version=APP_VERSION))
         except Exception as err:  # pragma: no cover - depends on local Windows runtime
-            if manual:
-                self._notify(
-                    self._t("notify_update_check_failed", error=format_update_error(err))
+            if manual or self._manual_update_requested.is_set():
+                show_update_message(
+                    self._t("notify_update_check_failed", error=format_update_error(err)), error=True,
                 )
         finally:
+            self._manual_update_requested.clear()
             self._update_check_in_progress = False
+            self._icon.update_menu()
 
     def _should_auto_check_updates(self) -> bool:
         """Return whether the startup check should hit GitHub now."""
@@ -623,7 +564,7 @@ class TrayApp:
 
 def parse_args() -> argparse.Namespace:
     """Parse tray CLI arguments."""
-    parser = argparse.ArgumentParser(description="Run the PC Power Free system tray app")
+    parser = argparse.ArgumentParser(description="Run the WakeLink system tray app")
     parser.add_argument("--config", help="Path to config.json")
     return parser.parse_args()
 

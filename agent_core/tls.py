@@ -45,6 +45,11 @@ def create_server_context(directory: Path) -> ssl.SSLContext:
             temp_key.chmod(0o600)
             os.replace(temp_key, key)
             os.replace(temp_cert, certificate)
+    if os.name == "nt":
+        # The agent runs elevated, but the dashboard and tray read this public certificate.
+        subprocess.run(["icacls.exe", str(certificate), "/grant:r", "*S-1-5-32-545:(R)"],
+            check=True, capture_output=True, text=True, timeout=10,
+            creationflags=subprocess.CREATE_NO_WINDOW)
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     context.minimum_version = ssl.TLSVersion.TLSv1_2
     context.load_cert_chain(certificate, key)

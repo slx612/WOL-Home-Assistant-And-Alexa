@@ -1,33 +1,24 @@
-# PC Power Free
+# WakeLink
 
-![PC Power Free](custom_components/pc_power_free/brand/logo.png)
+[English](README.md) | [Espanol](docs/README.es.md)
 
-Language:
+Local, subscription-free power control for Windows PCs and Linux hosts through Home Assistant. WakeLink is the new Windows app name; existing `PC Power Free` installation paths, settings and Home Assistant integration names remain unchanged.
 
-- [English](README.md)
-- [Espanol](docs/README.es.md)
+## Download
 
-Local, subscription-free power control for Windows PCs and Linux hosts through Home Assistant and Alexa.
+**[Download for Windows x64: beta.10 installer](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/download/v0.2.0-beta.10/pcpowerfree-windows-x64-setup.exe)**
 
-Current beta: `0.2.0-beta.7`, a security/correctness prerelease pending real-hardware validation. Earlier beta.6 testing does not validate this version. The [upgrade instructions](docs/UPGRADE-beta.7.md) preserve existing beta.6 pairing, devices and automations: update both components, without uninstalling or entering a new code.
+Use one Windows installer, not the individual executables. It installs the WakeLink dashboard, agent and tray app together.
 
-**Downloads:** [Windows installer](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/download/v0.2.0-beta.7/pcpowerfree-windows-x64-setup.exe) | [Home Assistant integration](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/download/v0.2.0-beta.7/pcpowerfree-home-assistant-integration.zip) | [All downloads and release notes](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.7)
+**Home Assistant is separate:** install `PC Power Free` through [HACS](#hacs). Other platforms, the manual integration ZIP and checksums are on the [beta.10 release page](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.10).
 
-Publication status:
+### Beta.10 update
 
-- Current GitHub prerelease: [v0.2.0-beta.7](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.7)
-- Release downloads: Windows installer, standalone Windows binaries, Home Assistant zip, Linux source bundle, experimental DSM `.spk`, SHA-256 checksums
-- Included in the HACS default list; [submission #7156 was merged](https://github.com/hacs/default/pull/7156). Select beta.7 explicitly if HACS does not offer prereleases automatically.
-- Supported distribution paths: manual install, HACS custom repository, GitHub prerelease downloads, Windows installer, experimental Linux source install
-- Beta.7 real-world validation still pending: in-place Windows upgrade, Home Assistant/Alexa, hardware power cycles and DSM power actions; see the [validation report](docs/VALIDATION-beta.7.md).
+`0.2.0-beta.10` is a public **prerelease**. It includes the WakeLink dashboard, the beta.8 certificate-access and desktop-shortcut fixes, and left-click-to-open behavior for the tray icon. Right-click still shows the menu. The update checker offers the direct installer download.
 
-Beta.7 highlights:
+Upgrading from beta.5 through beta.9 uses the existing installation: **do not uninstall, reset credentials or pair again**. Keep the port, token, machine ID and existing TLS certificate/key. See the [beta.10 instructions](docs/WINDOWS-beta.10.md).
 
-- Existing beta.6 pairings migrate automatically without new codes or device entries.
-- HTTPS, persistent certificate pinning, guarded state persistence and bounded discovery.
-- In-place Windows updates preserve settings and repair enabled startup tasks without repeating setup.
-- 56 local regression checks, including old/new protocol exchanges using the published beta.6 code.
-- Previous beta.6 DSM install/start/discovery/pairing tests do not validate this new build's hardware behavior.
+Manual Windows installation, hardware power cycles and Home Assistant checks are still required for beta.10. No Alexa or Matter configuration is changed or claimed validated.
 
 ## What this is
 
@@ -48,13 +39,9 @@ No cloud dependency. No open internet ports required.
 - A shared cross-platform runtime core in [`agent_core`](agent_core)
 - A Windows agent in [`windows_agent`](windows_agent)
 - An experimental Linux agent in [`linux_agent`](linux_agent)
-- A full Windows installer in [`windows_agent/dist/pcpowerfree-windows-x64-setup.exe`](windows_agent/dist/pcpowerfree-windows-x64-setup.exe)
-- A packaged Home Assistant integration zip in [`release_assets/pcpowerfree-home-assistant-integration.zip`](release_assets/pcpowerfree-home-assistant-integration.zip)
+- A single Windows installer, linked above
+- A Home Assistant integration ZIP on the public release page, as an alternative to HACS
 - An experimental Linux source bundle published as a GitHub release asset: `pcpowerfree-linux-agent.tar.gz`
-- Standalone Windows binaries:
-  - [`windows_agent/dist/PCPowerAgent.exe`](windows_agent/dist/PCPowerAgent.exe)
-  - [`windows_agent/dist/PCPowerTray.exe`](windows_agent/dist/PCPowerTray.exe)
-  - [`windows_agent/dist/PCPowerSetup.exe`](windows_agent/dist/PCPowerSetup.exe)
 
 ## How it works
 
@@ -82,36 +69,37 @@ No cloud dependency. No open internet ports required.
 - A Windows PC or Linux host
 - Wake-on-LAN support if you want power-on from a full shutdown
 - Home Assistant `2026.3` or newer if you want the bundled integration logo from `custom_components/.../brand/`
-- Alexa is optional and works through Home Assistant
+- Alexa is optional; its route through Home Assistant remains experimental
 
 ## Windows installation
 
-Recommended path:
+The download above installs beta.10. The following dashboard flow requires Windows x64.
 
-1. Run [`windows_agent/dist/pcpowerfree-windows-x64-setup.exe`](windows_agent/dist/pcpowerfree-windows-x64-setup.exe)
-2. Complete the installer
-3. Review the detected settings
-4. Leave these enabled:
-   - `Create firewall rule`
-   - `Install at startup`
-5. Click `Install`
-6. Confirm the tray app is enabled at startup
-7. Use the tray icon to temporarily or permanently ignore Home Assistant power requests when needed
-8. Keep the pairing code visible or copied somewhere because Home Assistant will ask for it next
-9. Pair the device in Home Assistant within 10 minutes, or generate a new code later from the Windows configurator
+### First-time configuration (beta.10)
 
-The setup program auto-detects:
+1. Run the beta.10 Windows installer once, select English or Spanish and choose whether to create a desktop shortcut. It is off by default. Windows asks for administrator permission for installation.
+2. Leave **Open WakeLink** selected on Finish, then choose **Enable and continue**. WakeLink detects the local network, creates the local firewall rule and enables automatic startup. This configures the installed app; it is not a second installation.
+3. Pair with the separately installed Home Assistant integration on a trusted LAN. Compare the certificate fingerprint shown in WakeLink, then enter the temporary code within ten minutes. The dashboard shows local-agent status; this alone does not prove Wake-on-LAN or Alexa works.
 
-- Computer name
-- Active network adapter
-- Current IP
-- Primary MAC
-- Wake-on-LAN broadcast
-- Discovery subnet
+### Upgrade from beta.5 through beta.9
 
-The setup UI supports `English` and `Spanish`.
-It also includes a `Check for updates` action against GitHub releases.
-The tray app also checks for updates automatically after Windows starts and can offer to open the latest release page.
+**Do not uninstall.** Back up the existing data folder, close the dashboard and run the beta.10 installer over the same installation. Keep the existing installation and data locations, normally `C:\Program Files\PC Power Free` and `C:\ProgramData\PC Power Free`.
+
+The finish page reports that settings and pairing were preserved. Its checked launch option opens the tray **and** dashboard, not onboarding; no new code or second setup is required. The port, token, machine ID, existing TLS certificate/key, guard and startup choices are retained. An older installation without TLS files creates them during migration; existing certificates must not be replaced. Disabled automatic startup stays disabled. No Windows restart is requested by the installer.
+
+Read the [beta.10 manual instructions](docs/WINDOWS-beta.10.md) before testing. If Home Assistant is still on beta.5/6, follow the separate [beta.7 integration upgrade guide](docs/UPGRADE-beta.7.md) for HTTPS compatibility; do not remove the existing device entry.
+
+The dashboard supports English and Spanish. First-time launch follows the installer language; upgrades do not override a saved app language. The optional desktop shortcut is called `WakeLink`; old desktop links to this installation are removed. `PCPowerSetup.exe` is the dashboard's legacy filename, not another installer. Agent and tray startup roles are unchanged; opening the dashboard later should not request administrator permission just to view it.
+
+### SmartScreen and updates
+
+The preview is unsigned. SmartScreen may show an unrecognized-app or unknown-publisher warning. Verify the source and supplied SHA-256 checksum before deciding whether to proceed; a matching checksum is not a publisher signature. Do not disable antivirus, SmartScreen or organizational policy. Free code signing for the open-source project is pending, and signing would not guarantee that all warnings disappear. See [Microsoft's SmartScreen explanation](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation).
+
+Update checks need Internet access; local dashboard use does not depend on GitHub. An offline check must not be reported as "up to date". The tray asks before opening the installer download; it never runs the installer automatically.
+
+### Advanced: standalone executables
+
+`PCPowerAgent.exe`, `PCPowerTray.exe` and `PCPowerSetup.exe` are for development or advanced troubleshooting only. The installer includes all three; normal installation and upgrades do not require downloading or launching them separately.
 
 ## Linux installation
 
@@ -176,7 +164,7 @@ Notes:
 The repository is prepared for HACS with [`hacs.json`](hacs.json).
 
 1. In HACS, search for `PC Power Free` in the integrations list.
-2. Install the integration, selecting beta.7 as explained in the [upgrade guide](docs/UPGRADE-beta.7.md).
+2. Install the latest prerelease (beta.10). If updating an older beta, keep the existing device and pairing; the [beta.7 upgrade guide](docs/UPGRADE-beta.7.md) explains the HTTPS migration from beta.5/6.
 3. Restart Home Assistant. Existing installations keep their pairing.
 
 If the integration tile still shows the generic placeholder icon, your Home Assistant version is likely older than `2026.3`, which is the first release that supports bundled `brand/` assets for custom integrations.
@@ -209,7 +197,7 @@ There is also a manual IP flow:
 
 If the code expires:
 
-- on Windows, open the configurator and generate a new one
+- on Windows, open WakeLink and generate a new code on its Home Assistant page for first-time pairing, not a routine upgrade
 - on Linux, rerun `linux_agent/setup_cli.py`
 
 ## Alexa
@@ -289,9 +277,9 @@ LICENSE
 Current `default HACS repository` status:
 
 - Included in HACS default following [merged submission #7156](https://github.com/hacs/default/pull/7156).
-- Current prerelease: `v0.2.0-beta.7`, with downloads linked at the top of this README.
+- Current prerelease: `v0.2.0-beta.10`, with downloads linked at the top of this README. Its [manual checks](docs/WINDOWS-beta.10.md) remain pending.
 
 Still pending before calling it truly final:
 
-- Real beta.7 installation/upgrade, HA/Alexa and hardware power-cycle tests.
+- Real beta.10 installation/upgrade, HA/Alexa and hardware power-cycle tests.
 - DSM power-action privilege model

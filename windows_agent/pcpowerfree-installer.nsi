@@ -7,8 +7,9 @@ RequestExecutionLevel admin
 !include "x64.nsh"
 
 !define APP_NAME "PC Power Free"
-!define APP_PUBLISHER "PC Power Free"
-!define APP_VERSION "0.2.0-beta.7"
+!define APP_DISPLAY_NAME "WakeLink"
+!define APP_PUBLISHER "WakeLink open-source project"
+!define APP_VERSION "0.2.0-beta.10"
 !define INSTALL_BASENAME "pcpowerfree-windows-x64-setup.exe"
 !define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
 
@@ -16,26 +17,39 @@ RequestExecutionLevel admin
   !define OUTPUT_DIR ".\dist"
 !endif
 
-Name "${APP_NAME}"
+; Keep APP_NAME and the legacy filenames/registry key stable for in-place upgrades.
+Name "${APP_DISPLAY_NAME}"
 OutFile "${OUTPUT_DIR}\${INSTALL_BASENAME}"
 InstallDir "$ProgramFiles64\${APP_NAME}"
 InstallDirRegKey HKLM "${UNINSTALL_KEY}" "InstallLocation"
-ShowInstDetails show
-ShowUnInstDetails show
-BrandingText "${APP_NAME}"
+ShowInstDetails hide
+ShowUnInstDetails hide
+BrandingText "${APP_DISPLAY_NAME} ${APP_VERSION}"
+VIProductVersion "0.2.0.10"
+VIAddVersionKey "ProductName" "${APP_DISPLAY_NAME}"
+VIAddVersionKey "ProductVersion" "${APP_VERSION}"
+VIAddVersionKey "FileDescription" "${APP_DISPLAY_NAME} Windows installer"
+VIAddVersionKey "FileVersion" "${APP_VERSION}"
+VIAddVersionKey "LegalCopyright" "MIT License"
 Var IsUpgrade
 
 !define MUI_ABORTWARNING
 !insertmacro MUI_RESERVEFILE_LANGDLL
-!define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\modern-install.ico"
-!define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico"
+!define MUI_ICON "assets\wakelink.ico"
+!define MUI_UNICON "assets\wakelink.ico"
+!define MUI_WELCOMEPAGE_TITLE "${APP_DISPLAY_NAME}"
+!define MUI_WELCOMEPAGE_TEXT "$(WelcomeText)"
+!define MUI_FINISHPAGE_TITLE "$(FinishTitle)"
+!define MUI_FINISHPAGE_TEXT "$(FinishText)"
+!define MUI_FINISHPAGE_TEXT_LARGE
+!define MUI_FINISHPAGE_NOREBOOTSUPPORT
 !define MUI_FINISHPAGE_RUN "$INSTDIR\PCPowerSetup.exe"
 !define MUI_FINISHPAGE_RUN_FUNCTION FinishRun
 !define MUI_FINISHPAGE_RUN_TEXT "$(FinishRunText)"
-!define MUI_FINISHPAGE_SHOWREADME ""
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
 !define MUI_PAGE_CUSTOMFUNCTION_SHOW FinishPageShow
 !insertmacro MUI_PAGE_FINISH
@@ -46,10 +60,20 @@ Var IsUpgrade
 !insertmacro MUI_LANGUAGE "English"
 !insertmacro MUI_LANGUAGE "Spanish"
 
-LangString FinishRunText 1033 "Open the configurator now"
-LangString FinishRunText 1034 "Abrir el configurador ahora"
-LangString UpgradeFinishRunText 1033 "Open the tray app (existing pairing preserved)"
-LangString UpgradeFinishRunText 1034 "Abrir la bandeja (vinculacion anterior conservada)"
+LangString WelcomeText 1033 "Local PC power control with Home Assistant.$\r$\n$\r$\nInstall or update WakeLink. Existing PC Power Free settings and pairing are kept.$\r$\n$\r$\nOn a new PC, the dashboard guides you through first-time configuration after installation."
+LangString WelcomeText 1034 "Control local del PC con Home Assistant.$\r$\n$\r$\nInstala o actualiza WakeLink. Se conservan los ajustes y la vinculacion de PC Power Free.$\r$\n$\r$\nEn un PC nuevo, el panel te guiara por la configuracion inicial al terminar."
+LangString FinishTitle 1033 "WakeLink installed"
+LangString FinishTitle 1034 "WakeLink instalado"
+LangString FinishText 1033 "Next: first-time configuration in the dashboard. Review your PC settings and pair with Home Assistant.$\r$\n$\r$\nNo Windows restart is required."
+LangString FinishText 1034 "Siguiente: configuracion inicial en el panel. Revisa los ajustes del PC y vincula Home Assistant.$\r$\n$\r$\nNo hace falta reiniciar Windows."
+LangString UpgradeFinishTitle 1033 "WakeLink updated"
+LangString UpgradeFinishTitle 1034 "WakeLink actualizado"
+LangString UpgradeFinishText 1033 "Your settings and pairing are preserved. No setup or new pairing code is needed.$\r$\n$\r$\nStartup preferences are unchanged. No Windows restart is required."
+LangString UpgradeFinishText 1034 "Se conservan tus ajustes y vinculacion. No necesitas repetir la configuracion ni otro codigo.$\r$\n$\r$\nEl inicio automatico no cambia. No hace falta reiniciar Windows."
+LangString FinishRunText 1033 "Open WakeLink"
+LangString FinishRunText 1034 "Abrir WakeLink"
+LangString UpgradeFinishRunText 1033 "Open WakeLink and the tray app"
+LangString UpgradeFinishRunText 1034 "Abrir WakeLink y la bandeja"
 LangString UpgradeFailed 1033 "Could not restart the updated agent. Your configuration was kept. Check upgrade.log in the data folder before retrying; do not uninstall."
 LangString UpgradeFailed 1034 "No se pudo arrancar el agente actualizado. Se conserva tu configuracion. Consulta upgrade.log en la carpeta de datos antes de reintentar; no desinstales."
 LangString OnlyX64Message 1033 "This installer is only for Windows x64."
@@ -58,6 +82,10 @@ LangString ConfigureShortcut 1033 "Configure ${APP_NAME}"
 LangString ConfigureShortcut 1034 "Configurar ${APP_NAME}"
 LangString UninstallShortcut 1033 "Uninstall ${APP_NAME}"
 LangString UninstallShortcut 1034 "Desinstalar ${APP_NAME}"
+LangString DesktopShortcut 1033 "Create a desktop shortcut"
+LangString DesktopShortcut 1034 "Crear un acceso directo en el escritorio"
+LangString ShortcutFailed 1033 "The desktop shortcut could not be updated. WakeLink is installed; open it from the Start menu."
+LangString ShortcutFailed 1034 "No se pudo actualizar el acceso directo del escritorio. WakeLink esta instalado; abrelo desde el menu Inicio."
 
 Function .onInit
   StrCpy $IsUpgrade 0
@@ -66,6 +94,8 @@ FunctionEnd
 
 Function FinishPageShow
   ${If} $IsUpgrade == 1
+    SendMessage $mui.FinishPage.Title ${WM_SETTEXT} 0 "STR:$(UpgradeFinishTitle)"
+    SendMessage $mui.FinishPage.Text ${WM_SETTEXT} 0 "STR:$(UpgradeFinishText)"
     SendMessage $mui.FinishPage.Run ${WM_SETTEXT} 0 "STR:$(UpgradeFinishRunText)"
   ${EndIf}
 FunctionEnd
@@ -73,12 +103,17 @@ FunctionEnd
 Function FinishRun
   ${If} $IsUpgrade == 1
     Exec '"$INSTDIR\PCPowerTray.exe"'
-  ${Else}
+    ; Do not override the dashboard's saved language on an upgrade.
     Exec '"$INSTDIR\PCPowerSetup.exe"'
+  ${ElseIf} $LANGUAGE == ${LANG_SPANISH}
+    Exec '"$INSTDIR\PCPowerSetup.exe" --lang es'
+  ${Else}
+    Exec '"$INSTDIR\PCPowerSetup.exe" --lang en'
   ${EndIf}
 FunctionEnd
 
-Section "Install" SEC_MAIN
+Section "WakeLink" SEC_MAIN
+  SectionIn RO
   ${IfNot} ${RunningX64}
     MessageBox MB_ICONSTOP "$(OnlyX64Message)"
     Abort
@@ -98,6 +133,7 @@ Section "Install" SEC_MAIN
   File "${OUTPUT_DIR}\install-task.ps1"
   File "${OUTPUT_DIR}\uninstall-task.ps1"
   File "${OUTPUT_DIR}\add-firewall-rule.ps1"
+  File "desktop-shortcut.ps1"
   File "${OUTPUT_DIR}\config.example.json"
 
   ExecWait '"$INSTDIR\PCPowerSetup.exe" --upgrade-existing' $0
@@ -113,9 +149,16 @@ Section "Install" SEC_MAIN
   CreateDirectory "$SMPROGRAMS\${APP_NAME}"
   CreateShortcut "$SMPROGRAMS\${APP_NAME}\$(ConfigureShortcut).lnk" "$INSTDIR\PCPowerSetup.exe"
   CreateShortcut "$SMPROGRAMS\${APP_NAME}\$(UninstallShortcut).lnk" "$INSTDIR\Uninstall.exe"
-  CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\PCPowerSetup.exe"
 
-  WriteRegStr HKLM "${UNINSTALL_KEY}" "DisplayName" "${APP_NAME}"
+  ; Keep one public Start menu entry; desktop creation is optional below.
+  CreateDirectory "$SMPROGRAMS\${APP_DISPLAY_NAME}"
+  CreateShortcut "$SMPROGRAMS\${APP_DISPLAY_NAME}\${APP_DISPLAY_NAME}.lnk" "$INSTDIR\PCPowerSetup.exe"
+  ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "$INSTDIR\desktop-shortcut.ps1" -DesktopPath "$DESKTOP" -InstallDir "$INSTDIR"' $0
+  ${If} $0 != 0
+    MessageBox MB_ICONEXCLAMATION "$(ShortcutFailed)"
+  ${EndIf}
+
+  WriteRegStr HKLM "${UNINSTALL_KEY}" "DisplayName" "${APP_DISPLAY_NAME}"
   WriteRegStr HKLM "${UNINSTALL_KEY}" "DisplayVersion" "${APP_VERSION}"
   WriteRegStr HKLM "${UNINSTALL_KEY}" "Publisher" "${APP_PUBLISHER}"
   WriteRegStr HKLM "${UNINSTALL_KEY}" "InstallLocation" "$INSTDIR"
@@ -123,6 +166,14 @@ Section "Install" SEC_MAIN
   WriteRegStr HKLM "${UNINSTALL_KEY}" "UninstallString" "$INSTDIR\Uninstall.exe"
   WriteRegDWORD HKLM "${UNINSTALL_KEY}" "NoModify" 1
   WriteRegDWORD HKLM "${UNINSTALL_KEY}" "NoRepair" 1
+SectionEnd
+
+Section /o "$(DesktopShortcut)" SEC_DESKTOP
+  SetShellVarContext all
+  ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "$INSTDIR\desktop-shortcut.ps1" -DesktopPath "$DESKTOP" -InstallDir "$INSTDIR" -Create' $0
+  ${If} $0 != 0
+    MessageBox MB_ICONEXCLAMATION "$(ShortcutFailed)"
+  ${EndIf}
 SectionEnd
 
 Section "Uninstall"
@@ -140,7 +191,9 @@ Section "Uninstall"
   ExecWait '"$SYSDIR\schtasks.exe" /Delete /TN "PC Power Agent" /F'
   ExecWait '"$SYSDIR\netsh.exe" advfirewall firewall delete rule name="PC Power Agent"'
 
-  Delete "$DESKTOP\${APP_NAME}.lnk"
+  ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "$INSTDIR\desktop-shortcut.ps1" -DesktopPath "$DESKTOP" -InstallDir "$INSTDIR"'
+  Delete "$SMPROGRAMS\${APP_DISPLAY_NAME}\${APP_DISPLAY_NAME}.lnk"
+  RMDir "$SMPROGRAMS\${APP_DISPLAY_NAME}"
   Delete "$SMPROGRAMS\${APP_NAME}\$(ConfigureShortcut).lnk"
   Delete "$SMPROGRAMS\${APP_NAME}\$(UninstallShortcut).lnk"
   RMDir "$SMPROGRAMS\${APP_NAME}"
@@ -151,6 +204,7 @@ Section "Uninstall"
   Delete "$INSTDIR\install-task.ps1"
   Delete "$INSTDIR\uninstall-task.ps1"
   Delete "$INSTDIR\add-firewall-rule.ps1"
+  Delete "$INSTDIR\desktop-shortcut.ps1"
   Delete "$INSTDIR\config.example.json"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"

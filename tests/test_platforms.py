@@ -15,6 +15,49 @@ sys.path.insert(0, str(ROOT / "windows_agent"))
 
 @unittest.skipUnless(sys.platform == "win32", "Windows wrapper")
 class WindowsTests(unittest.TestCase):
+    def test_left_click_opens_dashboard_and_menu_stays_available(self):
+        import pystray
+        import pc_power_tray as tray
+        native_menu = types.SimpleNamespace(Icon=Mock(return_value=Mock()),
+            Menu=pystray.Menu, MenuItem=pystray.MenuItem)
+        with patch.object(tray, "pystray", native_menu), \
+             patch.object(tray, "resolve_language", return_value="en"), \
+             patch.object(tray.TrayApp, "_open_setup") as open_dashboard:
+            app = tray.TrayApp(Path("never-created-config.json"))
+            app._icon.menu(app._icon)  # pystray's Windows left-click dispatches the default action.
+        open_dashboard.assert_called_once()
+        self.assertGreater(len(list(app._icon.menu)), 2)
+
+    def test_desktop_shortcut_choice_removes_only_wakelink_shortcuts(self):
+        script = ROOT / "windows_agent/desktop-shortcut.ps1"
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            desktop = directory / "Desktop"
+            desktop.mkdir()
+            installed = directory / "PCPowerSetup.exe"
+            installed.touch()
+            command = ["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+                "-File", str(script), "-DesktopPath", str(desktop), "-InstallDir", str(directory)]
+            subprocess.run([*command, "-Create"], capture_output=True, text=True, check=True)
+            current = desktop / "WakeLink.lnk"
+            legacy = desktop / "PC Power Free.lnk"
+            self.assertTrue(current.exists())
+            shutil.copyfile(current, legacy)
+            subprocess.run(command, capture_output=True, text=True, check=True)
+            self.assertFalse(current.exists())
+            self.assertFalse(legacy.exists())
+            other_install = directory / "Other"
+            other_install.mkdir()
+            subprocess.run([*command[:-1], str(other_install), "-Create"],
+                capture_output=True, text=True, check=True)
+            subprocess.run(command, capture_output=True, text=True, check=True)
+            self.assertTrue(current.exists(), "An unrelated shortcut must be preserved")
+            subprocess.run([*command[:-1], str(other_install)],
+                capture_output=True, text=True, check=True)
+            subprocess.run([*command, "-Create"], capture_output=True, text=True, check=True)
+            self.assertTrue(current.exists())
+            self.assertFalse(legacy.exists())
+
     def test_upgrade_entry_point_reuses_published_data_location_without_gui(self):
         import setup_wizard_gui as setup
         with tempfile.TemporaryDirectory() as temporary:
@@ -116,11 +159,11 @@ class WindowsTests(unittest.TestCase):
         command = run.call_args.args[0]
         self.assertTrue(any(str(arg).endswith("install-task.ps1") for arg in command))
 
-    def test_setup_launch_uses_windows_elevation(self):
+    def test_setup_launch_opens_dashboard_without_elevation(self):
         import pc_power_tray as tray
         with patch.object(tray.ctypes.windll.shell32, "ShellExecuteW", return_value=42) as launch:
             tray.launch_configurator(Path("fake.exe"))
-        self.assertEqual(launch.call_args.args[1], "runas")
+        self.assertEqual(launch.call_args.args[1], "open")
 
     def test_standalone_setup_uses_its_bundled_task_script(self):
         import setup_wizard_gui as setup
@@ -135,7 +178,7 @@ class WindowsTests(unittest.TestCase):
 class PackageScriptTests(unittest.TestCase):
     def test_installer_upgrades_existing_config_without_running_setup_wizard(self):
         script = (ROOT / "windows_agent/pcpowerfree-installer.nsi").read_text(encoding="utf-8")
-        install = script.split('Section "Install"', 1)[1].split("SectionEnd", 1)[0]
+        install = script.split('Section "WakeLink"', 1)[1].split("SectionEnd", 1)[0]
         self.assertIn('--upgrade-existing', install)
         self.assertNotIn('Delete "$APPDATA', install)
         task = (ROOT / "windows_agent/install-task.ps1").read_text(encoding="utf-8")

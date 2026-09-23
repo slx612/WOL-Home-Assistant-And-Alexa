@@ -3,7 +3,7 @@
 
 a = Analysis(
     ['pc_power_agent.py'],
-    pathex=['C:\\Users\\sergi\\Desktop\\wake on lan'],
+    pathex=['..'],
     binaries=[],
     datas=[],
     hiddenimports=['agent_core.common'],
@@ -26,7 +26,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=True,
@@ -35,4 +35,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    version='assets\\PCPowerAgent.version.txt',
+    icon=['assets/wakelink.ico'],
 )
