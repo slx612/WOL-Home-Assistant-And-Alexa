@@ -22,8 +22,12 @@ class MatterGuideContentTests(unittest.TestCase):
                 self.assertIn("power_entity_missing", options["abort"])
                 self.assertNotIn("{token}", json.dumps(options))
                 plugin_text = options["step"]["alexa_plugin"]["description"]
-                self.assertIn("wss://", plugin_text)
-                self.assertIn("ws://", plugin_text)
+                self.assertIn("wss", plugin_text)
+                self.assertIn("ws", plugin_text)
+                self.assertNotIn("http://", plugin_text)
+                self.assertNotIn("https://", plugin_text)
+                self.assertNotIn("ws://", plugin_text)
+                self.assertNotIn("wss://", plugin_text)
 
     def test_hacs_installation_uses_new_visible_name(self):
         english = (ROOT / "README.md").read_text(encoding="utf-8")
