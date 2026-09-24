@@ -8,6 +8,8 @@ You need a PC already paired with WakeLink in Home Assistant, Home Assistant OS 
 
 There are **two different codes**: WakeLink's **six-digit code** pairs the PC with Home Assistant; Matterbridge's **Matter QR code** pairs the bridge with Alexa. Do not scan the QR before step 6.
 
+These are real screenshots. **Red boxes** show exactly where to click or type. Your screen may differ with your Home Assistant version. For safety, no QR, token, or private network address is shown.
+
 ## 1. Check the PC and make a backup
 
 1. Follow [the WakeLink installation guide](GETTING_STARTED.en.md) if the PC is not yet under **Settings > Devices & services > WakeLink**.
@@ -21,6 +23,15 @@ There are **two different codes**: WakeLink's **six-digit code** pairs the PC wi
 
 1. In Home Assistant open **Settings > Apps > App store**. Older versions call **Apps** **Add-ons**.
 2. Open **... > Repositories**, paste `https://github.com/Luligu/matterbridge-home-assistant-addon`, and select **Add**. This is the [official repository](https://github.com/Luligu/matterbridge-home-assistant-addon).
+
+   First select the **three dots**, then **Repositories**:
+
+   ![App store menu with the three dots and Repositories outlined in red](images/alexa/ha-repositories-menu.png)
+
+   Paste the address into the outlined field and select **Add** (shown as **Anadir** in the Spanish screenshot):
+
+   ![Repository form with the URL field and Add button outlined in red](images/alexa/ha-add-repository.png)
+
 3. Find **Matterbridge**, select **Install**, and wait. Enable **Start on boot** so it runs when the PC is off. Select **Start** and **Open Web UI**. The first start may take several minutes; if the app is not ready, wait and retry.
 4. The top navigation says **Home | Devices | Logs | Settings**. **Home** already shows a QR code. **Do not scan it yet.**
 
@@ -31,11 +42,20 @@ There are **two different codes**: WakeLink's **six-digit code** pairs the PC wi
 1. In another Home Assistant tab open **Settings > System > Network**. Note the name of the primary interface with your home-network address. It might be `end0`, `eth0`, or something else: do not blindly copy an example.
 2. In Matterbridge select **Settings** at the top and find **Matter settings > Mdns interface**. Enter that exact name. Save and restart Matterbridge if prompted.
 
+   Select **Settings** and type your interface name into **Mdns interface**; the field is empty in this screenshot:
+
+   ![Matterbridge Settings and Mdns interface outlined in red](images/alexa/matterbridge-mdns.png)
+
 **Checkpoint:** on **Home > System info**, **Interface name** matches that network. A guest network isolating your Echo may prevent discovery.
 
 ## 4. Mark only the PC switch
 
 1. In Home Assistant open **Settings > Areas, labels & zones > Labels > Create label**. Name it `WakeLink Alexa`. Capitalization and spaces matter.
+
+   Type this exact name into **Name** (shown as **Nombre**) and then select **Create**:
+
+   ![Name field containing WakeLink Alexa outlined in red](images/alexa/ha-label-name.png)
+
 2. Go to **Settings > Devices & services > Entities** and search for the `switch.` ID from step 1. Enable table selection mode, select **only that entity**, choose **Add label**, and select `WakeLink Alexa`. If your version has labels in entity settings, adding it there works too.
 3. **Do not** put this label on the whole device, an area, or other entities. Confirm in the list that only the intended switch has `WakeLink Alexa`.
 
@@ -44,10 +64,19 @@ There are **two different codes**: WakeLink's **six-digit code** pairs the PC wi
 ## 5. Install the plugin and limit what it exports
 
 1. Under **Matterbridge > Home > Install plugins**, enter `matterbridge-hass` in **Plugin name or plugin path**, leave **Tag or version** at `latest`, and select **Install**. Wait for it to appear under **Plugins**. **Do not scan the QR.**
+
+   Type `matterbridge-hass` in the left field and select **Install**:
+
+   ![matterbridge-hass field and Install button outlined in red](images/alexa/matterbridge-install-plugin.png)
+
 2. In Home Assistant select your username in the lower-left corner, then **Security > Long-Lived Access Tokens > Create token**. Name it, for example, `Matterbridge WakeLink`. Copy it when created. This credential gives broad Home Assistant access: never paste it into WakeLink, GitHub, screenshots, or chats.
 3. Open the **Plugins > matterbridge-hass** configuration in Matterbridge. Set **Host** to your Home Assistant WebSocket address, usually `ws://homeassistant.local:8123` on a trusted private LAN. If you use HTTPS with a valid certificate, use `wss://` and your actual hostname. `ws://` does not encrypt the token: do not use it on an untrusted network. Do not disable certificate validation to hide an error.
 4. Paste the token into **Token**. Set **Filter By Label** to exactly `WakeLink Alexa` and **Domain Whitelist** to `switch` only. Save and restart the plugin if prompted. **Do not use Split Entities:** it is deprecated and unnecessary here. An empty **Whitelist** is not a filter; **Filter By Label** is the filter for this route.
 5. Open **Matterbridge > Devices**. There must be **exactly one device** from `matterbridge-hass`: your PC power switch. If there are zero, recheck Host, Token, and label. If there are more than one, **do not pair Alexa**: check the label and filter.
+
+   Check the counter under **Devices**. This screenshot shows **0/0**, meaning **not ready yet**. Do not scan the QR until only your intended PC appears:
+
+   ![Matterbridge device counter at 0/0 outlined in red](images/alexa/matterbridge-device-check.png)
 
 **Required checkpoint:** do not move to the QR until **Devices** shows only the intended PC. The plugin may show many devices if incorrectly filtered.
 

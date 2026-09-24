@@ -8,6 +8,8 @@ Necesitas el PC ya vinculado a WakeLink en Home Assistant, Home Assistant OS con
 
 Hay **dos codigos distintos**: el codigo de **seis cifras de WakeLink** vincula el PC con Home Assistant; el **QR Matter de Matterbridge** vincula el puente con Alexa. No escanees el QR hasta el paso 6.
 
+Las capturas de esta guia son reales. Los **recuadros rojos** indican donde pulsar o escribir. Tu pantalla puede variar segun la version de Home Assistant. Por seguridad, no mostramos ningun QR, token ni direccion privada.
+
 ## 1. Comprueba el PC y haz una copia
 
 1. Sigue [la instalacion de WakeLink](GETTING_STARTED.es.md) si todavia no ves el PC en **Configuracion > Dispositivos y servicios > WakeLink**.
@@ -21,6 +23,15 @@ Hay **dos codigos distintos**: el codigo de **seis cifras de WakeLink** vincula 
 
 1. En Home Assistant abre **Configuracion > Aplicaciones > Tienda de aplicaciones**. En versiones antiguas, **Aplicaciones** se llama **Complementos**.
 2. Abre el menu **... > Repositorios**, pega `https://github.com/Luligu/matterbridge-home-assistant-addon` y pulsa **Anadir**. Es el [repositorio oficial](https://github.com/Luligu/matterbridge-home-assistant-addon).
+
+   Primero pulsa los **tres puntos** y despues **Repositorios**:
+
+   ![Menu de la tienda con tres puntos y Repositorios marcados en rojo](images/alexa/ha-repositories-menu.png)
+
+   Pega la direccion en el campo marcado y pulsa **Anadir**:
+
+   ![Formulario de repositorio con el campo URL y Anadir marcados en rojo](images/alexa/ha-add-repository.png)
+
 3. Busca **Matterbridge**, pulsa **Instalar** y espera. Activa **Iniciar al arrancar** para que funcione con el PC apagado. Pulsa **Iniciar** y **Abrir interfaz web**. El primer inicio puede tardar varios minutos; si aparece «La aplicacion no esta lista», espera y pulsa **Volver a intentar**.
 4. Arriba veras **Home | Devices | Logs | Settings**. **Home** ya muestra un QR. **No lo escanees todavia.**
 
@@ -31,11 +42,20 @@ Hay **dos codigos distintos**: el codigo de **seis cifras de WakeLink** vincula 
 1. En otra pestana de Home Assistant abre **Configuracion > Sistema > Red**. Apunta el nombre de la interfaz principal que tiene la direccion de tu red domestica. Puede ser `end0`, `eth0` u otro: no copies un ejemplo a ciegas.
 2. Vuelve a Matterbridge, pulsa **Settings** arriba y busca **Matter settings > Mdns interface**. Escribe exactamente ese nombre. Guarda y reinicia Matterbridge si lo pide.
 
+   Pulsa **Settings** y escribe el nombre de tu interfaz en **Mdns interface**; el campo aparece vacio en esta captura:
+
+   ![Matterbridge Settings y Mdns interface marcados en rojo](images/alexa/matterbridge-mdns.png)
+
 **Comprueba:** en **Home > System info**, **Interface name** corresponde a esa red. Una red de invitados que aisle el Echo puede impedir la deteccion.
 
 ## 4. Marca solo el interruptor del PC
 
 1. En Home Assistant abre **Configuracion > Areas, etiquetas y zonas > Etiquetas > Crear etiqueta**. Llamala `WakeLink Alexa`. Importan las mayusculas y los espacios.
+
+   Escribe exactamente este nombre en **Nombre** y despues pulsa **Crear**:
+
+   ![Campo Nombre de una etiqueta con WakeLink Alexa marcado en rojo](images/alexa/ha-label-name.png)
+
 2. Ve a **Configuracion > Dispositivos y servicios > Entidades** y busca el ID `switch.` del paso 1. Activa el modo de seleccion de la tabla, marca **solo esa entidad**, pulsa **Anadir etiqueta** y elige `WakeLink Alexa`. Si tu version permite asignarla desde los ajustes de la entidad, tambien vale.
 3. **No** apliques esa etiqueta al dispositivo completo, a un area o a otras entidades. Comprueba en la lista que solo el interruptor previsto tiene `WakeLink Alexa`.
 
@@ -44,10 +64,19 @@ Hay **dos codigos distintos**: el codigo de **seis cifras de WakeLink** vincula 
 ## 5. Instala el complemento y limita lo que exporta
 
 1. En **Matterbridge > Home > Install plugins**, escribe `matterbridge-hass` en **Plugin name or plugin path**, deja **Tag or version** en `latest` y pulsa **Install**. Espera a que aparezca en **Plugins**. **No escanees el QR.**
+
+   Escribe `matterbridge-hass` en el campo de la izquierda y pulsa **Install**:
+
+   ![Campo matterbridge-hass y boton Install marcados en rojo](images/alexa/matterbridge-install-plugin.png)
+
 2. En Home Assistant pulsa tu usuario, abajo a la izquierda, y entra en **Seguridad > Tokens de acceso de larga duracion > Crear token**. Llamalo, por ejemplo, `Matterbridge WakeLink`. Copialo al crearlo. Es una clave con acceso amplio a Home Assistant: no la pongas en WakeLink, GitHub, capturas ni chats.
 3. En la fila **Plugins > matterbridge-hass** abre su configuracion. En **Host** pon la direccion WebSocket de Home Assistant, normalmente `ws://homeassistant.local:8123` en una red privada de confianza. Si usas HTTPS con certificado valido, usa `wss://` y tu nombre de host real. `ws://` no cifra el token: no lo uses en redes no confiables. No desactives la validacion de certificados para ocultar un error.
 4. Pega el token en **Token**. En **Filter By Label** elige/escribe exactamente `WakeLink Alexa`. En **Domain Whitelist** deja solo `switch`. Guarda y reinicia el complemento si lo pide. **No uses Split Entities:** esta obsoleto y no hace falta en esta ruta. Una **Whitelist** vacia no es un filtro; aqui el filtro es **Filter By Label**.
 5. Abre **Matterbridge > Devices**. Debe aparecer **exactamente un dispositivo** de `matterbridge-hass`: el interruptor del PC. Si hay cero, revisa Host, Token y etiqueta. Si hay mas de uno, **no vincules Alexa**: revisa la etiqueta y el filtro.
+
+   Comprueba el contador en **Devices**. Esta captura muestra **0/0**, es decir, **todavia no esta listo**. No escanees el QR hasta que se muestre solo el PC previsto:
+
+   ![Contador de dispositivos de Matterbridge en 0/0 marcado en rojo](images/alexa/matterbridge-device-check.png)
 
 **Comprobacion obligatoria:** no vayas al QR hasta ver solo el PC previsto en **Devices**. El complemento puede mostrar muchos dispositivos si no se filtra bien.
 
