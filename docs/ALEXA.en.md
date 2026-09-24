@@ -26,11 +26,11 @@ These are real screenshots. **Red boxes** show exactly where to click or type. Y
 
    First select the **three dots**, then **Repositories**:
 
-   ![App store menu with the three dots and Repositories outlined in red](images/alexa/ha-repositories-menu.png)
+   ![App store menu with the three dots and Repositories outlined in red](images/alexa/ha-repositories-menu-en.png)
 
-   Paste the address into the outlined field and select **Add** (shown as **Anadir** in the Spanish screenshot):
+   Paste the address into the outlined field and select **Add**:
 
-   ![Repository form with the URL field and Add button outlined in red](images/alexa/ha-add-repository.png)
+   ![Repository form with the URL field and Add button outlined in red](images/alexa/ha-add-repository-en.png)
 
 3. Find **Matterbridge**, select **Install**, and wait. Enable **Start on boot** so it runs when the PC is off. Select **Start** and **Open Web UI**. The first start may take several minutes; if the app is not ready, wait and retry.
 4. The top navigation says **Home | Devices | Logs | Settings**. **Home** already shows a QR code. **Do not scan it yet.**
@@ -50,14 +50,18 @@ These are real screenshots. **Red boxes** show exactly where to click or type. Y
 
 ## 4. Mark only the PC switch
 
-1. In Home Assistant open **Settings > Areas, labels & zones > Labels > Create label**. Name it `WakeLink Alexa`. Capitalization and spaces matter.
+1. In Home Assistant open **Settings > Devices & services > Entities**. Search for the `switch.` ID from step 1, open your PC's **Power** row, and select the entity **Settings** icon. Do not press the **Toggle** switch.
+2. In that entity's settings, select **Add label > Add new label...**. Name it `WakeLink Alexa`; capitalization and spaces matter.
 
-   Type this exact name into **Name** (shown as **Nombre**) and then select **Create**:
+   In this crop, select **Add label** first, then **Add new label...**:
 
-   ![Name field containing WakeLink Alexa outlined in red](images/alexa/ha-label-name.png)
+   ![Add label and Add new label outlined in red](images/alexa/entity-add-label-en.png)
 
-2. Go to **Settings > Devices & services > Entities** and search for the `switch.` ID from step 1. Enable table selection mode, select **only that entity**, choose **Add label**, and select `WakeLink Alexa`. If your version has labels in entity settings, adding it there works too.
-3. **Do not** put this label on the whole device, an area, or other entities. Confirm in the list that only the intended switch has `WakeLink Alexa`.
+   Type this exact name into **Name** and then select **Create**:
+
+   ![New label form with WakeLink Alexa and Create outlined in red](images/alexa/ha-label-create-en.png)
+
+3. Confirm that `WakeLink Alexa` appears on **that entity** and select **Update** if it becomes enabled. If creating the label did not assign it automatically, open **Add label** again and select it. **Do not** label the whole device, an area, or other entities.
 
 **Checkpoint:** the label identifies one entity. It is the filter before anything is shared with Alexa.
 
@@ -70,8 +74,17 @@ These are real screenshots. **Red boxes** show exactly where to click or type. Y
    ![matterbridge-hass field and Install button outlined in red](images/alexa/matterbridge-install-plugin.png)
 
 2. In Home Assistant select your username in the lower-left corner, then **Security > Long-Lived Access Tokens > Create token**. Name it, for example, `Matterbridge WakeLink`. Copy it when created. This credential gives broad Home Assistant access: never paste it into WakeLink, GitHub, screenshots, or chats.
+
+   Scroll down in **Security** and select **Create token**. An existing token is hidden in this crop for privacy:
+
+   ![Create token button outlined in red under Long-lived access tokens](images/alexa/ha-token-entry-en.png)
+
+   Enter a name and select **Create token**. Copy the token from the *next* screen; it will not be shown again:
+
+   ![Name and Create token button outlined in red in the English form](images/alexa/ha-token-form-en.png)
+
 3. Open the **Plugins > matterbridge-hass** configuration in Matterbridge. Set **Host** to your Home Assistant WebSocket address, usually `ws://homeassistant.local:8123` on a trusted private LAN. If you use HTTPS with a valid certificate, use `wss://` and your actual hostname. `ws://` does not encrypt the token: do not use it on an untrusted network. Do not disable certificate validation to hide an error.
-4. Paste the token into **Token**. Set **Filter By Label** to exactly `WakeLink Alexa` and **Domain Whitelist** to `switch` only. Save and restart the plugin if prompted. **Do not use Split Entities:** it is deprecated and unnecessary here. An empty **Whitelist** is not a filter; **Filter By Label** is the filter for this route.
+4. Paste the token into **Token**. Set **Filter By Label** to exactly `WakeLink Alexa` and **Domain Whitelist** to `switch` only. Save and **restart the plugin** to apply the selection. **Do not use Split Entities:** it is deprecated and unnecessary here. An empty **Whitelist** is not a filter; **Filter By Label** is the filter for this route.
 5. Open **Matterbridge > Devices**. There must be **exactly one device** from `matterbridge-hass`: your PC power switch. If there are zero, recheck Host, Token, and label. If there are more than one, **do not pair Alexa**: check the label and filter.
 
    Check the counter under **Devices**. This screenshot shows **0/0**, meaning **not ready yet**. Do not scan the QR until only your intended PC appears:

@@ -50,14 +50,18 @@ Las capturas de esta guia son reales. Los **recuadros rojos** indican donde puls
 
 ## 4. Marca solo el interruptor del PC
 
-1. En Home Assistant abre **Configuracion > Areas, etiquetas y zonas > Etiquetas > Crear etiqueta**. Llamala `WakeLink Alexa`. Importan las mayusculas y los espacios.
+1. En Home Assistant abre **Configuracion > Dispositivos y servicios > Entidades**. Busca el ID `switch.` del paso 1, abre la fila **Power** de tu PC y pulsa el icono **Configuracion** de la entidad. No pulses el interruptor **Alternar**.
+2. En los ajustes de esa entidad pulsa **Anadir etiqueta > Anadir nueva etiqueta...**. Llamala `WakeLink Alexa`; importan las mayusculas y los espacios.
+
+   En este recorte, pulsa primero **Anadir etiqueta** y despues **Anadir nueva etiqueta...**:
+
+   ![Botones Anadir etiqueta y Anadir nueva etiqueta marcados en rojo](images/alexa/entity-add-label-es.png)
 
    Escribe exactamente este nombre en **Nombre** y despues pulsa **Crear**:
 
-   ![Campo Nombre de una etiqueta con WakeLink Alexa marcado en rojo](images/alexa/ha-label-name.png)
+   ![Formulario de nueva etiqueta con WakeLink Alexa y Crear marcados en rojo](images/alexa/ha-label-create-es.png)
 
-2. Ve a **Configuracion > Dispositivos y servicios > Entidades** y busca el ID `switch.` del paso 1. Activa el modo de seleccion de la tabla, marca **solo esa entidad**, pulsa **Anadir etiqueta** y elige `WakeLink Alexa`. Si tu version permite asignarla desde los ajustes de la entidad, tambien vale.
-3. **No** apliques esa etiqueta al dispositivo completo, a un area o a otras entidades. Comprueba en la lista que solo el interruptor previsto tiene `WakeLink Alexa`.
+3. Comprueba que `WakeLink Alexa` aparece en **esa entidad** y pulsa **Actualizar** si se habilita. Si crear la etiqueta no la asigno automaticamente, vuelve a **Anadir etiqueta** y seleccionala. **No** la apliques al dispositivo completo, a un area ni a otras entidades.
 
 **Comprueba:** la etiqueta identifica una sola entidad. Sera el filtro antes de compartir nada con Alexa.
 
@@ -70,8 +74,17 @@ Las capturas de esta guia son reales. Los **recuadros rojos** indican donde puls
    ![Campo matterbridge-hass y boton Install marcados en rojo](images/alexa/matterbridge-install-plugin.png)
 
 2. En Home Assistant pulsa tu usuario, abajo a la izquierda, y entra en **Seguridad > Tokens de acceso de larga duracion > Crear token**. Llamalo, por ejemplo, `Matterbridge WakeLink`. Copialo al crearlo. Es una clave con acceso amplio a Home Assistant: no la pongas en WakeLink, GitHub, capturas ni chats.
+
+   Baja hasta **Tokens de acceso de larga duracion** y pulsa **Crear token**. Hemos ocultado un token anterior en este recorte:
+
+   ![Boton Crear token marcado en rojo debajo de los tokens de larga duracion](images/alexa/ha-token-entry-es.png)
+
+   Escribe un nombre y pulsa **Crear token**. Copia el token de la pantalla *siguiente*: no volvera a mostrarse:
+
+   ![Campo Nombre y boton Crear token marcados en rojo en el formulario espanol](images/alexa/ha-token-form-es.png)
+
 3. En la fila **Plugins > matterbridge-hass** abre su configuracion. En **Host** pon la direccion WebSocket de Home Assistant, normalmente `ws://homeassistant.local:8123` en una red privada de confianza. Si usas HTTPS con certificado valido, usa `wss://` y tu nombre de host real. `ws://` no cifra el token: no lo uses en redes no confiables. No desactives la validacion de certificados para ocultar un error.
-4. Pega el token en **Token**. En **Filter By Label** elige/escribe exactamente `WakeLink Alexa`. En **Domain Whitelist** deja solo `switch`. Guarda y reinicia el complemento si lo pide. **No uses Split Entities:** esta obsoleto y no hace falta en esta ruta. Una **Whitelist** vacia no es un filtro; aqui el filtro es **Filter By Label**.
+4. Pega el token en **Token**. En **Filter By Label** elige/escribe exactamente `WakeLink Alexa`. En **Domain Whitelist** deja solo `switch`. Guarda y **reinicia el complemento** para aplicar la seleccion. **No uses Split Entities:** esta obsoleto y no hace falta en esta ruta. Una **Whitelist** vacia no es un filtro; aqui el filtro es **Filter By Label**.
 5. Abre **Matterbridge > Devices**. Debe aparecer **exactamente un dispositivo** de `matterbridge-hass`: el interruptor del PC. Si hay cero, revisa Host, Token y etiqueta. Si hay mas de uno, **no vincules Alexa**: revisa la etiqueta y el filtro.
 
    Comprueba el contador en **Devices**. Esta captura muestra **0/0**, es decir, **todavia no esta listo**. No escanees el QR hasta que se muestre solo el PC previsto:
