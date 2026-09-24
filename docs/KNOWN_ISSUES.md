@@ -1,0 +1,7 @@
+# Known issues / Problemas conocidos
+
+## HACS icon missing / Falta el icono en HACS
+
+**English:** Home Assistant shows WakeLink's bundled `brand/icon.png`, but HACS may show "icon not available" in its repository or Update entity. WakeLink already ships the image in the correct location. HACS still requests an old external brands URL instead of Home Assistant's local image. This does **not** affect installation or updates. Changing WakeLink's icon again cannot reliably fix it. Track the [HACS Update entity fix](https://github.com/hacs/integration/pull/5228) and [HACS frontend fix](https://github.com/hacs/frontend/pull/937). Once released, update HACS and recheck both screens. Status: **upstream fix pending; not fixed in WakeLink**.
+
+**Espanol:** Home Assistant muestra el `brand/icon.png` de WakeLink, pero HACS puede mostrar "icon not available" en su ficha o entidad de actualizacion. WakeLink ya incluye la imagen en el lugar correcto. HACS sigue consultando una direccion externa antigua en vez de la imagen local de Home Assistant. **No afecta a la instalacion ni a las actualizaciones.** Cambiar otra vez el icono de WakeLink no lo resolveria de forma fiable. Seguimiento: [correccion de la entidad de HACS](https://github.com/hacs/integration/pull/5228) y [correccion de su interfaz](https://github.com/hacs/frontend/pull/937). Cuando se publiquen, actualizar HACS y comprobar ambas pantallas. Estado: **pendiente de HACS; no corregido en WakeLink**.

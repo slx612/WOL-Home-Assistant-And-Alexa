@@ -9,6 +9,8 @@
 | [Install Windows + Home Assistant](GETTING_STARTED.en.md) | [Instalar Windows + Home Assistant](GETTING_STARTED.es.md) |
 | [Connect to Alexa: experimental Matter route](ALEXA.en.md) | [Conectar con Alexa: recorrido Matter experimental](ALEXA.es.md) |
 
+[Known issues / Problemas conocidos](KNOWN_ISSUES.md), including the missing HACS icon.
+
 Use the guides above for a new installation. The versioned notes below are **historical records**, not additional required installation steps. Old names and versions in them describe what was true for those betas.
 
 ## Maintainer and advanced information

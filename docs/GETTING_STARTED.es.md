@@ -14,6 +14,7 @@ Este es el recorrido basico. **Alexa es opcional** y tiene [otra guia](ALEXA.es.
 ## 2. Instala la integracion de Home Assistant
 
 1. En Home Assistant, abre **HACS**, busca `WakeLink` y descarga la integracion. Si HACS ofrece elegir version, selecciona la beta mas reciente. Reinicia Home Assistant cuando lo pida.
+   Si HACS muestra "icon not available" pero Home Assistant si muestra el icono, consulta el [problema conocido](KNOWN_ISSUES.md): no impide instalar ni actualizar WakeLink.
 2. Abre **Configuracion > Dispositivos y servicios**. Selecciona el PC WakeLink detectado. Si no aparece, pulsa **Anadir integracion**, busca `WakeLink` y elige el PC detectado desde ahi.
 3. En la aplicacion de Windows, abre la pagina **Vincular** y genera un codigo temporal de seis cifras. Compara la huella del certificado que muestran ambas pantallas y escribe el codigo en Home Assistant antes de diez minutos.
 4. Comprueba que el PC y su interruptor aparecen bajo WakeLink en Home Assistant. Eso confirma la vinculacion, pero aun no demuestra que Wake-on-LAN funcione en tu equipo.

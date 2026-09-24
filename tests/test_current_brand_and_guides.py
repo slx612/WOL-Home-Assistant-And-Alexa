@@ -1,6 +1,7 @@
 """Current branding and beginner documentation stay aligned."""
 
 from pathlib import Path
+import json
 import re
 import sys
 import unittest
@@ -67,6 +68,14 @@ class CurrentBrandAndGuideTests(unittest.TestCase):
                 self.assertIn("Echo", text)
                 self.assertIn("Whitelist", text)
                 self.assertIn("token", text.lower())
+
+    def test_alexa_wizard_uses_the_same_label_filter_as_current_guides(self):
+        for name in ("strings.json", "translations/en.json", "translations/es.json"):
+            source = ROOT / "custom_components/pc_power_free" / name
+            steps = json.loads(source.read_text(encoding="utf-8"))["options"]["step"]
+            with self.subTest(source=name):
+                self.assertIn("Filter By Label", steps["alexa_filter"]["description"])
+                self.assertNotIn("Split Entities", steps["alexa_filter"]["description"])
 
     def test_current_local_documentation_links_resolve(self):
         pages = [ROOT / "README.md", *(ROOT / "docs" / name for name in (

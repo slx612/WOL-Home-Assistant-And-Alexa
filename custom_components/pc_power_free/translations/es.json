@@ -78,11 +78,11 @@
       },
       "alexa_filter": {
         "title": "Exponer solo el interruptor de este PC",
-        "description": "Antes de vincular, limita `matterbridge-hass`: pon **Domain Whitelist** en `switch`; anade `{entity_id}` tanto a **Split Entities** como a **Whitelist**. Split Entities esta obsoleto en el complemento, pero se necesita para esta prueba. Nunca dejes Whitelist vacia: un filtro vacio puede exponer otros dispositivos de Home Assistant. Reinicia el complemento y revisa su lista de dispositivos. Continua solo si aparece exactamente el interruptor previsto, sin otros PC ni entidades de Home Assistant. Si tu version ya no ofrece Split Entities, detente y sigue sus instrucciones actuales de Split By Label en lugar de improvisar."
+        "description": "En Home Assistant crea la etiqueta `WakeLink Alexa` y aplicala **solo a la entidad** `{entity_id}`, no al dispositivo entero ni a un area. En `matterbridge-hass`, pon **Filter By Label** exactamente en `WakeLink Alexa` y **Domain Whitelist** en `switch`. La etiqueta es el filtro: una **Whitelist** vacia por si sola no lo es. Guarda, reinicia el complemento y comprueba **Devices** en Matterbridge. Continua solo si muestra un unico dispositivo: el interruptor de este PC. Si aparecen mas, no escanees el QR Matter. La guia enlazada explica cada clic."
       },
       "alexa_pair": {
         "title": "Vincular con Alexa",
-        "description": "En **Settings** de Matterbridge, elige como interfaz Matter mDNS la que aparece en **Home Assistant > Configuracion > Sistema > Red** (por ejemplo `end0` en algunos equipos HAOS). Luego busca el QR Matter o codigo de configuracion de Matterbridge. **No** es el codigo de seis cifras de WakeLink para el PC. En la app Alexa, anade un dispositivo Matter y escanea ese QR con un Echo compatible en la misma red. Dale al PC un nombre distinto. Terminar esta guia solo cierra las instrucciones; **no** significa que Alexa este verificada. Comprueba primero su estado. Prueba el apagado solo tras guardar tu trabajo y decidir apagar el PC."
+        "description": "En **Settings > Matter settings** de Matterbridge, pon en **Mdns interface** la interfaz que muestra **Home Assistant > Configuracion > Sistema > Red**; no adivines su nombre. Solo cuando **Devices** muestre tu PC y ningun otro dispositivo exportado, escanea el QR Matter de Matterbridge en la app Alexa con un Echo compatible en la misma red. **No** es el codigo de seis cifras de WakeLink. Pon un nombre distinto al PC. Terminar esta guia **no** verifica Alexa: comprueba primero que aparece y prueba el apagado solo tras guardar el trabajo."
       }
     },
     "abort": {

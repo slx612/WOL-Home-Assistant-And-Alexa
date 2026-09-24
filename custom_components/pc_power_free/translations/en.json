@@ -78,11 +78,11 @@
       },
       "alexa_filter": {
         "title": "Expose only this PC's power switch",
-        "description": "Before pairing, restrict the `matterbridge-hass` plugin: set its **Domain Whitelist** to `switch`; add `{entity_id}` to **Split Entities** and to **Whitelist**. Split Entities is deprecated upstream but currently needed for this preview. Never leave the Whitelist empty: an empty filter can expose unrelated Home Assistant devices. Restart the plugin and inspect its device list. Continue only if it shows exactly the switch you intended, not other PCs or Home Assistant entities. If your plugin no longer offers Split Entities, stop and use its current Split By Label instructions instead of guessing."
+        "description": "In Home Assistant, create a label named `WakeLink Alexa` and apply it **only to the entity** `{entity_id}`, not to the whole device or area. In `matterbridge-hass`, set **Filter By Label** to exactly `WakeLink Alexa` and **Domain Whitelist** to `switch`. The label is the filter; an empty **Whitelist** by itself is not a filter. Save, restart the plugin and check Matterbridge **Devices**. Continue only if it shows exactly one device: this PC's power switch. If more devices appear, do not scan the Matter QR. Follow the linked step-by-step guide for every click."
       },
       "alexa_pair": {
         "title": "Pair with Alexa",
-        "description": "In Matterbridge **Settings**, set the Matter mDNS interface to the network interface shown in **Home Assistant > Settings > System > Network** (for example `end0` on some HAOS hosts). Then find Matterbridge's Matter QR or setup code. This is **not** the six-digit WakeLink PC code. In the Alexa app, add a Matter device and scan that QR with a compatible Echo on the same network. Give the PC a distinct name. Finishing this guide only closes the instructions; it does **not** mean Alexa was verified. First check its reported state. Test shutdown only after saving work and deciding to shut the PC down."
+        "description": "In Matterbridge **Settings > Matter settings**, set **Mdns interface** to the network interface shown in **Home Assistant > Settings > System > Network**; do not guess its name. Only after **Devices** shows your PC and no other exported devices, scan Matterbridge's Matter QR in the Alexa app with a compatible Echo on the same network. This is **not** WakeLink's six-digit PC code. Give the PC a distinct name. Finishing this guide does **not** verify Alexa. Check that the device appears first, and test shutdown only after saving your work."
       }
     },
     "abort": {

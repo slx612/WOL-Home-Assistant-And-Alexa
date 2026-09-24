@@ -14,6 +14,7 @@ This is the basic route. **Alexa is optional** and has a [separate guide](ALEXA.
 ## 2. Install the Home Assistant integration
 
 1. In Home Assistant, open **HACS**, search for `WakeLink`, and download the integration. For a beta, select the latest beta if HACS offers a version choice. Restart Home Assistant when prompted.
+   If HACS says "icon not available" while Home Assistant shows the icon, see the [known issue](KNOWN_ISSUES.md): it does not block installation or updates.
 2. Open **Settings > Devices & services**. Select the discovered WakeLink PC. If nothing appears, use **Add integration**, search for `WakeLink`, and select the discovered PC there.
 3. On the Windows app, open the **Pair** page and generate a temporary six-digit code. Compare the certificate fingerprint in both screens, then enter the code in Home Assistant within ten minutes.
 4. Confirm that the PC and its power switch now appear under WakeLink in Home Assistant. This confirms pairing; it does not yet prove that Wake-on-LAN is configured on your hardware.
