@@ -1,3 +1,5 @@
+> **Historical draft, not current instructions.** The product's visible name is now WakeLink; see the [current guides](README.md).
+
 Sixth public beta release of PC Power Free.
 
 Highlights in this beta:

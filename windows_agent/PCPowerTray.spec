@@ -5,7 +5,7 @@ a = Analysis(
     ['pc_power_tray.py'],
     pathex=['..'],
     binaries=[],
-    datas=[],
+    datas=[('assets/wakelink.ico', 'assets')],
     hiddenimports=['agent_core.common', 'pystray._win32'],
     hookspath=[],
     hooksconfig={},

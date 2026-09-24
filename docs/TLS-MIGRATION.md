@@ -1,5 +1,7 @@
 # Existing-pairing TLS migration
 
+> **Historical migration note.** Use the [current installation guide](GETTING_STARTED.en.md) or [guia actual](GETTING_STARTED.es.md) for normal updates.
+
 This is an application-specific migration binding using standard HMAC-SHA-256
 and TLS certificate pinning, not a new cryptographic primitive or a claim of an
 independently audited protocol. It needs no Internet service, CA, account or new

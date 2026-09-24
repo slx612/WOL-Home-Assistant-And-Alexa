@@ -1,5 +1,7 @@
 # Beta.7 local validation
 
+> **Historical test record.** It does not certify the current beta; see the [current guides](README.md).
+
 Date: 2026-09-07. Prepared on Windows 11 x64 / Python 3.13.2.
 Git base: `865f0933a1fa9f6587355cade291f426a691460a`.
 Prepared on branch `fix/review-beta7`. This report records local pre-publication verification; publication and CI status are tracked on the [release page](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.7) and repository Actions page.

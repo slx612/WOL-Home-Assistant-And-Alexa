@@ -1,5 +1,7 @@
 # WakeLink beta.10: install and update
 
+> **Historical beta.10 note / Nota historica.** For current installation use [English](GETTING_STARTED.en.md) or [Espanol](GETTING_STARTED.es.md).
+
 [English](#english) | [Espanol](#espanol)
 
 ## English

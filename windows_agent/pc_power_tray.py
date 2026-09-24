@@ -32,7 +32,7 @@ from update_check import (
 APP_NAME = "WakeLink"
 APP_TITLE = "WakeLink"
 APP_DIR_NAME = "PC Power Free"
-APP_VERSION = "0.2.0-beta.10"
+APP_VERSION = "0.2.0-beta.12"
 DEFAULT_AGENT_PORT = 58477
 CONFIG_FILENAME = "config.json"
 COMMAND_GUARD_ALLOW = "allow"
@@ -204,17 +204,18 @@ def launch_configurator(path: Path) -> None:
 
 def build_tray_image(*, mode: str | None, available: bool) -> Image.Image:
     """Return the tray icon image for the current protection state."""
-    background = "#183b3a" if available else "#6b7280"
-    accent = "#f59e0b" if mode and mode != COMMAND_GUARD_ALLOW else "#34d399"
-
-    image = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+    accent = "#6b7280" if not available else (
+        "#f59e0b" if mode and mode != COMMAND_GUARD_ALLOW else "#34d399"
+    )
+    asset_root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+    icon = Image.open(asset_root / "assets" / "wakelink.ico")
+    try:
+        image = icon.convert("RGBA").resize((64, 64), Image.Resampling.LANCZOS)
+    finally:
+        icon.close()
     draw = ImageDraw.Draw(image)
-    draw.rounded_rectangle((6, 6, 58, 58), radius=16, fill=background)
-    draw.rounded_rectangle((16, 14, 48, 38), radius=6, outline="white", width=3)
-    draw.rectangle((24, 42, 40, 47), fill="white")
-    draw.ellipse((41, 39, 56, 54), fill=accent)
-    draw.line((48, 43, 48, 49), fill="white", width=2)
-    draw.arc((44, 39, 52, 47), start=200, end=340, fill="white", width=2)
+    draw.ellipse((43, 43, 62, 62), fill="#eef3df")
+    draw.ellipse((46, 46, 59, 59), fill=accent)
     return image
 
 

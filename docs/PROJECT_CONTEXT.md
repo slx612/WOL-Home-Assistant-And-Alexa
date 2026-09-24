@@ -1,5 +1,7 @@
 # Project Context
 
+> **Historical development log.** Current user instructions are in the [documentation index](README.md); dates and names below reflect past work.
+
 Last updated: 2026-04-25
 
 ## What This Project Is

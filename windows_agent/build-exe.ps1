@@ -73,6 +73,8 @@ try {
         "PCPowerTray",
         "--version-file",
         "assets\PCPowerTray.version.txt",
+        "--add-data",
+        "assets/wakelink.ico;assets",
         "--hidden-import",
         "pystray._win32",
         "pc_power_tray.py"

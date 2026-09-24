@@ -70,7 +70,7 @@
       },
       "alexa": {
         "title": "Conectar con Alexa: antes de empezar",
-        "description": "Tu PC sigue vinculado a WakeLink en Home Assistant. Esta guia no envia ordenes de encendido o apagado ni cambia la vinculacion. Home Assistant y Matterbridge deben seguir encendidos cuando el PC este apagado. El codigo de Windows **no** es un codigo Matter. El interruptor de este PC es `{entity_id}`. Si ya has expuesto este PC por Emulated Hue, quita esa exposicion antes de vincular Matter para evitar duplicados en Alexa. Continua solo cuando quieras configurar la aplicacion independiente Matterbridge."
+        "description": "Tu PC sigue vinculado a Home Assistant. Su interruptor es `{entity_id}`. Matterbridge es una aplicacion aparte; esta guia no la instala ni controla el PC. Sigue la [guia de Alexa paso a paso]({guide_url}) antes de pulsar Enviar. El codigo de WakeLink **no** es el QR de Matter."
       },
       "alexa_plugin": {
         "title": "Conectar Matterbridge con Home Assistant",

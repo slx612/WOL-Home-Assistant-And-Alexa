@@ -1,83 +1,16 @@
-# HACS publishing checklist
+# WakeLink release and HACS checklist (maintainers)
 
-Use this checklist to keep the repository aligned with the current HACS situation and with the active prerelease.
+For user installation instructions, use [English](GETTING_STARTED.en.md) or [Espanol](GETTING_STARTED.es.md). This file is for maintainers, not another setup route.
 
-## Current status
+WakeLink is already on the HACS default list ([accepted submission #7156](https://github.com/hacs/default/pull/7156)); do not submit it again for each beta. HACS reads `custom_components/pc_power_free`, `hacs.json` and the GitHub release. Keep the visible name WakeLink but retain `pc_power_free` as the integration domain and discovery type to preserve pairings.
 
-- Current prerelease: [v0.2.0-beta.10](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.10)
-- HACS default submission [#7156 was merged](https://github.com/hacs/default/pull/7156); current default-list membership verified on September 7, 2026.
-- Beta.10 keeps existing pairings; follow the [Windows update guide](WINDOWS-beta.10.md). The [beta.7 guide](UPGRADE-beta.7.md) still explains the beta.5/6 HTTPS migration.
+## Before a prerelease
 
-## 1. Repository metadata on GitHub
+1. Bump the integration manifest, Windows app, installer and Windows executable version resources together when both platforms change. If only one platform changes, state that explicitly in release notes.
+2. Run unit tests, package checks, HACS validation and hassfest. Review actual Windows installer and integration ZIP contents.
+3. Test installation over an existing WakeLink installation without uninstalling. Confirm the Home Assistant entry, token, certificate and PC identity survive. Upload both the user-facing `WakeLink-Windows-x64-Setup.exe` and identical legacy `pcpowerfree-windows-x64-setup.exe`; installed updaters still require the latter.
+4. Build release assets and `SHA256SUMS.txt`. Do not imply the unsigned installer has a publisher signature; a checksum only detects a different file.
+5. Create a **GitHub prerelease** with notes and uploaded assets, not just a tag. Check that direct Windows and integration download links work and that the Windows update checker finds the uploaded installer.
+6. Keep Alexa labelled experimental until pairing and both power directions have been tested on a compatible Echo. Matterbridge and `matterbridge-hass` are external dependencies; do not claim they are bundled with WakeLink.
 
-Configure the repository `About` section on GitHub:
-
-- Add a short description
-- Add topics
-- Keep issues enabled
-
-Suggested topics:
-
-- `home-assistant`
-- `hacs`
-- `custom-integration`
-- `wake-on-lan`
-- `windows`
-- `linux`
-- `alexa`
-
-## 2. Validation workflows
-
-Before publishing a new prerelease:
-
-- `HACS validation` must pass with no ignored checks
-- `hassfest` must pass
-
-## 3. Release
-
-For each new prerelease:
-
-1. Create a full GitHub prerelease
-2. Do not publish only a tag
-3. Attach release notes
-4. Attach the current release assets
-
-Release assets for `v0.2.0-beta.10`:
-
-- `pcpowerfree-windows-x64-setup.exe`
-- `PCPowerAgent.exe`
-- `PCPowerTray.exe`
-- `PCPowerSetup.exe`
-- `pcpowerfree-home-assistant-integration.zip`
-- `pcpowerfree-linux-agent.tar.gz`
-- `pcpowerfree-dsm-noarch-0.2.0-0010.spk`
-- `SHA256SUMS.txt`
-
-Suggested release path from this point:
-
-- Keep using prereleases until `Alexa + Home Assistant` has been validated on a real setup
-- Keep Linux marked as experimental until it has packaging beyond the source bundle
-- Keep DSM marked as experimental until shutdown, restart, and wake have been validated on real hardware
-
-## 4. HACS default repository submission
-
-The submission is accepted and merged. No new default-list submission is needed for beta.10. Keep metadata and validation workflows correct, publish a full prerelease with its assets, and retain the same integration domain and device identifiers.
-
-## 5. Recommended validation status
-
-Earlier-beta real-setup validation (not evidence of beta.7 hardware validation):
-
-- Home Assistant discovery
-- Pairing code flow
-- Windows path with Home Assistant
-- Linux path with Home Assistant
-- Linux power-off from Home Assistant
-- DSM 7 package install, service start, discovery, and pairing
-
-Still pending:
-
-- Real beta.7 in-place Windows upgrade and HA device/automation preservation; local regression evidence is in [the validation report](VALIDATION-beta.7.md).
-- Real Wake-on-LAN boot validation on Linux hardware if that path is going to be advertised broadly
-- Real restart validation on Linux hardware
-- Real Alexa test through Home Assistant
-- DSM shutdown, restart, and wake validation
+Current user guides must not hardcode a beta number. Version-specific validation and old releases are listed in the [documentation index](README.md) as historical records.

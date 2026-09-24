@@ -1,5 +1,6 @@
 """Verify built archives/Windows code without installing or executing power actions."""
 import io
+import hashlib
 import sys
 import json
 import marshal
@@ -47,7 +48,7 @@ def main():
     if "--windows-only" in sys.argv:
         print(json.dumps(verify_windows(), indent=2))
         return
-    with zipfile.ZipFile(ROOT / "release_assets/pcpowerfree-home-assistant-integration.zip") as archive:
+    with zipfile.ZipFile(ROOT / "release_assets/WakeLink-Home-Assistant.zip") as archive:
         expected = {path.relative_to(ROOT).as_posix() for path in
                     (ROOT / "custom_components/pc_power_free").rglob("*")
                     if path.is_file() and "__pycache__" not in path.parts}
@@ -82,6 +83,10 @@ def main():
 
 def verify_windows():
     results = {}
+    installer = ROOT / "windows_agent/dist/pcpowerfree-windows-x64-setup.exe"
+    friendly_installer = ROOT / "windows_agent/dist/WakeLink-Windows-x64-Setup.exe"
+    assert installer.is_file() and friendly_installer.is_file(), "Missing update-compatible installer alias"
+    assert hashlib.sha256(installer.read_bytes()).digest() == hashlib.sha256(friendly_installer.read_bytes()).digest()
     for exe, module in [("PCPowerAgent", "pc_power_agent"), ("PCPowerSetup", "setup_wizard_gui"),
                         ("PCPowerTray", "pc_power_tray")]:
         path = ROOT / f"windows_agent/dist/{exe}.exe"
@@ -91,19 +96,20 @@ def verify_windows():
         for shared in ("common", "tls"):
             assert signature(embedded.extract(f"agent_core.{shared}")) == source_signature(ROOT / f"agent_core/{shared}.py"), (exe, shared)
         assert any("cryptography" in name and name.endswith(".pyd") for name in archive.toc), exe
+        if exe in ("PCPowerSetup", "PCPowerTray"):
+            icon_name = next(name for name in archive.toc if name.replace("\\", "/") == "assets/wakelink.ico")
+            assert archive.extract(icon_name) == (ROOT / "windows_agent/assets/wakelink.ico").read_bytes()
         if exe == "PCPowerSetup":
             assert archive.extract("install-task.ps1") == (ROOT / "windows_agent/install-task.ps1").read_bytes()
             for module_name in ("desktop_ui", "ui_preferences", "update_check", "setup_wizard_gui"):
                 assert signature(embedded.extract(module_name)) == source_signature(ROOT / f"windows_agent/{module_name}.py"), module_name
-            icon_name = next(name for name in archive.toc if name.replace("\\", "/") == "assets/wakelink.ico")
-            assert archive.extract(icon_name) == (ROOT / "windows_agent/assets/wakelink.ico").read_bytes()
         if exe == "PCPowerTray":
             for module_name in ("ui_preferences", "update_check"):
                 assert signature(embedded.extract(module_name)) == source_signature(ROOT / f"windows_agent/{module_name}.py"), module_name
         levels = []
         with pefile.PE(str(path)) as pe:
             assert any(entry.id == 14 for entry in pe.DIRECTORY_ENTRY_RESOURCE.entries), "Missing icon"
-            assert pe.VS_FIXEDFILEINFO[0].FileVersionLS == 10, "Missing beta.10 product metadata"
+            assert pe.VS_FIXEDFILEINFO[0].FileVersionLS == 12, "Missing beta.12 product metadata"
             for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
                 if resource_type.id != 24:
                     continue

@@ -70,7 +70,7 @@
       },
       "alexa": {
         "title": "Connect with Alexa: before you start",
-        "description": "Your WakeLink PC stays paired with Home Assistant. This guide does not send power commands or change that pairing. Home Assistant and Matterbridge must remain on when the PC is off. Your Windows pairing code is **not** a Matter code. The power entity for this PC is `{entity_id}`. If this PC is already exposed through Emulated Hue, remove that exposure before pairing Matter to avoid duplicate Alexa devices. Continue only when you are ready to configure the separate Matterbridge app."
+        "description": "Your PC remains paired with Home Assistant. Its power switch is `{entity_id}`. Matterbridge is a separate app; this guide does not install it or control your PC. Follow the [step-by-step Alexa guide]({guide_url}) before pressing Submit. The WakeLink pairing code is **not** the Matter QR code."
       },
       "alexa_plugin": {
         "title": "Connect Matterbridge to Home Assistant",

@@ -1,5 +1,7 @@
 # Beta.7: upgrade and verification
 
+> **Historical beta.7 migration note.** Use the [current installation guide](GETTING_STARTED.en.md) or [guia actual](GETTING_STARTED.es.md) unless updating specifically from this old version.
+
 [English](#english) | [Espanol](#espanol)
 
 ## English

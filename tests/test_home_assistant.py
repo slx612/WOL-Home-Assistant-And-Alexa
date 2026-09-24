@@ -202,6 +202,9 @@ class FlowTests(unittest.IsolatedAsyncioTestCase):
         flow.hass = self.hass
         result = await flow.async_step_alexa()
         self.assertEqual(result["description_placeholders"]["entity_id"], "switch.renamed_pc_power")
+        self.assertTrue(result["description_placeholders"]["guide_url"].endswith("/docs/ALEXA.en.md"))
+        self.hass.config = types.SimpleNamespace(language="es")
+        self.assertTrue((await flow.async_step_alexa())["description_placeholders"]["guide_url"].endswith("/docs/ALEXA.es.md"))
         self.assertEqual(result["step_id"], "alexa")
         self.assertEqual((await flow.async_step_alexa({}))["step_id"], "alexa_plugin")
         self.assertEqual((await flow.async_step_alexa_plugin({}))["step_id"], "alexa_filter")

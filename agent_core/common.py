@@ -30,7 +30,7 @@ except ImportError:  # pragma: no cover - optional during source-only use
     ServiceInfo = None
     Zeroconf = None
 
-AGENT_VERSION = "0.2.0-beta.10"
+AGENT_VERSION = "0.2.0-beta.12"
 DEFAULT_HOST = "0.0.0.0"
 DEFAULT_PORT = 58477
 DEFAULT_ALLOWED_SUBNETS = ("127.0.0.1/32",)

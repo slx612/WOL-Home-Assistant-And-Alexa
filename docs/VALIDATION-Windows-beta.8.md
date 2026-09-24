@@ -1,5 +1,7 @@
 # Windows beta.8 local preview validation
 
+> **Historical test record.** It does not certify the current beta; see the [current guides](README.md).
+
 **Later finding:** the user installed beta.8 and reported two unwanted desktop shortcuts plus a certificate permission error on both. The source tests below missed that Windows ACL behavior. Beta.8 must not be treated as release-ready; see [beta.9](WINDOWS-beta.9.md).
 
 Date: 2026-09-23. Scope: Windows desktop, tray and installer only.

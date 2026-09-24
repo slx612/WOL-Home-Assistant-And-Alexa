@@ -1,5 +1,7 @@
 # WakeLink v0.2.0-beta.10
 
+> **Historical release note.** For current instructions see [English](GETTING_STARTED.en.md) or [Espanol](GETTING_STARTED.es.md).
+
 Public prerelease for testing. Install over an existing PC Power Free or WakeLink installation without uninstalling or re-pairing.
 
 ## Windows

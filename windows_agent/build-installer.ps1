@@ -85,9 +85,13 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "makensis.exe devolvio el codigo $LASTEXITCODE"
     }
+    $legacyInstaller = Join-Path $distDir 'pcpowerfree-windows-x64-setup.exe'
+    $friendlyInstaller = Join-Path $distDir 'WakeLink-Windows-x64-Setup.exe'
+    Copy-Item -LiteralPath $legacyInstaller -Destination $friendlyInstaller -Force
     Write-Host ""
     Write-Host "Instalador generado:" -ForegroundColor Green
-    Write-Host "$(Join-Path $distDir 'pcpowerfree-windows-x64-setup.exe')" -ForegroundColor Green
+    Write-Host $friendlyInstaller -ForegroundColor Green
+    Write-Host "Alias para versiones antiguas: $legacyInstaller" -ForegroundColor Green
     Write-Host ""
 }
 finally {

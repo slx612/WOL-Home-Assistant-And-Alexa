@@ -491,10 +491,18 @@ class PCPowerOptionsFlow(config_entries.OptionsFlow):
             return self.async_abort(reason="power_entity_missing")
         if user_input is not None:
             return await self.async_step_alexa_plugin()
+        language = getattr(getattr(self.hass, "config", None), "language", "en") or "en"
+        guide_language = "es" if language.lower().startswith("es") else "en"
         return self.async_show_form(
             step_id="alexa",
             data_schema=vol.Schema({}),
-            description_placeholders={"entity_id": entity_id},
+            description_placeholders={
+                "entity_id": entity_id,
+                "guide_url": (
+                    "https://github.com/slx612/WOL-Home-Assistant-And-Alexa/"
+                    f"blob/main/docs/ALEXA.{guide_language}.md"
+                ),
+            },
         )
 
     async def async_step_alexa_plugin(self, user_input: dict[str, Any] | None = None):

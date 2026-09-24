@@ -34,7 +34,7 @@ from agent_core.tls import create_server_context
 
 APP_TITLE = "WakeLink"
 APP_DIR_NAME = "PC Power Free"
-APP_VERSION = "0.2.0-beta.10"
+APP_VERSION = "0.2.0-beta.12"
 DEFAULT_AGENT_PORT = 58477
 DEFAULT_TASK_NAME = "PC Power Agent"
 DEFAULT_RULE_NAME = "PC Power Agent"

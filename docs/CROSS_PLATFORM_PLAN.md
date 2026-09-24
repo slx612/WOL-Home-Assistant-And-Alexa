@@ -1,5 +1,7 @@
 # Cross-Platform Agent Plan
 
+> **Historical development plan, not a supported-platform promise.** See the [current guides](README.md) for user instructions.
+
 ## Goal
 
 Keep a single Home Assistant integration while allowing different local runtimes:

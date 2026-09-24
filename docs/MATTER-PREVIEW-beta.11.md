@@ -1,5 +1,7 @@
 # WakeLink Matter preview (Home Assistant beta.11)
 
+> **Historical beta.11 note / Nota historica.** For current instructions use [English](ALEXA.en.md) or [Espanol](ALEXA.es.md). Do not install beta.11 just to follow this old preview.
+
 [English](#english) | [Espanol](#espanol)
 
 ## English

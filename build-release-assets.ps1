@@ -7,7 +7,7 @@ $releaseDir = Join-Path $repoRoot "release_assets"
 $stageDir = Join-Path $releaseDir ".zip_stage"
 $integrationSourceDir = Join-Path $repoRoot "custom_components\\pc_power_free"
 $integrationStageDir = Join-Path $stageDir "custom_components\\pc_power_free"
-$integrationZipPath = Join-Path $releaseDir "pcpowerfree-home-assistant-integration.zip"
+$integrationZipPath = Join-Path $releaseDir "WakeLink-Home-Assistant.zip"
 $linuxBundlePath = Join-Path $releaseDir "pcpowerfree-linux-agent.tar.gz"
 
 function Copy-DirectoryWithoutCaches {

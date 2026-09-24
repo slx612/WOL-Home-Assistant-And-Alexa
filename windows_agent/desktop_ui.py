@@ -57,7 +57,7 @@ TEXT = {
     "expired": ("Code expired or already used. Generate a new one if needed.", "C\u00f3digo caducado o utilizado. Genera otro si lo necesitas."),
     "new_code": ("Generate a code", "Generar un c\u00f3digo"), "copy": ("Copy code", "Copiar c\u00f3digo"),
     "copied": ("Pairing code copied", "C\u00f3digo copiado"),
-    "pair_steps": ("1. In Home Assistant, install PC Power Free from HACS.\n2. Open Settings > Devices & services and select the discovered PC.\n3. Enter this six-digit code within 10 minutes.", "1. En Home Assistant, instala PC Power Free desde HACS.\n2. Abre Ajustes > Dispositivos y servicios y selecciona el PC descubierto.\n3. Introduce estos seis d\u00edgitos antes de 10 minutos."),
+    "pair_steps": ("1. In Home Assistant, install WakeLink from HACS.\n2. Open Settings > Devices & services and select the discovered PC.\n3. Enter this six-digit code within 10 minutes.", "1. En Home Assistant, instala WakeLink desde HACS.\n2. Abre Ajustes > Dispositivos y servicios y selecciona el PC descubierto.\n3. Introduce estos seis d\u00edgitos antes de 10 minutos."),
     "open_ha": ("Open Home Assistant", "Abrir Home Assistant"),
     "ha_address": ("Uses homeassistant.local. If it does not open, use your usual Home Assistant address.", "Usa homeassistant.local. Si no abre, entra con tu direcci\u00f3n habitual de Home Assistant."),
     "matter": ("Alexa setup is separate and still experimental. This code is for Home Assistant, not Matter.", "La configuraci\u00f3n de Alexa es independiente y sigue en pruebas. Este c\u00f3digo es para Home Assistant, no para Matter."),

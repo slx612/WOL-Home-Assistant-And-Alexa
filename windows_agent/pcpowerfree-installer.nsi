@@ -9,7 +9,7 @@ RequestExecutionLevel admin
 !define APP_NAME "PC Power Free"
 !define APP_DISPLAY_NAME "WakeLink"
 !define APP_PUBLISHER "WakeLink open-source project"
-!define APP_VERSION "0.2.0-beta.10"
+!define APP_VERSION "0.2.0-beta.12"
 !define INSTALL_BASENAME "pcpowerfree-windows-x64-setup.exe"
 !define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
 
@@ -78,10 +78,6 @@ LangString UpgradeFailed 1033 "Could not restart the updated agent. Your configu
 LangString UpgradeFailed 1034 "No se pudo arrancar el agente actualizado. Se conserva tu configuracion. Consulta upgrade.log en la carpeta de datos antes de reintentar; no desinstales."
 LangString OnlyX64Message 1033 "This installer is only for Windows x64."
 LangString OnlyX64Message 1034 "Este instalador es solo para Windows x64."
-LangString ConfigureShortcut 1033 "Configure ${APP_NAME}"
-LangString ConfigureShortcut 1034 "Configurar ${APP_NAME}"
-LangString UninstallShortcut 1033 "Uninstall ${APP_NAME}"
-LangString UninstallShortcut 1034 "Desinstalar ${APP_NAME}"
 LangString DesktopShortcut 1033 "Create a desktop shortcut"
 LangString DesktopShortcut 1034 "Crear un acceso directo en el escritorio"
 LangString ShortcutFailed 1033 "The desktop shortcut could not be updated. WakeLink is installed; open it from the Start menu."
@@ -146,9 +142,12 @@ Section "WakeLink" SEC_MAIN
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
-  CreateDirectory "$SMPROGRAMS\${APP_NAME}"
-  CreateShortcut "$SMPROGRAMS\${APP_NAME}\$(ConfigureShortcut).lnk" "$INSTDIR\PCPowerSetup.exe"
-  CreateShortcut "$SMPROGRAMS\${APP_NAME}\$(UninstallShortcut).lnk" "$INSTDIR\Uninstall.exe"
+  ; Remove only the two known legacy shortcuts; keep the old data/install paths.
+  Delete "$SMPROGRAMS\${APP_NAME}\Configure PC Power Free.lnk"
+  Delete "$SMPROGRAMS\${APP_NAME}\Configurar PC Power Free.lnk"
+  Delete "$SMPROGRAMS\${APP_NAME}\Uninstall PC Power Free.lnk"
+  Delete "$SMPROGRAMS\${APP_NAME}\Desinstalar PC Power Free.lnk"
+  RMDir "$SMPROGRAMS\${APP_NAME}"
 
   ; Keep one public Start menu entry; desktop creation is optional below.
   CreateDirectory "$SMPROGRAMS\${APP_DISPLAY_NAME}"
@@ -194,8 +193,10 @@ Section "Uninstall"
   ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "$INSTDIR\desktop-shortcut.ps1" -DesktopPath "$DESKTOP" -InstallDir "$INSTDIR"'
   Delete "$SMPROGRAMS\${APP_DISPLAY_NAME}\${APP_DISPLAY_NAME}.lnk"
   RMDir "$SMPROGRAMS\${APP_DISPLAY_NAME}"
-  Delete "$SMPROGRAMS\${APP_NAME}\$(ConfigureShortcut).lnk"
-  Delete "$SMPROGRAMS\${APP_NAME}\$(UninstallShortcut).lnk"
+  Delete "$SMPROGRAMS\${APP_NAME}\Configure PC Power Free.lnk"
+  Delete "$SMPROGRAMS\${APP_NAME}\Configurar PC Power Free.lnk"
+  Delete "$SMPROGRAMS\${APP_NAME}\Uninstall PC Power Free.lnk"
+  Delete "$SMPROGRAMS\${APP_NAME}\Desinstalar PC Power Free.lnk"
   RMDir "$SMPROGRAMS\${APP_NAME}"
 
   Delete "$INSTDIR\PCPowerAgent.exe"
