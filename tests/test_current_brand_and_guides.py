@@ -5,7 +5,6 @@ import re
 import sys
 import unittest
 
-from PIL import Image, ImageDraw
 from unittest.mock import patch
 
 
@@ -14,6 +13,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class CurrentBrandAndGuideTests(unittest.TestCase):
     def test_home_assistant_icon_uses_windows_symbol(self):
+        if sys.platform != "win32":
+            self.skipTest("Pillow is installed only for Windows desktop tests")
+        from PIL import Image
         with Image.open(ROOT / "windows_agent/assets/wakelink.ico") as source:
             expected = source.convert("RGBA").resize((256, 256))
         with Image.open(ROOT / "custom_components/pc_power_free/brand/icon.png") as actual:
@@ -26,6 +28,9 @@ class CurrentBrandAndGuideTests(unittest.TestCase):
         self.assertIn('"assets/wakelink.ico;assets"', build)
 
     def test_tray_only_adds_a_status_dot_to_the_shared_symbol(self):
+        if sys.platform != "win32":
+            self.skipTest("Pillow and pystray are installed only for Windows desktop tests")
+        from PIL import Image, ImageDraw
         sys.path.insert(0, str(ROOT / "windows_agent"))
         from pc_power_tray import build_tray_image
         import pc_power_tray
