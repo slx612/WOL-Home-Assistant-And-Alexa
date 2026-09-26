@@ -33,7 +33,7 @@ Las capturas de esta guia son reales. Los **recuadros rojos** indican donde puls
    ![Formulario de repositorio con el campo URL y Anadir marcados en rojo](images/alexa/ha-add-repository.png)
 
 3. Busca **Matterbridge**, pulsa **Instalar** y espera. Activa **Iniciar al arrancar** para que funcione con el PC apagado. Pulsa **Iniciar** y **Abrir interfaz web**. El primer inicio puede tardar varios minutos; si aparece «La aplicacion no esta lista», espera y pulsa **Volver a intentar**.
-4. Arriba veras **Home | Devices | Logs | Settings**. **Home** ya muestra un QR. **No lo escanees todavia.**
+4. Arriba veras **Home | Devices | Logs | Settings**. **Home** puede mostrar un QR o el boton **Turn on pairing**. Todavia no vincules nada.
 
 **Comprueba:** la interfaz abre y en **Home** aparece **Install plugins**. Si no, revisa el registro de la aplicacion en Home Assistant.
 
@@ -46,12 +46,12 @@ Las capturas de esta guia son reales. Los **recuadros rojos** indican donde puls
 
    ![Matterbridge Settings y Mdns interface marcados en rojo](images/alexa/matterbridge-mdns.png)
 
-**Comprueba:** en **Home > System info**, **Interface name** corresponde a esa red. Una red de invitados que aisle el Echo puede impedir la deteccion.
+**Comprueba:** en **Home > System info**, **Interface name** corresponde a esa red. Si Matterbridge avisa de que falta **Mdns interface**, vuelve a **Settings** y corrigelo antes de vincular Alexa. Una red de invitados que aisle el Echo puede impedir la deteccion.
 
 ## 4. Marca solo el interruptor del PC
 
 1. En Home Assistant abre **Configuracion > Dispositivos y servicios > Entidades**. Busca el ID `switch.` del paso 1, abre la fila **Power** de tu PC y pulsa el icono **Configuracion** de la entidad. No pulses el interruptor **Alternar**.
-2. En los ajustes de esa entidad pulsa **Anadir etiqueta > Anadir nueva etiqueta...**. Llamala `WakeLink Alexa`; importan las mayusculas y los espacios.
+2. En los ajustes de esa entidad pulsa **Anadir etiqueta**. Si `WakeLink Alexa` ya existe, seleccionala. Si no existe, pulsa **Anadir nueva etiqueta...** y creala con ese nombre exacto; importan las mayusculas y los espacios.
 
    En este recorte, pulsa primero **Anadir etiqueta** y despues **Anadir nueva etiqueta...**:
 
@@ -67,7 +67,7 @@ Las capturas de esta guia son reales. Los **recuadros rojos** indican donde puls
 
 ## 5. Instala el complemento y limita lo que exporta
 
-1. En **Matterbridge > Home > Install plugins**, escribe `matterbridge-hass` en **Plugin name or plugin path**, deja **Tag or version** en `latest` y pulsa **Install**. Espera a que aparezca en **Plugins**. **No escanees el QR.**
+1. En **Matterbridge > Home > Install plugins**, escribe `matterbridge-hass` en **Plugin name or plugin path**, deja **Tag or version** en `latest` y pulsa **Install**. Espera a que aparezca en **Plugins**. Puede indicar **Error** hasta que rellenes Host y Token; es normal. **No escanees el QR.**
 
    Escribe `matterbridge-hass` en el campo de la izquierda y pulsa **Install**:
 
@@ -83,19 +83,39 @@ Las capturas de esta guia son reales. Los **recuadros rojos** indican donde puls
 
    ![Campo Nombre y boton Crear token marcados en rojo en el formulario espanol](images/alexa/ha-token-form-es.png)
 
-3. En la fila **Plugins > matterbridge-hass** abre su configuracion. En **Host** pon la direccion WebSocket de Home Assistant, normalmente `ws://homeassistant.local:8123` en una red privada de confianza. Si usas HTTPS con certificado valido, usa `wss://` y tu nombre de host real. `ws://` no cifra el token: no lo uses en redes no confiables. No desactives la validacion de certificados para ocultar un error.
-4. Pega el token en **Token**. En **Filter By Label** elige/escribe exactamente `WakeLink Alexa`. En **Domain Whitelist** deja solo `switch`. Guarda y **reinicia el complemento** para aplicar la seleccion. **No uses Split Entities:** esta obsoleto y no hace falta en esta ruta. Una **Whitelist** vacia no es un filtro; aqui el filtro es **Filter By Label**.
-5. Abre **Matterbridge > Devices**. Debe aparecer **exactamente un dispositivo** de `matterbridge-hass`: el interruptor del PC. Si hay cero, revisa Host, Token y etiqueta. Si hay mas de uno, **no vincules Alexa**: revisa la etiqueta y el filtro.
+3. En la fila **Plugins** de `matterbridge-hass`, pulsa el **engranaje** de **Actions** para abrir **Plugin config**:
 
-   Comprueba el contador en **Devices**. Esta captura muestra **0/0**, es decir, **todavia no esta listo**. No escanees el QR hasta que se muestre solo el PC previsto:
+   ![Engranaje Plugin config de matterbridge-hass marcado en rojo](images/alexa/matterbridge-plugin-config.png)
 
-   ![Contador de dispositivos de Matterbridge en 0/0 marcado en rojo](images/alexa/matterbridge-device-check.png)
+   En **Host** pon la direccion WebSocket de Home Assistant, normalmente `ws://homeassistant.local:8123` en una red privada de confianza. Pega la nueva clave en **Token**; nunca la incluyas en una captura. En esta imagen el campo Token esta vacio a proposito:
 
-**Comprobacion obligatoria:** no vayas al QR hasta ver solo el PC previsto en **Devices**. El complemento puede mostrar muchos dispositivos si no se filtra bien.
+   ![Campos Host y Token vacio de Matterbridge marcados en rojo](images/alexa/matterbridge-host-token.png)
+
+   `ws://` no cifra el token: usalo solo en una red local de confianza. Si Home Assistant usa HTTPS con certificado valido, usa `wss://` con su nombre real y marca **Reject Unauthorized**. Un certificado propio necesita un **CA Certificate Path** de confianza. No desactives la comprobacion del certificado para ocultar un error.
+4. Baja hasta **Filter By Label** y escribe exactamente `WakeLink Alexa`:
+
+   ![Valor Filter By Label de Matterbridge marcado en rojo](images/alexa/matterbridge-label-filter.png)
+
+   En **Domain Whitelist**, abre la lista y selecciona **solo** `switch`:
+
+   ![Domain Whitelist de Matterbridge con switch marcado en rojo](images/alexa/matterbridge-domain-switch.png)
+
+   Pulsa **Confirm** y despues **Restart matterbridge** (boton de flecha circular en la barra superior); espera a que vuelva a abrir. No uses **Split Entities**. No dejes **Filter By Label** vacio: sin el, el complemento puede exportar otros dispositivos.
+5. Abre **Matterbridge > Devices**. En **View mode**, arriba a la derecha, pulsa el **icono de tabla**:
+
+   ![Boton de vista de tabla de Matterbridge marcado en rojo](images/alexa/matterbridge-table-view.png)
+
+   La tabla debe tener **una fila** de `matterbridge-hass`, con el nombre de tu PC, y mostrar **Total devices: 1**. En esta captura publica hemos ocultado el nombre real:
+
+   ![Una fila de PC y Total devices 1 de Matterbridge marcados en rojo](images/alexa/matterbridge-one-pc.png)
+
+   En la vista de tarjetas, el *mismo PC* puede aparecer dos veces como **Online** y **On**; no son dos PC exportados. Si la tabla no tiene filas, revisa Host, Token y etiqueta. Si hay mas de una, **no vincules Alexa**: corrige la etiqueta o el filtro.
+
+**Comprobacion obligatoria:** no vayas al QR hasta que la tabla muestre solo tu PC. Un filtro mal configurado puede exportar muchos dispositivos.
 
 ## 6. Vincula Matterbridge con Alexa
 
-1. En Matterbridge abre **Home** y deja visible **QR pairing code**. No es el codigo de seis cifras de WakeLink. No publiques el QR ni el codigo manual: alguien en tu red podria intentar vincular el puente.
+1. En Matterbridge abre **Home**. Si aparece **Turn on pairing**, pulsalo ahora; si no, ya veras **QR pairing code**. No es el codigo de seis cifras de WakeLink. No publiques el QR ni el codigo manual: alguien en tu red podria intentar vincular el puente.
 2. En el movil abre **Alexa > Dispositivos > + > Anadir dispositivo > Otro > Matter**. Confirma las preguntas y pulsa **Escanear codigo QR**. Escanea el QR de Matterbridge. Los textos pueden variar segun la version de Alexa; busca la opcion **Matter**.
 3. Espera a que Alexa encuentre el puente y el interruptor. Dale al PC un nombre claro, como **PC del despacho**. Si aparecen otros dispositivos de Home Assistant, elimina el puente de Alexa, corrige el filtro del paso 5 y no pruebes ordenes de voz.
 4. Primero comprueba que el PC **aparece** en Alexa. Para probar el apagado, guarda tu trabajo y di «Alexa, apaga PC del despacho». Solo si Wake-on-LAN ya funciona desde Home Assistant, prueba «Alexa, enciende PC del despacho» con el PC apagado.
@@ -105,10 +125,10 @@ Las capturas de esta guia son reales. Los **recuadros rojos** indican donde puls
 ## Si falla o quieres deshacerlo
 
 - **Matterbridge no esta lista:** espera, pulsa **Volver a intentar** y, si persiste, revisa los registros de la aplicacion en Home Assistant.
-- **Devices muestra cero:** comprueba que WakeLink funciona, que la etiqueta esta en la *entidad* `switch.`, y que Host/Token conectan `matterbridge-hass`.
-- **Devices muestra mas de uno:** no escanees el QR. Quita etiquetas sobrantes o corrige **Filter By Label**, reinicia el complemento y vuelve a contar.
+- **La tabla Devices no muestra filas:** comprueba que WakeLink funciona, que la etiqueta esta en la *entidad* `switch.`, y que Host/Token conectan `matterbridge-hass`.
+- **La tabla Devices muestra mas de una fila:** no escanees el QR. Quita etiquetas sobrantes o corrige **Filter By Label**, reinicia Matterbridge y vuelve a contar.
 - **Alexa no lo encuentra:** revisa **Mdns interface**, la compatibilidad Matter del Echo y que Echo, movil y Home Assistant puedan comunicarse localmente.
 - **Alexa no enciende el PC:** prueba primero Wake-on-LAN desde Home Assistant. Matterbridge no puede cambiar la BIOS/UEFI ni el adaptador de red.
 - **Deshacer:** elimina el puente Matterbridge de Alexa, desactiva/elimina `matterbridge-hass` y **revoca su token** en **Home Assistant > tu perfil > Seguridad**. Puedes quitar la etiqueta. Conserva el PC y la vinculacion WakeLink. Restaurar una copia no revoca por si solo el token ni borra el dispositivo de Alexa.
 
-Fuentes: [aplicacion Matterbridge](https://github.com/Luligu/matterbridge-home-assistant-addon/blob/main/DOCS.md), [filtros de `matterbridge-hass`](https://github.com/Luligu/matterbridge-hass/discussions/186), [etiquetas en Home Assistant](https://www.home-assistant.io/docs/organizing/labels/), [Matter en Amazon](https://developer.amazon.com/docs/alexaplus/smarthome/matter-support.html).
+Fuentes: [aplicacion Matterbridge](https://github.com/Luligu/matterbridge-home-assistant-addon/blob/main/DOCS.md), [configuracion de `matterbridge-hass`](https://github.com/Luligu/matterbridge-hass/blob/main/README.md), [etiquetas en Home Assistant](https://www.home-assistant.io/docs/organizing/labels/), [Matter en Amazon](https://developer.amazon.com/docs/alexaplus/smarthome/matter-support.html).
