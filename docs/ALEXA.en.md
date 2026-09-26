@@ -51,19 +51,29 @@ These are real screenshots. **Red boxes** show exactly where to click or type. Y
 ## 4. Mark only the PC switch
 
 1. In Home Assistant open **Settings > Devices & services > Entities**. Search for the `switch.` ID from step 1, open your PC's **Power** row, and select the entity **Settings** icon. Do not press the **Toggle** switch.
-2. In that entity's settings, select **Add label**. If `WakeLink Alexa` already exists, select it. Otherwise select **Add new label...** and create it with that exact name; capitalization and spaces matter.
+2. In **Power** settings, select **Add label**. If `WakeLink Alexa` is **not in the list**, select **Add new label...**, enter `WakeLink Alexa`, and select **Create**. If it is already listed, do not create another one.
 
-   In this crop, select **Add label** first, then **Add new label...**:
+   **Only if the label does not exist**, select **Add new label...**:
 
    ![Add label and Add new label outlined in red](images/alexa/entity-add-label-en.png)
 
-   Type this exact name into **Name** and then select **Create**:
+   Type this exact name into **Name** and select **Create**:
 
    ![New label form with WakeLink Alexa and Create outlined in red](images/alexa/ha-label-create-en.png)
 
-3. Confirm that `WakeLink Alexa` appears on **that entity** and select **Update** if it becomes enabled. If creating the label did not assign it automatically, open **Add label** again and select it. **Do not** label the whole device, an area, or other entities.
+3. Look next to **Add label**. If you already see a **WakeLink Alexa** pill, go to step 4. **If it is missing**, open **Add label** and select **WakeLink Alexa**. Creating a label does not guarantee it is assigned to **Power**; do not select it twice or you may uncheck it.
 
-**Checkpoint:** the label identifies one entity. It is the filter before anything is shared with Alexa.
+   If the pill is missing, select **WakeLink Alexa**, outlined in red; do **not** select **Add new label...** again:
+
+   ![Existing WakeLink Alexa label outlined in red in Power's menu](images/alexa/entity-select-existing-label-en.png)
+
+4. Check that the **WakeLink Alexa** pill appears next to **Add label**. Then select **Update** at the bottom; otherwise the assignment is not saved.
+
+   These two crops are from the same form: the pill first, then **Update**:
+
+   ![Selected label and Update button outlined in red](images/alexa/entity-save-label-en.png)
+
+**Checkpoint before continuing:** return to **Entities** and find your PC. Its **Power** row must show **WakeLink Alexa** next to the name. If it does not, repeat steps 3 and 4; **do not continue to Matterbridge**. Do not label the entire device, an area, or other entities.
 
 ## 5. Install the plugin and limit what it exports
 
@@ -125,7 +135,7 @@ These are real screenshots. **Red boxes** show exactly where to click or type. Y
 ## If it fails or you want to undo it
 
 - **Matterbridge is not ready:** wait, retry, and if it persists check its app logs in Home Assistant.
-- **The Devices table shows zero:** check WakeLink, the label on the `switch.` *entity*, and Host/Token for `matterbridge-hass`.
+- **The Devices table shows zero:** first return to step 4 and check that Home Assistant's **Power** row shows **WakeLink Alexa**; creating a label without assigning it leaves the filter with no results. If it does, check Host/Token and the `matterbridge-hass` log. Do not remove **Filter By Label** to hide the problem.
 - **The Devices table shows more than one row:** do not scan the QR. Remove extra labels or correct **Filter By Label**, restart Matterbridge, and count again.
 - **Alexa cannot find it:** check **Mdns interface**, Echo Matter support, and local connectivity among Echo, phone, and Home Assistant.
 - **Alexa cannot wake the PC:** first test Wake-on-LAN from Home Assistant. Matterbridge cannot change BIOS/UEFI or network-adapter settings.

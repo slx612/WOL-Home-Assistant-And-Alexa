@@ -51,19 +51,29 @@ Las capturas de esta guia son reales. Los **recuadros rojos** indican donde puls
 ## 4. Marca solo el interruptor del PC
 
 1. En Home Assistant abre **Configuracion > Dispositivos y servicios > Entidades**. Busca el ID `switch.` del paso 1, abre la fila **Power** de tu PC y pulsa el icono **Configuracion** de la entidad. No pulses el interruptor **Alternar**.
-2. En los ajustes de esa entidad pulsa **Anadir etiqueta**. Si `WakeLink Alexa` ya existe, seleccionala. Si no existe, pulsa **Anadir nueva etiqueta...** y creala con ese nombre exacto; importan las mayusculas y los espacios.
+2. En los ajustes de **Power**, pulsa **Anadir etiqueta**. Si **no aparece** `WakeLink Alexa` en la lista, pulsa **Anadir nueva etiqueta...**, escribe `WakeLink Alexa` y pulsa **Crear**. Si ya aparece, no crees otra.
 
-   En este recorte, pulsa primero **Anadir etiqueta** y despues **Anadir nueva etiqueta...**:
+   **Solo si no existe**, pulsa **Anadir nueva etiqueta...**:
 
    ![Botones Anadir etiqueta y Anadir nueva etiqueta marcados en rojo](images/alexa/entity-add-label-es.png)
 
-   Escribe exactamente este nombre en **Nombre** y despues pulsa **Crear**:
+   Escribe exactamente este nombre en **Nombre** y pulsa **Crear**:
 
    ![Formulario de nueva etiqueta con WakeLink Alexa y Crear marcados en rojo](images/alexa/ha-label-create-es.png)
 
-3. Comprueba que `WakeLink Alexa` aparece en **esa entidad** y pulsa **Actualizar** si se habilita. Si crear la etiqueta no la asigno automaticamente, vuelve a **Anadir etiqueta** y seleccionala. **No** la apliques al dispositivo completo, a un area ni a otras entidades.
+3. Mira junto a **Anadir etiqueta**. Si ya ves una pastilla **WakeLink Alexa**, pasa al paso 4. **Si no la ves**, abre **Anadir etiqueta** y pulsa la opcion **WakeLink Alexa**. Crear la etiqueta no garantiza que quede asignada a **Power**; tampoco la pulses dos veces porque podrias desmarcarla.
 
-**Comprueba:** la etiqueta identifica una sola entidad. Sera el filtro antes de compartir nada con Alexa.
+   Si falta la pastilla, pulsa **WakeLink Alexa**, la opcion marcada en rojo; **no** pulses **Anadir nueva etiqueta...** otra vez:
+
+   ![Etiqueta WakeLink Alexa existente marcada en rojo en el menu de Power](images/alexa/entity-select-existing-label-es.png)
+
+4. Comprueba que aparezca la pastilla **WakeLink Alexa** junto a **Anadir etiqueta**. Despues pulsa **Actualizar** abajo; si no lo pulsas, el cambio no se guarda.
+
+   Estos dos recortes son del mismo formulario: primero la pastilla, despues **Actualizar**:
+
+   ![Etiqueta seleccionada y boton Actualizar marcados en rojo](images/alexa/entity-save-label-es.png)
+
+**Comprueba antes de seguir:** vuelve a **Entidades** y busca el PC. La fila **Power** debe mostrar **WakeLink Alexa** junto a su nombre. Si no aparece, repite los pasos 3 y 4; **no sigas a Matterbridge**. No apliques la etiqueta al dispositivo completo, a un area ni a otras entidades.
 
 ## 5. Instala el complemento y limita lo que exporta
 
@@ -125,7 +135,7 @@ Las capturas de esta guia son reales. Los **recuadros rojos** indican donde puls
 ## Si falla o quieres deshacerlo
 
 - **Matterbridge no esta lista:** espera, pulsa **Volver a intentar** y, si persiste, revisa los registros de la aplicacion en Home Assistant.
-- **La tabla Devices no muestra filas:** comprueba que WakeLink funciona, que la etiqueta esta en la *entidad* `switch.`, y que Host/Token conectan `matterbridge-hass`.
+- **La tabla Devices no muestra filas:** primero vuelve al paso 4 y comprueba que la fila **Power** de Home Assistant muestre **WakeLink Alexa**; crear la etiqueta sin asignarla deja el filtro sin resultados. Si ya aparece, revisa Host/Token y el registro de `matterbridge-hass`. No quites **Filter By Label** para ocultar el problema.
 - **La tabla Devices muestra mas de una fila:** no escanees el QR. Quita etiquetas sobrantes o corrige **Filter By Label**, reinicia Matterbridge y vuelve a contar.
 - **Alexa no lo encuentra:** revisa **Mdns interface**, la compatibilidad Matter del Echo y que Echo, movil y Home Assistant puedan comunicarse localmente.
 - **Alexa no enciende el PC:** prueba primero Wake-on-LAN desde Home Assistant. Matterbridge no puede cambiar la BIOS/UEFI ni el adaptador de red.
