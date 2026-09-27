@@ -1,0 +1,6 @@
+linux_package/*.sh text eol=lf
+linux_package/postinst text eol=lf
+linux_package/prerm text eol=lf
+dsm_package/payload/dsm_runtime/*.sh text eol=lf
+dsm_package/payload/ui/*.cgi text eol=lf
+dsm_package/template/scripts/* text eol=lf

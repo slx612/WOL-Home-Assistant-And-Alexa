@@ -193,6 +193,7 @@ New-Item -ItemType Directory -Force -Path $appStage | Out-Null
 Copy-FilteredTree -Source (Join-Path $projectRoot "agent_core") -Destination (Join-Path $appStage "agent_core")
 Copy-FilteredTree -Source (Join-Path $projectRoot "linux_agent") -Destination (Join-Path $appStage "linux_agent")
 Copy-FilteredTree -Source (Join-Path $payloadRoot "dsm_runtime") -Destination (Join-Path $appStage "dsm_runtime")
+Copy-FilteredTree -Source (Join-Path $payloadRoot "ui") -Destination (Join-Path $payloadStage "ui")
 Copy-Item -LiteralPath (Join-Path $payloadRoot "share") -Destination $appStage -Recurse -Force
 Copy-Item -LiteralPath (Join-Path $projectRoot "linux_agent\config.example.json") -Destination (Join-Path $appStage "share\config.example.json") -Force
 $vendorStage = Join-Path $appStage "vendor"
@@ -210,6 +211,11 @@ New-Item -ItemType Directory -Force -Path (Join-Path $payloadStage "var") | Out-
 $iconSource = Join-Path $projectRoot "custom_components\pc_power_free\brand\icon.png"
 Write-ResizedPng -Source $iconSource -Destination (Join-Path $spkRoot "PACKAGE_ICON.PNG") -Size 64
 Copy-Item -LiteralPath $iconSource -Destination (Join-Path $spkRoot "PACKAGE_ICON_256.PNG") -Force
+$uiIcons = Join-Path $payloadStage "ui\images"
+New-Item -ItemType Directory -Force -Path $uiIcons | Out-Null
+foreach ($size in @(16, 24, 32, 48, 64, 72, 256)) {
+    Write-ResizedPng -Source $iconSource -Destination (Join-Path $uiIcons "wakelink_$size.png") -Size $size
+}
 
 $packageTgz = Join-Path $buildRoot "package.tgz"
 tar -czf $packageTgz -C $payloadStage .

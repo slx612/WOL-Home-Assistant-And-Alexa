@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+  <title>WakeLink</title>
+  <link rel="icon" href="images/wakelink_64.png">
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <header class="masthead">
+      <div class="brand"><img src="images/wakelink_64.png" width="44" height="44" alt=""><span>WakeLink</span></div>
+      <div class="languages" role="group" aria-label="Language / Idioma">
+        <button type="button" data-lang="es" lang="es">ES</button>
+        <button type="button" data-lang="en" lang="en">EN</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="intro">
+        <p class="eyebrow" data-i18n="eyebrow"></p>
+        <h1 data-i18n="title"></h1>
+        <p class="lead" data-i18n="lead"></p>
+      </div>
+
+      <section class="status-card" aria-labelledby="status-title">
+        <div class="status-top">
+          <div>
+            <p class="section-label" id="status-title" data-i18n="statusTitle"></p>
+            <p class="status-line" id="status-line" role="status" aria-live="polite"></p>
+          </div>
+          <button type="button" class="quiet-button" id="refresh" data-i18n="refresh"></button>
+        </div>
+        <div class="network" id="network" hidden>
+          <div><span data-i18n="device"></span><strong id="hostname"></strong></div>
+          <div><span data-i18n="address"></span><strong id="address"></strong></div>
+          <div><span>MAC</span><strong id="mac"></strong></div>
+        </div>
+      </section>
+
+      <section class="pairing" aria-labelledby="pairing-title">
+        <p class="section-label" data-i18n="pairingLabel"></p>
+        <h2 id="pairing-title" data-i18n="pairingTitle"></h2>
+        <p class="hint" data-i18n="pairingHint"></p>
+        <button type="button" class="primary-button" id="pair" data-i18n="pairButton" disabled></button>
+        <p id="pair-error" class="error" role="alert" hidden></p>
+        <div class="code-card" id="code-card" hidden>
+          <span data-i18n="codeLabel"></span>
+          <div class="code-line"><output id="pairing-code"></output><button type="button" id="copy" class="quiet-button" data-i18n="copy"></button></div>
+          <p data-i18n="codeExpiry"></p>
+        </div>
+      </section>
+
+      <section class="steps" aria-labelledby="steps-title">
+        <p class="section-label" data-i18n="next"></p>
+        <h2 id="steps-title" data-i18n="stepsTitle"></h2>
+        <ol>
+          <li data-i18n="step1"></li>
+          <li data-i18n="step2"></li>
+          <li data-i18n="step3"></li>
+        </ol>
+      </section>
+    </main>
+    <footer data-i18n="footer"></footer>
+  </div>
+</body>
+</html>

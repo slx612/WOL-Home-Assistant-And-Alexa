@@ -2,6 +2,7 @@
 
 import importlib
 import hashlib
+import io
 import json
 import logging
 from pathlib import Path
@@ -11,14 +12,17 @@ import sys
 import tempfile
 import threading
 import time
+import tarfile
 import unittest
 from unittest.mock import patch
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from agent_core import common as core
 from agent_core.tls import create_server_context
 from tests.test_runtime import FakePlatform, TOKEN, config_in
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class DsmAuthenticationTests(unittest.TestCase):
@@ -169,6 +173,99 @@ class DsmSetupRouteTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256((self.directory / "agent-cert.pem").read_bytes()).hexdigest(), self.cert_hash)
         self.assertEqual(hashlib.sha256((self.directory / "agent-key.pem").read_bytes()).hexdigest(), self.key_hash)
         self.assertEqual(self.platform.commands, [])
+
+
+class DsmPageTests(unittest.TestCase):
+    def ui(self):
+        return importlib.import_module("dsm_package.payload.ui.setup_cgi")
+
+    def test_package_launcher_opens_wakelink_page(self):
+        info = (ROOT / "dsm_package/template/INFO.in").read_text(encoding="utf-8")
+        config = json.loads((ROOT / "dsm_package/payload/ui/config").read_text(encoding="utf-8"))
+        self.assertIn('displayname="WakeLink"', info)
+        self.assertIn('dsmuidir="ui"', info)
+        self.assertIn('dsmappname="com.wakelink.Setup"', info)
+        app = config[".url"]["com.wakelink.Setup"]
+        self.assertEqual(app["url"], "3rdparty/pcpowerfree/index.html")
+        self.assertNotIn("allUsers", app)
+
+    def test_page_has_both_languages_and_no_power_button(self):
+        html = (ROOT / "dsm_package/payload/ui/index.html").read_text(encoding="utf-8")
+        script = (ROOT / "dsm_package/payload/ui/app.js").read_text(encoding="utf-8")
+        self.assertIn('lang="en"', html)
+        self.assertIn("Generar código", script)
+        self.assertIn("Generate pairing code", script)
+        self.assertNotIn("/v1/power/", html + script)
+        self.assertNotIn("action=shutdown", html + script)
+
+    def test_cgi_rejects_unknown_action_without_proxying(self):
+        module = self.ui()
+        with patch.object(module, "call_agent") as call:
+            status, _ = module.handle_request({"QUERY_STRING": "action=shutdown", "REQUEST_METHOD": "POST"})
+        self.assertEqual(status, 404)
+        call.assert_not_called()
+
+    def test_cgi_pairing_requires_custom_header(self):
+        module = self.ui()
+        with patch.object(module, "call_agent") as call:
+            status, _ = module.handle_request({"QUERY_STRING": "action=pair", "REQUEST_METHOD": "POST"})
+        self.assertEqual(status, 403)
+        call.assert_not_called()
+
+    def test_cgi_rejects_cross_origin_post(self):
+        module = self.ui()
+        environment = {
+            "QUERY_STRING": "action=pair", "REQUEST_METHOD": "POST",
+            "HTTP_X_WAKELINK_ACTION": "pair", "HTTP_ORIGIN": "https://other.example",
+            "HTTP_HOST": "nas.local:5001",
+        }
+        with patch.object(module, "call_agent") as call:
+            status, _ = module.handle_request(environment)
+        self.assertEqual(status, 403)
+        call.assert_not_called()
+
+    def test_cgi_reports_agent_unavailable(self):
+        module = self.ui()
+        with patch.object(module, "call_agent", side_effect=URLError("offline")):
+            status, payload = module.handle_request({"QUERY_STRING": "action=status", "REQUEST_METHOD": "GET"})
+        self.assertEqual(status, 503)
+        self.assertEqual(payload["error"], "WakeLink agent unavailable")
+
+    def test_cgi_forwards_admin_context_and_disables_caching(self):
+        module = self.ui()
+        environment = {
+            "QUERY_STRING": "action=pair", "REQUEST_METHOD": "POST",
+            "HTTP_X_WAKELINK_ACTION": "pair", "HTTP_COOKIE": "id=admin",
+            "REMOTE_ADDR": "192.168.100.10", "SERVER_ADDR": "192.168.100.167",
+        }
+        output = io.StringIO()
+        with patch.object(module, "call_agent", return_value=(200, {"pairing_code": "123456", "expires_in": 600})) as call:
+            module.main(environment, output)
+        self.assertEqual(call.call_args.args[0], "POST")
+        self.assertEqual(call.call_args.args[1], "/v1/dsm/pairing-code")
+        self.assertEqual(call.call_args.args[2]["Cookie"], "id=admin")
+        self.assertIn("Cache-Control: no-store", output.getvalue())
+        self.assertIn('"pairing_code": "123456"', output.getvalue())
+        self.assertNotIn("id=admin", output.getvalue())
+
+    def test_cgi_uses_pinned_public_certificate(self):
+        module = self.ui()
+        source = (ROOT / "dsm_package/payload/ui/setup_cgi.py").read_text(encoding="utf-8")
+        self.assertIn("agent-cert.pem", source)
+        self.assertIn("ssl.create_default_context", source)
+        self.assertNotIn("_create_unverified_context", source)
+
+    def test_built_package_has_page_but_no_private_state(self):
+        archive_path = ROOT / "dsm_package/build/package.tgz"
+        if not archive_path.is_file():
+            self.skipTest("Build the DSM package first")
+        with tarfile.open(archive_path) as archive:
+            names = {name.removeprefix("./") for name in archive.getnames()}
+            self.assertIn("ui/index.html", names)
+            self.assertIn("ui/setup.cgi", names)
+            self.assertIn("ui/images/wakelink_64.png", names)
+            for name in names:
+                self.assertNotIn(Path(name).name, {"agent-key.pem", "agent-cert.pem", "config.json"})
 
 
 if __name__ == "__main__":

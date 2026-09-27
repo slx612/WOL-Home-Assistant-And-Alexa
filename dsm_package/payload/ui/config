@@ -1,0 +1,11 @@
+{
+  ".url": {
+    "com.wakelink.Setup": {
+      "type": "url",
+      "icon": "images/wakelink_{0}.png",
+      "title": "WakeLink",
+      "desc": "Connect this NAS to Home Assistant",
+      "url": "3rdparty/pcpowerfree/index.html"
+    }
+  }
+}

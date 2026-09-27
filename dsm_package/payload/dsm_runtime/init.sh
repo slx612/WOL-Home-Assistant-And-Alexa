@@ -7,6 +7,7 @@ CONFIG_PATH="${VAR_DIR}/config.json"
 SUMMARY_PATH="${VAR_DIR}/setup-output.txt"
 PYTHON_FINDER="${SCRIPT_DIR}/find-python.sh"
 VENDOR_PATH="${APP_ROOT}/vendor"
+UI_DIR="${APP_ROOT}/../ui"
 
 mkdir -p "${VAR_DIR}"
 umask 077
@@ -41,14 +42,24 @@ ensure_config() {
     "${PYTHON_BIN}" -c 'import sys; from pathlib import Path; from agent_core.common import load_config; load_config(Path(sys.argv[1]))' "${CONFIG_PATH}"
 }
 
+publish_ui_certificate() {
+    [ -d "${UI_DIR}" ] || return 0
+    cp "${VAR_DIR}/agent-cert.pem" "${UI_DIR}/agent-cert.pem" || return 1
+    chmod -R go-w "${APP_ROOT}/.." || return 1
+    chmod 755 "${APP_ROOT}/.." "${UI_DIR}" "${UI_DIR}/setup.cgi" || return 1
+    chmod 644 "${UI_DIR}/agent-cert.pem" || return 1
+}
+
 case "$1" in
     --check)
         [ -f "${CONFIG_PATH}" ] || fail "Config file missing at ${CONFIG_PATH}"
         ensure_config || fail "Invalid agent configuration or TLS identity."
+        publish_ui_certificate || fail "Could not prepare DSM setup page."
         echo "python3 and DSM agent config are available."
         ;;
     --ensure-config|"")
         ensure_config || fail "Initial agent configuration failed. See setup-output.txt."
+        publish_ui_certificate || fail "Could not prepare DSM setup page."
         ;;
     *)
         fail "Unknown argument: $1"
