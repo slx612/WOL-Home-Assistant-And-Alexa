@@ -91,6 +91,18 @@ class LinuxPlatformAdapter:
             ) from err
 
 
+class DsmPlatformAdapter(LinuxPlatformAdapter):
+    """DSM's agent adds authenticated access to local setup actions."""
+
+    def __init__(self) -> None:
+        super().__init__(platform_id="dsm")
+
+    def authenticate_setup_request(self, cookie: str, remote_addr: str, server_addr: str) -> bool:
+        from dsm_runtime.setup_auth import authenticate_admin
+
+        return authenticate_admin(cookie, remote_addr, server_addr)
+
+
 def parse_args() -> argparse.Namespace:
     """Parse CLI arguments."""
     parser = argparse.ArgumentParser(description="Run the PC Power Free Linux agent")
@@ -107,7 +119,7 @@ def main() -> int:
         platform_id = DEFAULT_PLATFORM_ID
     return run_agent(
         config_path=config_path,
-        platform=LinuxPlatformAdapter(platform_id=platform_id),
+        platform=DsmPlatformAdapter() if platform_id == "dsm" else LinuxPlatformAdapter(),
         logger_name=f"pc_power_agent.{platform_id}",
     )
 

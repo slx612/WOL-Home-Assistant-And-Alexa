@@ -499,6 +499,11 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
         self.server.refresh_config_if_needed()
         self.server.refresh_guard_state_if_needed()
 
+        if self.path == "/v1/dsm/setup":
+            if self._authorize_dsm_setup():
+                self._send_json(HTTPStatus.OK, self._build_dsm_setup_payload())
+            return
+
         if self.path == "/v1/status":
             if not self._authorize():
                 return
@@ -523,6 +528,20 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
         """Handle POST requests."""
         self.server.refresh_config_if_needed()
         self.server.refresh_guard_state_if_needed()
+
+        if self.path == "/v1/dsm/pairing-code":
+            if self.headers.get("X-WakeLink-Action") != "pair":
+                self._send_json(HTTPStatus.FORBIDDEN, {"error": "Setup action not allowed"})
+                return
+            if self._authorize_dsm_setup():
+                with self.server.config_lock:
+                    code = generate_pairing_code()
+                    self.server.config.pairing_code_hash = hash_pairing_code(code)
+                    self.server.config.pairing_code_expires_at = time.time() + PAIRING_CODE_TTL_SECONDS
+                    self.server.config.pairing_code_failed_attempts = 0
+                    self.server.persist_config()
+                self._send_json(HTTPStatus.OK, {"pairing_code": code, "expires_in": PAIRING_CODE_TTL_SECONDS})
+            return
 
         if self.path == "/v1/pairing/upgrade":
             if not self._authorize_network():
@@ -610,6 +629,48 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.FORBIDDEN, {"error": "Local control requires loopback"})
             return False
         return True
+
+    def _authorize_dsm_setup(self) -> bool:
+        """Allow DSM setup only via localhost and an administrator session."""
+        platform = self.server.platform
+        authenticate = getattr(platform, "authenticate_setup_request", None)
+        if platform.platform_id != "dsm" or not callable(authenticate):
+            self._send_json(HTTPStatus.NOT_FOUND, {"error": "Not found"})
+            return False
+        try:
+            if not ipaddress.ip_address(self.client_address[0]).is_loopback:
+                self._send_json(HTTPStatus.FORBIDDEN, {"error": "Setup requires loopback"})
+                return False
+        except ValueError:
+            self._send_json(HTTPStatus.FORBIDDEN, {"error": "Setup requires loopback"})
+            return False
+        if not isinstance(self.connection, ssl.SSLSocket):
+            self._send_json(HTTPStatus.FORBIDDEN, {"error": "TLS required"})
+            return False
+        if not authenticate(
+            self.headers.get("Cookie", ""),
+            self.headers.get("X-WakeLink-Remote-Addr", ""),
+            self.headers.get("X-WakeLink-Server-Addr", ""),
+        ):
+            self._send_json(HTTPStatus.FORBIDDEN, {"error": "DSM administrator session required"})
+            return False
+        return True
+
+    def _build_dsm_setup_payload(self) -> dict[str, Any]:
+        try:
+            adapter = self.server.platform.detect_primary_adapter()
+            address = adapter.ipv4_address
+            mac = adapter.mac_address
+        except (OSError, ValueError, RuntimeError):
+            address = None
+            mac = None
+        return {
+            "online": True,
+            "hostname": self.server.hostname,
+            "ip_address": address,
+            "mac_address": mac,
+            "agent_version": AGENT_VERSION,
+        }
 
     def _handle_power_action(self, action: str) -> None:
         """Run a power action if the request is valid."""
@@ -836,6 +897,7 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
         self.send_response(status_code)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(encoded)))
+        self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(encoded)
 
