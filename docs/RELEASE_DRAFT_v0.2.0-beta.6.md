@@ -1,4 +1,4 @@
-> **Historical draft, not current instructions.** The product's visible name is now WakeLink; see the [current guides](README.md).
+> **Historical record / Registro histórico.** Not current setup instructions. Use the [current guides / guías actuales](README.md). Old names, versions and test results below describe that point in development only.
 
 Sixth public beta release of PC Power Free.
 

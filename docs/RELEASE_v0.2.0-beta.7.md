@@ -1,6 +1,6 @@
 # PC Power Free v0.2.0-beta.7
 
-> **Historical release note.** The product's visible name is now WakeLink; see the [current guides](README.md).
+> **Historical record / Registro histórico.** Not current setup instructions. Use the [current guides / guías actuales](README.md). Old names, versions and test results below describe that point in development only.
 
 Security and reliability prerelease. **Ready for testing, not a stable or fully hardware-validated release.**
 

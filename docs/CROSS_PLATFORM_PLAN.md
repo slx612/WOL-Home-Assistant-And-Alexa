@@ -1,6 +1,6 @@
 # Cross-Platform Agent Plan
 
-> **Historical development plan, not a supported-platform promise.** See the [current guides](README.md) for user instructions.
+> **Historical record / Registro histórico.** Not current setup instructions. Use the [current guides / guías actuales](README.md). Old names, versions and test results below describe that point in development only.
 
 ## Goal
 

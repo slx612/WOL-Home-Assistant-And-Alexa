@@ -1,5 +1,7 @@
 # WakeLink naming and guided Matterbridge release
 
+> **Historical record / Registro histórico.** Not current setup instructions. Use the [current guides / guías actuales](../../README.md). Old names, versions and test results below describe that point in development only.
+
 Status: design for review; no implementation or release has been approved by this document.
 Date: 2026-09-23.
 Baseline: published v0.2.0-beta.10. The Windows updater was observed to find that version; a downloaded unsigned installer still triggers SmartScreen.

@@ -1,18 +1,31 @@
 # WakeLink with Alexa: step-by-step guide
 
-[English](ALEXA.en.md) | [Espanol](ALEXA.es.md) | [Install WakeLink first](GETTING_STARTED.en.md)
+[English](ALEXA.en.md) | [Español](ALEXA.es.md) | [Install your device first](../README.md#start-here) | [Help](HELP.en.md)
 
-**Status: beta; not yet tested end to end with a real Echo.** WakeLink does not connect to Alexa directly. The route is **WakeLink PC -> Home Assistant -> Matterbridge -> Alexa**. Matterbridge and its `matterbridge-hass` plugin are separate software and must keep running on the Home Assistant host when the PC is off. There is no third-party subscription, but Alexa may need the internet for voice recognition.
+**Status: beta. Discovery has been reported working; a complete shutdown-and-wake test with a real Echo is still pending.** WakeLink does not connect to Alexa directly. The route is **WakeLink PC -> Home Assistant -> Matterbridge -> Alexa**. Matterbridge and its `matterbridge-hass` plugin are separate software and must keep running on the Home Assistant host when the PC is off. There is no third-party subscription, but Alexa may need the internet for voice recognition.
 
-You need a PC already paired with WakeLink in Home Assistant, Home Assistant OS with the **Apps** menu (formerly **Add-ons**), a [Matter-compatible Echo](https://developer.amazon.com/docs/alexaplus/smarthome/matter-support.html), and the Alexa phone app. Echo and Home Assistant must be discoverable on the local network. **You do not need Home Assistant's Matter integration:** it imports Matter devices into Home Assistant, not your PC into Alexa.
+You need a computer/NAS already paired with WakeLink in Home Assistant (called **PC** below), Home Assistant OS with the **Apps** menu (formerly **Add-ons**), a [Matter-compatible Echo](https://developer.amazon.com/docs/alexaplus/smarthome/matter-support.html), and the Alexa phone app. Echo and Home Assistant must be discoverable on the local network. **You do not need Home Assistant's Matter integration:** it imports Matter devices into Home Assistant, not your PC into Alexa.
 
 There are **two different codes**: WakeLink's **six-digit code** pairs the PC with Home Assistant; Matterbridge's **Matter QR code** pairs the bridge with Alexa. Do not scan the QR before step 6.
+
+**Compatibility:** Amazon lists regular Echo and Echo Dot 3rd generation and newer as Matter-compatible. Other Echo families have different generation requirements: check the exact model in [Amazon's list](https://developer.amazon.com/docs/alexaplus/smarthome/matter-support.html), and keep its firmware updated. This guide uses the Home Assistant OS app route; Home Assistant Container/Core does not have that app store. Home Assistant and Matterbridge must not be hosted on the device you will shut down.
+
+**Where to start:** if Matterbridge is already paired to another controller, stop at step 1's warning; do not install an unfiltered plugin into it. The WakeLink **Configure > Connect with Alexa (Matter preview)** screen is only a reminder/link to this guide, not an automatic installer.
+
+| Step | Do this | Check before continuing |
+| --- | --- | --- |
+| [1](#1-check-the-pc-and-make-a-backup) | Identify the power switch and back up | Exact entity ID saved |
+| [2](#2-install-and-open-matterbridge) | Install Matterbridge | Web UI opens; do not scan QR |
+| [3](#3-select-the-correct-network) | Select the LAN interface | Correct Mdns interface |
+| [4](#4-mark-only-the-pc-switch) | Create, assign and save the label | Power row shows WakeLink Alexa |
+| [5](#5-install-the-plugin-and-limit-what-it-exports) | Connect and filter the plugin | Devices table contains exactly one PC |
+| [6](#6-pair-matterbridge-with-alexa) | Scan the Matter QR in Alexa | Only the intended device appears |
 
 These are real screenshots. **Red boxes** show exactly where to click or type. Your screen may differ with your Home Assistant version. For safety, no QR, token, or private network address is shown.
 
 ## 1. Check the PC and make a backup
 
-1. Follow [the WakeLink installation guide](GETTING_STARTED.en.md) if the PC is not yet under **Settings > Devices & services > WakeLink**.
+1. Follow [your system's WakeLink guide](../README.md#start-here) if the PC is not yet under **Settings > Devices & services > WakeLink**.
 2. Open that PC and find its **power switch**. Open the entity details and note its **ID**, for example `switch.my_pc_power`. It must start with `switch.`. Do not toggle it just to inspect it: switching it off may shut down the PC.
 3. Make a backup under **Settings > System > Backups**. Keep its encryption key private.
 4. If you already share this PC with Alexa through Emulated Hue, remove that exposure first to avoid a duplicate. If **Matterbridge is already paired with Alexa**, do not follow this first-install recipe: a new unfiltered plugin could share unrelated devices. Set a safe filter before connecting it, or use an isolated instance.

@@ -1,5 +1,7 @@
 # WakeLink guides and brand implementation plan
 
+> **Historical record / Registro histórico.** Not current setup instructions. Use the [current guides / guías actuales](../../README.md). Old names, versions and test results below describe that point in development only.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make WakeLink's current installation and Alexa instructions understandable in English and Spanish, with consistent visible icons and names.

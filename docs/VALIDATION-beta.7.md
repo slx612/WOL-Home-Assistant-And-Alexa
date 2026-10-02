@@ -1,6 +1,6 @@
 # Beta.7 local validation
 
-> **Historical test record.** It does not certify the current beta; see the [current guides](README.md).
+> **Historical record / Registro histórico.** Not current setup instructions. Use the [current guides / guías actuales](README.md). Old names, versions and test results below describe that point in development only.
 
 Date: 2026-09-07. Prepared on Windows 11 x64 / Python 3.13.2.
 Git base: `865f0933a1fa9f6587355cade291f426a691460a`.

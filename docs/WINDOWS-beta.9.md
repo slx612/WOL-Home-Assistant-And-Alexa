@@ -1,6 +1,6 @@
 # WakeLink Windows beta.9: local test build
 
-> **Historical beta.9 note.** Use the [current installation guide](GETTING_STARTED.en.md) or [guia actual](GETTING_STARTED.es.md) for new installs.
+> **Historical record / Registro histórico.** Not current setup instructions. Use the [current guides / guías actuales](README.md). Old names, versions and test results below describe that point in development only.
 
 [English](#english) | [Espanol](#espanol)
 
