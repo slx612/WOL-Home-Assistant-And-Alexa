@@ -2,10 +2,10 @@
   "packages": [
     {
       "package": "pcpowerfree",
-      "version": "0.2.0-0024",
+      "version": "1.0.0-0001",
       "dname": "WakeLink",
-      "desc": "Local WakeLink agent for Synology DSM, aligned with upstream 0.2.0-beta.13.",
-      "link": "https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/download/v0.2.0-beta.13/pcpowerfree-dsm-noarch-0.2.0-0024.spk",
+      "desc": "Local WakeLink agent for Synology DSM, aligned with upstream 1.0.0.",
+      "link": "https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/download/v1.0.0/pcpowerfree-dsm-noarch-1.0.0-0001.spk",
       "thumbnail": [
         "https://raw.githubusercontent.com/slx612/WOL-Home-Assistant-And-Alexa/main/custom_components/pc_power_free/brand/icon.png",
         "https://raw.githubusercontent.com/slx612/WOL-Home-Assistant-And-Alexa/main/custom_components/pc_power_free/brand/icon.png"
@@ -27,7 +27,7 @@
       "maintainer_url": "https://github.com/slx612/WOL-Home-Assistant-And-Alexa",
       "distributor": "WakeLink",
       "distributor_url": "https://github.com/slx612/WOL-Home-Assistant-And-Alexa",
-      "md5": "32449fca5dda20f3f3abfa4158b92861",
+      "md5": "adcad7295e3f976d70e338b77a3851cf",
       "size": 1146368,
       "os_min_ver": "7.0-40000",
       "changelog": "WakeLink update. Existing pairing and TLS identity are preserved."
