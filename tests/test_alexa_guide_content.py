@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 import unittest
 
+from agent_core.common import AGENT_VERSION
+
 
 ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION = ROOT / "custom_components/pc_power_free"
@@ -40,7 +42,7 @@ class MatterGuideContentTests(unittest.TestCase):
         hacs = json.loads((ROOT / "hacs.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["domain"], "pc_power_free")
         self.assertEqual(manifest["name"], "WakeLink")
-        self.assertEqual(manifest["version"], "0.2.0-beta.12")
+        self.assertEqual(manifest["version"], AGENT_VERSION)
         self.assertEqual(hacs["name"], "WakeLink")
 
 

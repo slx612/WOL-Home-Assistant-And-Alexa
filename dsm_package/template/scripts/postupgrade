@@ -1,22 +1,27 @@
 #!/bin/sh
+set -eu
 
 PKG_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 STATE_DIR="${SYNOPKG_PKGVAR:-${PKG_ROOT}/var}"
 BACKUP_DIR="${SYNOPKG_TEMP_UPGRADE_FOLDER}/pcpowerfree-state"
 INIT_SCRIPT="${PKG_ROOT}/target/app/dsm_runtime/init.sh"
 
+umask 077
 mkdir -p "${STATE_DIR}"
-
 if [ -d "${BACKUP_DIR}" ]; then
-    for name in config.json guard_state.json setup-output.txt; do
+    for name in config.json agent-cert.pem agent-key.pem guard_state.json setup-output.txt; do
         if [ -f "${BACKUP_DIR}/${name}" ]; then
-            cp "${BACKUP_DIR}/${name}" "${STATE_DIR}/${name}"
+            temporary="$(mktemp "${STATE_DIR}/.${name}.XXXXXX")"
+            if ! cp "${BACKUP_DIR}/${name}" "${temporary}"; then
+                rm -f "${temporary}"
+                exit 1
+            fi
+            mv -f "${temporary}" "${STATE_DIR}/${name}"
         fi
     done
 fi
 
-if [ -x "${INIT_SCRIPT}" ]; then
-    "${INIT_SCRIPT}" --ensure-config >> "${SYNOPKG_TEMP_LOGFILE}" 2>&1 || true
-fi
+[ -x "${INIT_SCRIPT}" ] || exit 1
+"${INIT_SCRIPT}" --ensure-config >> "${SYNOPKG_TEMP_LOGFILE}" 2>&1
 
 exit 0

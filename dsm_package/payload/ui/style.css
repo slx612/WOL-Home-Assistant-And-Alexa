@@ -68,6 +68,9 @@ h2 { margin: 0; font: 700 25px/1.2 Georgia, serif; letter-spacing: -.02em; }
 .network div { min-width: 0; }
 .network span { display: block; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
 .network strong { display: block; overflow-wrap: anywhere; font-size: 14px; }
+.dsm-login { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+.dsm-login p { margin: 0 0 14px; color: var(--muted); }
+.dsm-login a { color: var(--accent); font-weight: 700; }
 
 .pairing { margin-top: 20px; padding: 28px; }
 .hint { max-width: 640px; margin: 10px 0 20px; color: var(--muted); }

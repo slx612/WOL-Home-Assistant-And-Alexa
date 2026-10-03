@@ -1,6 +1,6 @@
 # Project Context
 
-> **Historical development log.** Current user instructions are in the [documentation index](README.md); dates and names below reflect past work.
+> **Historical record / Registro histórico.** Not current setup instructions. Use the [current guides / guías actuales](README.md). Old names, versions and test results below describe that point in development only.
 
 Last updated: 2026-04-25
 

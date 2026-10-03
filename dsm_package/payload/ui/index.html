@@ -6,8 +6,8 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
   <title>WakeLink</title>
   <link rel="icon" href="images/wakelink_64.png">
-  <link rel="stylesheet" href="style.css">
-  <script src="app.js" defer></script>
+  <link rel="stylesheet" href="style.css?revision=@@DSM_PACKAGE_VERSION@@">
+  <script src="app.js?revision=@@DSM_PACKAGE_VERSION@@" defer></script>
 </head>
 <body>
   <div class="shell">
@@ -39,6 +39,19 @@
           <div><span data-i18n="address"></span><strong id="address"></strong></div>
           <div><span>MAC</span><strong id="mac"></strong></div>
         </div>
+        <div class="dsm-login" id="dsm-login" hidden>
+          <p data-i18n="loginHelp"></p>
+          <a id="desktop-link" data-i18n="openDesktop" target="_top" rel="noopener"></a>
+        </div>
+      </section>
+
+      <section class="pairing" id="power-panel" aria-labelledby="power-title" hidden>
+        <p class="section-label" data-i18n="powerLabel"></p>
+        <h2 id="power-title" data-i18n="powerTitle"></h2>
+        <p class="hint" data-i18n="powerHint"></p>
+        <p id="power-status" role="status" aria-live="polite"></p>
+        <button type="button" class="primary-button" id="authorize-power" data-i18n="powerButton" disabled></button>
+        <p id="power-error" class="error" role="alert" hidden></p>
       </section>
 
       <section class="pairing" aria-labelledby="pairing-title">

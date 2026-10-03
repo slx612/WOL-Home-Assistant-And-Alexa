@@ -26,16 +26,16 @@ for filename, description in (("PCPowerAgent", "WakeLink local power agent"),
                                ("PCPowerTray", "WakeLink system tray"),
                                ("PCPowerSetup", "WakeLink desktop")):
     version = f'''VSVersionInfo(
-  ffi=FixedFileInfo(filevers=(0,2,0,12), prodvers=(0,2,0,12), mask=0x3f, flags=0x2,
+  ffi=FixedFileInfo(filevers=(0,2,0,13), prodvers=(0,2,0,13), mask=0x3f, flags=0x2,
                    OS=0x40004, fileType=0x1, subtype=0x0, date=(0,0)),
   kids=[StringFileInfo([StringTable('040904B0', [
     StringStruct('CompanyName', 'WakeLink open-source project'),
     StringStruct('FileDescription', '{description}'),
-    StringStruct('FileVersion', '0.2.0-beta.12'),
+    StringStruct('FileVersion', '0.2.0-beta.13'),
     StringStruct('InternalName', '{filename}'),
     StringStruct('OriginalFilename', '{filename}.exe'),
     StringStruct('ProductName', 'WakeLink'),
-    StringStruct('ProductVersion', '0.2.0-beta.12')])]),
+    StringStruct('ProductVersion', '0.2.0-beta.13')])]),
     VarFileInfo([VarStruct('Translation', [1033, 1200])])])
 '''
     (ASSETS / f"{filename}.version.txt").write_text(version, encoding="utf-8")

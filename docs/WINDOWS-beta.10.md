@@ -1,6 +1,6 @@
 # WakeLink beta.10: install and update
 
-> **Historical beta.10 note / Nota historica.** For current installation use [English](GETTING_STARTED.en.md) or [Espanol](GETTING_STARTED.es.md).
+> **Historical record / Registro histórico.** Not current setup instructions. Use the [current guides / guías actuales](README.md). Old names, versions and test results below describe that point in development only.
 
 [English](#english) | [Espanol](#espanol)
 

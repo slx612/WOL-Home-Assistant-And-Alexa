@@ -1,11 +1,17 @@
 {
-  ".url": {
+  "main.js": {
     "com.wakelink.Setup": {
-      "type": "url",
+      "type": "app",
       "icon": "images/wakelink_{0}.png",
       "title": "WakeLink",
       "desc": "Connect this NAS to Home Assistant",
-      "url": "3rdparty/pcpowerfree/index.html"
+      "appWindow": "SYNO.SDS.WakeLink.MainWindow",
+      "allowMultiInstance": false
+    },
+    "SYNO.SDS.WakeLink.MainWindow": {
+      "type": "lib",
+      "title": "WakeLink",
+      "icon": "images/wakelink_{0}.png"
     }
   }
 }

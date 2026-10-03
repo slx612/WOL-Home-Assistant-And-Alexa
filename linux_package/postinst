@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+if [ "$1" = configure ]; then
+    /usr/bin/systemctl daemon-reload
+    if [ -f /etc/pc-power-free/config.json ] && /usr/bin/systemctl is-active --quiet pcpowerfree-agent.service; then
+        /usr/bin/systemctl restart pcpowerfree-agent.service
+    fi
+fi

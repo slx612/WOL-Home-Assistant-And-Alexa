@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=WakeLink
+Comment=Connect this computer to Home Assistant
+Comment[es]=Vincula este ordenador con Home Assistant
+Exec=/usr/bin/python3 /opt/pc-power-free/linux_agent/desktop_ui.py
+Icon=wakelink
+Terminal=false
+Categories=Utility;Network;
+StartupNotify=true

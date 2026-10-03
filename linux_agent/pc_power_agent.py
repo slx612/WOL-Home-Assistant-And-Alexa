@@ -97,10 +97,59 @@ class DsmPlatformAdapter(LinuxPlatformAdapter):
     def __init__(self) -> None:
         super().__init__(platform_id="dsm")
 
-    def authenticate_setup_request(self, cookie: str, remote_addr: str, server_addr: str) -> bool:
+    def power_permission_enabled(self) -> bool:
+        """Query both fixed permissions without executing a power action."""
+        try:
+            return all(subprocess.run(
+                ["/usr/bin/sudo", "-n", "-l", "/usr/syno/sbin/synoshutdown", flag],
+                capture_output=True, text=True, timeout=2,
+            ).returncode == 0 for flag in ("--shutdown", "--reboot"))
+        except (OSError, subprocess.SubprocessError):
+            return False
+
+    def execute_power_action(self, action: str, *, delay_seconds: int, force: bool) -> None:
+        """Use DSM's normal shutdown checks with narrowly granted privileges."""
+        flags = {"shutdown": "--shutdown", "restart": "--reboot"}
+        if action not in flags:
+            raise PowerActionError(f"Unsupported action: {action}")
+        if force or delay_seconds != 0:
+            raise PowerActionError("DSM supports normal, immediate power actions only")
+        command = ["/usr/syno/sbin/synoshutdown", flags[action]]
+        try:
+            permission = subprocess.run(
+                ["/usr/bin/sudo", "-n", "-l", *command],
+                capture_output=True, text=True, timeout=10,
+            )
+            if permission.returncode != 0:
+                raise PowerActionError(
+                    "DSM power permission is not enabled; run WakeLink's one-time DSM power setup",
+                    details=permission.stderr.strip() or permission.stdout.strip(),
+                )
+            subprocess.run(
+                ["/usr/bin/sudo", "-n", *command],
+                check=True, capture_output=True, text=True, timeout=10,
+            )
+        except FileNotFoundError as err:
+            raise PowerActionError("DSM power command not found", details=str(err)) from err
+        except subprocess.TimeoutExpired as err:
+            # Do not retry: DSM might already have accepted the shutdown.
+            raise PowerActionError("DSM power command timed out; check the NAS before retrying") from err
+        except subprocess.CalledProcessError as err:
+            details = (err.stderr or err.stdout or "").strip()
+            raise PowerActionError(
+                f"DSM rejected the power action: {details}" if details else "DSM power command failed",
+                details=details,
+            ) from err
+
+    def authenticate_setup_request(
+        self, cookie: str, remote_addr: str, server_addr: str,
+        *, syno_token: str = "", syno_hash: str = "",
+    ) -> bool:
         from dsm_runtime.setup_auth import authenticate_admin
 
-        return authenticate_admin(cookie, remote_addr, server_addr)
+        return authenticate_admin(
+            cookie, remote_addr, server_addr, syno_token=syno_token, syno_hash=syno_hash,
+        )
 
 
 def parse_args() -> argparse.Namespace:

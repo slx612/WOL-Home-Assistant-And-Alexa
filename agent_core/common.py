@@ -30,7 +30,7 @@ except ImportError:  # pragma: no cover - optional during source-only use
     ServiceInfo = None
     Zeroconf = None
 
-AGENT_VERSION = "0.2.0-beta.12"
+AGENT_VERSION = "0.2.0-beta.13"
 DEFAULT_HOST = "0.0.0.0"
 DEFAULT_PORT = 58477
 DEFAULT_ALLOWED_SUBNETS = ("127.0.0.1/32",)
@@ -651,6 +651,8 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
             self.headers.get("Cookie", ""),
             self.headers.get("X-WakeLink-Remote-Addr", ""),
             self.headers.get("X-WakeLink-Server-Addr", ""),
+            syno_token=self.headers.get("X-SYNO-TOKEN", ""),
+            syno_hash=self.headers.get("X-SYNO-HASH", ""),
         ):
             self._send_json(HTTPStatus.FORBIDDEN, {"error": "DSM administrator session required"})
             return False
@@ -670,6 +672,8 @@ class PCPowerRequestHandler(BaseHTTPRequestHandler):
             "ip_address": address,
             "mac_address": mac,
             "agent_version": AGENT_VERSION,
+            "power_permission_enabled": self.server.platform.power_permission_enabled()
+                if hasattr(self.server.platform, "power_permission_enabled") else False,
         }
 
     def _handle_power_action(self, action: str) -> None:

@@ -1,5 +1,7 @@
 # WakeLink DSM Setup UI Implementation Plan
 
+> **Historical record / Registro histórico.** Not current setup instructions. Use the [current guides / guías actuales](../../README.md). Old names, versions and test results below describe that point in development only.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** An administrator opens WakeLink in DSM, checks agent status, and obtains a temporary Home Assistant pairing code without SSH, while existing pairings survive the upgrade.

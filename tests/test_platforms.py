@@ -208,3 +208,10 @@ class PackageScriptTests(unittest.TestCase):
                      'APP_ROOT=/nonexistent-test; SUMMARY_PATH=/dev/null;\n')
         result = subprocess.run([shell, "-c", variables + fragment], capture_output=True, timeout=5)
         self.assertNotEqual(result.returncode, 0)
+
+    def test_dsm_upgrade_preserves_tls_identity(self):
+        for stage in ("preupgrade", "postupgrade"):
+            script = (ROOT / "dsm_package/template/scripts" / stage).read_text(encoding="utf-8")
+            for name in ("config.json", "agent-cert.pem", "agent-key.pem"):
+                with self.subTest(stage=stage, name=name):
+                    self.assertIn(name, script)

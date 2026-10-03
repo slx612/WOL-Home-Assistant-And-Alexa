@@ -1,3 +1,8 @@
+param(
+    [ValidateRange(1, 9999)]
+    [int]$DsmRevision
+)
+
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
@@ -166,6 +171,9 @@ function Write-ResizedPng {
 
 $appVersion = Get-AppVersion
 $dsmPackageVersion = Convert-ToDsmPackageVersion -Version $appVersion
+if ($PSBoundParameters.ContainsKey("DsmRevision")) {
+    $dsmPackageVersion = "{0}-{1:0000}" -f ($dsmPackageVersion -split "-")[0], $DsmRevision
+}
 $packageName = "pcpowerfree"
 $packageFileName = "pcpowerfree-dsm-noarch-$dsmPackageVersion.spk"
 
@@ -177,6 +185,7 @@ $payloadStage = Join-Path $buildRoot "payload"
 New-Item -ItemType Directory -Force -Path $spkRoot, $payloadStage | Out-Null
 
 Copy-Item -LiteralPath (Join-Path $templateRoot "conf") -Destination $spkRoot -Recurse -Force
+Copy-Item -LiteralPath (Join-Path $payloadRoot "dsm_runtime/power_permissions.py") -Destination (Join-Path $spkRoot "conf/power_permissions.py") -Force
 Copy-Item -LiteralPath (Join-Path $templateRoot "scripts") -Destination $spkRoot -Recurse -Force
 Copy-Item -LiteralPath (Join-Path $projectRoot "LICENSE") -Destination (Join-Path $spkRoot "LICENSE") -Force
 
@@ -194,6 +203,11 @@ Copy-FilteredTree -Source (Join-Path $projectRoot "agent_core") -Destination (Jo
 Copy-FilteredTree -Source (Join-Path $projectRoot "linux_agent") -Destination (Join-Path $appStage "linux_agent")
 Copy-FilteredTree -Source (Join-Path $payloadRoot "dsm_runtime") -Destination (Join-Path $appStage "dsm_runtime")
 Copy-FilteredTree -Source (Join-Path $payloadRoot "ui") -Destination (Join-Path $payloadStage "ui")
+foreach ($uiFile in @("index.html", "main.js")) {
+    $stagedFile = Join-Path (Join-Path $payloadStage "ui") $uiFile
+    $versionedContent = [System.IO.File]::ReadAllText($stagedFile).Replace("@@DSM_PACKAGE_VERSION@@", $dsmPackageVersion)
+    [System.IO.File]::WriteAllText($stagedFile, $versionedContent, (New-Object System.Text.UTF8Encoding($false)))
+}
 Copy-Item -LiteralPath (Join-Path $payloadRoot "share") -Destination $appStage -Recurse -Force
 Copy-Item -LiteralPath (Join-Path $projectRoot "linux_agent\config.example.json") -Destination (Join-Path $appStage "share\config.example.json") -Force
 $vendorStage = Join-Path $appStage "vendor"

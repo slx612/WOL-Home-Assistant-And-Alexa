@@ -1,34 +1,71 @@
 # Instalar WakeLink: Windows + Home Assistant
 
-[English](GETTING_STARTED.en.md) | [Espanol](GETTING_STARTED.es.md) | [Inicio](README.es.md)
+[English](GETTING_STARTED.en.md) | [Español](GETTING_STARTED.es.md) | [Elegir otro sistema](README.es.md#empieza-aquí)
 
-Este es el recorrido basico. **Alexa es opcional** y tiene [otra guia](ALEXA.es.md). Necesitas un PC Windows x64, Home Assistant y ambos en la misma red local de confianza. Para encender desde un apagado completo, el PC debe admitir Wake-on-LAN en la BIOS/UEFI y en el adaptador de red.
+**Necesitas:** PC Windows x64, permiso de administrador para instalar, Home Assistant con HACS y una red local de confianza que conecte ambos. Home Assistant debe seguir encendido en otro equipo cuando apagues este PC. Es una beta: guarda antes una copia de Home Assistant. Alexa es opcional y se configura después.
 
-## 1. Instala la aplicacion de Windows
+En Home Assistant, **Configuración** puede llamarse **Ajustes** según la versión/idioma.
 
-1. Abre las [releases de WakeLink](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases). En la beta mas reciente con instalador de Windows, descarga **`WakeLink-Windows-x64-Setup.exe`**. No descargues `PCPowerAgent.exe`, `PCPowerTray.exe` ni `PCPowerSetup.exe` por separado. El antiguo `pcpowerfree-windows-x64-setup.exe` es una copia identica para los actualizadores ya instalados.
-2. Ejecuta el instalador. Elige espanol o ingles y, si quieres, el acceso directo del escritorio. Windows pedira permiso de administrador para instalar el agente y la regla del cortafuegos. Deja marcada la opcion **Abrir WakeLink** en la ultima pantalla.
-3. En WakeLink, pulsa **Activar y continuar**. Se configuran el arranque automatico y la red local. No tienes que poner la aplicacion en el inicio de Windows manualmente.
-4. Si SmartScreen avisa de que la aplicacion es desconocida, comprueba que el archivo procede de la release de este proyecto y compara su SHA-256 con `SHA256SUMS.txt` de esa release. El instalador no esta firmado; una suma coincidente tampoco acredita al autor. No desactives SmartScreen ni el antivirus.
+## 1. Descargar el instalador
 
-## 2. Instala la integracion de Home Assistant
+1. Abre las [publicaciones de WakeLink](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases).
+2. Elige la publicación más reciente **con instalador Windows**, despliega **Assets** y descarga **`WakeLink-Windows-x64-Setup.exe`**.
+3. No descargues por separado `PCPowerAgent.exe`, `PCPowerTray.exe`, `PCPowerSetup.exe` ni **Source code**. El antiguo `pcpowerfree-windows-x64-setup.exe` es una copia idéntica compatible con el actualizador, no otra app.
 
-1. En Home Assistant, abre **HACS**, busca `WakeLink` y descarga la integracion. Si HACS ofrece elegir version, selecciona la beta mas reciente. Reinicia Home Assistant cuando lo pida.
-   Si HACS muestra "icon not available" pero Home Assistant si muestra el icono, consulta el [problema conocido](KNOWN_ISSUES.md): no impide instalar ni actualizar WakeLink.
-2. Abre **Configuracion > Dispositivos y servicios**. Selecciona el PC WakeLink detectado. Si no aparece, pulsa **Anadir integracion**, busca `WakeLink` y elige el PC detectado desde ahi.
-3. En la aplicacion de Windows, abre la pagina **Vincular** y genera un codigo temporal de seis cifras. Compara la huella del certificado que muestran ambas pantallas y escribe el codigo en Home Assistant antes de diez minutos.
-4. Comprueba que el PC y su interruptor aparecen bajo WakeLink en Home Assistant. Eso confirma la vinculacion, pero aun no demuestra que Wake-on-LAN funcione en tu equipo.
+Si Windows avisa de una app desconocida, sigue [la comprobación SmartScreen](HELP.es.md#windows-smartscreen) antes de decidir ejecutarla. El instalador no tiene firma digital: no desactives la protección.
 
-**Normalmente no necesitas una IP fija.** WakeLink detecta la direccion en la red local. Si la deteccion no atraviesa tu VLAN o red de invitados, usa la opcion de host manual y considera reservar una IP por DHCP en el router; la MAC por si sola no permite dirigir una orden normal de apagado a una IP desconocida.
+## 2. Instalar y activar WakeLink
 
-## 3. Prueba sin sorpresas
+1. Ejecuta el instalador y acepta la petición de administrador Windows tras comprobar su origen.
+2. Elige español o inglés. Conserva las carpetas propuestas salvo que ya uses una instalación personalizada. Puedes desmarcar el **acceso directo del escritorio**.
+3. Deja seleccionada **Abrir WakeLink** al terminar.
+4. Para una instalación nueva, pulsa **Activar y continuar** en WakeLink. Si se abre otra ventana con permisos, acepta la petición Windows y repite ahí la acción cuando lo indique.
+5. Espera a **El agente está activo**. Abrir el panel no equivale a activar el agente.
 
-1. Con el PC encendido, comprueba que la app WakeLink indica que el agente local funciona. **No** pulses el interruptor de Home Assistant solo para comprobar su estado: apagarlo pide un apagado real.
-2. Guarda tu trabajo. Cuando estes preparado, apaga el interruptor en Home Assistant y comprueba que el PC se apaga.
-3. Enciende el interruptor para probar Wake-on-LAN. Si no arranca, revisa la BIOS/UEFI, el adaptador y el trafico broadcast de tu red. La vinculacion no puede activar un hardware que no lo admita.
+WakeLink prepara el agente, el acceso local del cortafuegos y el inicio con Windows. No debes meterlo manualmente en Inicio ni dejar el panel abierto. Después puedes abrir WakeLink desde Inicio o con **clic izquierdo** en la bandeja; el **clic derecho** abre el menú. Cambia el idioma con el selector **Idioma** de la app.
 
-## Actualizar o volver atras
+**Comprueba:** la app detecta el agente en marcha. Esto no prueba Alexa ni el encendido físico por Wake-on-LAN.
 
-Instala el nuevo instalador de Windows **encima** del actual; despues actualiza la integracion en HACS y reinicia Home Assistant. No desinstales ni borres el dispositivo: podrias perder la vinculacion. Para volver a la version anterior, reinstalala desde HACS si aparece o sustituye solo los archivos de la integracion con el ZIP publicado de esa version y reinicia Home Assistant. Conserva la entrada del dispositivo y los datos de Windows. Se recomienda crear una copia de seguridad de Home Assistant antes de probar una beta.
+<a id="2-instala-la-integracion-de-home-assistant"></a>
 
-El directorio antiguo `PC Power Free`, el identificador `pc_power_free` y el nombre del instalador son detalles de compatibilidad, no un segundo programa.
+## 3. Instalar la integración Home Assistant
+
+[![Abrir WakeLink en HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=slx612&repository=WOL-Home-Assistant-And-Alexa&category=integration)
+
+HACS debe estar instalado y configurado. El botón abre la ficha de WakeLink: no lo instala automáticamente. Comprueba la dirección de Home Assistant antes de pulsar **Open link** (abrir enlace). Si pide la dirección de tu instancia, introduce la que usas normalmente para abrir Home Assistant, por ejemplo `http://homeassistant.local:8123`. Inicia sesión en tu Home Assistant si lo solicita.
+
+1. Usa el botón anterior o abre **HACS**, busca `WakeLink` y entra en su ficha. Está en el catálogo predeterminado. Si tu catálogo no lo muestra, abre **... > Repositorios personalizados**, introduce `https://github.com/slx612/WOL-Home-Assistant-And-Alexa`, elige **Integración** y pulsa **Añadir**. Busca de nuevo.
+2. Pulsa **Descargar** y selecciona la publicación que quieres probar. Si una beta está oculta, revisa el selector de versiones y la opción HACS para mostrar betas.
+3. Reinicia **Home Assistant**, no el PC, cuando lo pida.
+4. Abre **Configuración > Dispositivos y servicios**. Si ya tienes WakeLink, no lo instales otra vez: una integración admite varios equipos.
+
+La lista HACS puede mostrar **icon not available**: es un [problema visual HACS conocido](KNOWN_ISSUES.md#espanol), no una instalación fallida. No debes introducir YAML, tokens manuales ni ejecutables Windows en HACS.
+
+## 4. Vincular este PC
+
+1. Vuelve a la app Windows y abre **Home Assistant** en el menú izquierdo.
+2. Pulsa **Generar un código** si no hay uno activo. Autoriza el permiso de administrador si lo pide. Son seis cifras válidas durante diez minutos.
+3. En **Configuración > Dispositivos y servicios** de Home Assistant, pulsa **Añadir** en el PC descubierto. Si falta, pulsa **Añadir integración > WakeLink** y elige el PC; si no encuentra ninguno, usa el formulario manual con su IP actual y puerto `58477`.
+4. Comprueba nombre/IP y compara la **huella del certificado** Home Assistant con la página **Home Assistant** de Windows. Si no coinciden, detente.
+5. Introduce las seis cifras y confirma. No pongas la contraseña Windows, un token Home Assistant ni el QR Matter.
+6. Abre el dispositivo nuevo de WakeLink. Debes ver el interruptor **Power**, el botón **Restart** y los sensores **Boot time** y **Uptime**; esos nombres pueden aparecer en inglés.
+
+**¿Ya está vinculado? Salta este apartado al actualizar.** Normalmente no necesitas IP fija; WakeLink redescubre los cambios de dirección local. Si una red de invitados/VLAN lo impide, consulta [Ayuda](HELP.es.md#home-assistant-no-encuentra-el-equipo).
+
+## 5. Probar sin sorpresas
+
+1. Con el PC encendido, comprueba su estado en Home Assistant. **No apagues Power para refrescar:** pide un apagado real.
+2. Antes de probar el encendido, comprueba que la BIOS/UEFI y tarjeta de red del PC físico admiten y tienen activado Wake-on-LAN. Ethernet es el punto de partida más sencillo. WakeLink no puede configurar el firmware de todos los fabricantes: sigue las instrucciones del fabricante del equipo/tarjeta.
+3. Guarda tu trabajo. Cuando quieras apagar de verdad, apaga **Power de este PC** y comprueba que se apaga.
+4. Enciende ese interruptor y espera al arranque. Comprueba que el PC arranca físicamente y luego vuelve a aparecer conectado. Si no enciende, consulta [los problemas de encendido](HELP.es.md#apaga-pero-no-enciende), no repitas la vinculación.
+5. Pulsa **Restart** solo cuando quieras reiniciar realmente el PC. No sirve para refrescar el estado.
+
+Los sensores pueden aparecer no disponibles mientras el PC está apagado o arrancando. Se recuperan en otra consulta cuando el agente responde. Boot time es la fecha/hora del último arranque, no cuánto tarda en arrancar.
+
+## 6. Actualizar o continuar con Alexa
+
+En Windows abre **Actualizaciones > Buscar actualizaciones**, descarga el instalador ofrecido e instálalo **encima** de WakeLink. Actualiza aparte la integración en HACS y reinicia Home Assistant. No desinstales, no borres el dispositivo/certificados ni generes otro código solo para actualizar.
+
+[Copias, regreso y problemas de actualización](HELP.es.md#actualizar-sin-volver-a-vincular) explican las dos partes. Las carpetas `PC Power Free` conservan la compatibilidad: no las cambies.
+
+**¿Funciona desde Home Assistant?** Has terminado el control local. Solo si quieres voz, continúa con [Alexa y sus capturas](ALEXA.es.md). Matterbridge no es necesario para el control Home Assistant.

@@ -49,6 +49,24 @@ def load_existing_config(config_path: Path) -> dict[str, object]:
     return payload if isinstance(payload, dict) else {}
 
 
+def activate_pairing_code(config_path: Path, supplied_code: str = "") -> str:
+    """Offer another pairing code without changing the installed identity."""
+    payload = json.loads(config_path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("Existing config must contain a JSON object")
+    AgentConfig.from_dict(payload, config_dir=config_path.parent)
+    code = supplied_code.strip() or generate_pairing_code()
+    if len(code) != 6 or not code.isdigit():
+        raise ValueError("The pairing code must be exactly 6 digits")
+    payload.update(
+        pairing_code_hash=hash_pairing_code(code),
+        pairing_code_expires_at=time.time() + PAIRING_CODE_TTL_SECONDS,
+        pairing_code_failed_attempts=0,
+    )
+    atomic_write_json(config_path, payload)
+    return code
+
+
 def write_config(
     config_path: Path,
     *,
@@ -113,6 +131,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Store shutdown_force=true in the config",
     )
+    parser.add_argument(
+        "--pairing-only",
+        action="store_true",
+        help="Generate a new pairing code without changing an existing connection",
+    )
     return parser.parse_args()
 
 
@@ -120,6 +143,14 @@ def main() -> int:
     """Generate a Linux agent config and show the pairing summary."""
     args = parse_args()
     config_path = Path(args.config).expanduser().resolve()
+    if args.pairing_only:
+        try:
+            code = activate_pairing_code(config_path, args.pairing_code)
+        except (OSError, ValueError) as err:
+            print(f"Cannot generate a pairing code: {err}", file=sys.stderr)
+            return 1
+        print(f"Pairing code: {code}")
+        return 0
     existing_config = load_existing_config(config_path)
     adapter = detect_primary_adapter()
 

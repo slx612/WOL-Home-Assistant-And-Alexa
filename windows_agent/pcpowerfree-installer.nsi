@@ -9,7 +9,7 @@ RequestExecutionLevel admin
 !define APP_NAME "PC Power Free"
 !define APP_DISPLAY_NAME "WakeLink"
 !define APP_PUBLISHER "WakeLink open-source project"
-!define APP_VERSION "0.2.0-beta.12"
+!define APP_VERSION "0.2.0-beta.13"
 !define INSTALL_BASENAME "pcpowerfree-windows-x64-setup.exe"
 !define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
 
@@ -25,7 +25,7 @@ InstallDirRegKey HKLM "${UNINSTALL_KEY}" "InstallLocation"
 ShowInstDetails hide
 ShowUnInstDetails hide
 BrandingText "${APP_DISPLAY_NAME} ${APP_VERSION}"
-VIProductVersion "0.2.0.10"
+VIProductVersion "0.2.0.13"
 VIAddVersionKey "ProductName" "${APP_DISPLAY_NAME}"
 VIAddVersionKey "ProductVersion" "${APP_VERSION}"
 VIAddVersionKey "FileDescription" "${APP_DISPLAY_NAME} Windows installer"

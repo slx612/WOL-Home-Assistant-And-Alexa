@@ -1,5 +1,7 @@
 # WakeLink DSM setup UI
 
+> **Historical record / Registro histórico.** Not current setup instructions. Use the [current guides / guías actuales](../../README.md). Old names, versions and test results below describe that point in development only.
+
 ## Goal
 
 An administrator installs or upgrades one WakeLink `.spk`, opens **WakeLink** from DSM, sees whether the agent is running, and can create a six-digit Home Assistant pairing code without SSH or reading files. The page has Spanish and English text. Existing Home Assistant pairings survive the upgrade. No shutdown or restart control is added.

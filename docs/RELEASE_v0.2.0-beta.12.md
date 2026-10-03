@@ -1,5 +1,7 @@
 # WakeLink 0.2.0-beta.12
 
+> **Historical record / Registro histórico.** Not current setup instructions. Use the [current guides / guías actuales](README.md). Old names, versions and test results below describe that point in development only.
+
 [English](#english) | [Espanol](#espanol)
 
 ## English

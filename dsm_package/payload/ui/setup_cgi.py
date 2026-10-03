@@ -30,7 +30,7 @@ def call_agent(method: str, path: str, headers: dict[str, str]) -> tuple[int, di
         method=method,
     )
     try:
-        response = opener.open(request, timeout=5)
+        response = opener.open(request, timeout=10)
     except HTTPError as error:
         response = error
     with response:
@@ -68,6 +68,8 @@ def handle_request(environ: Mapping[str, str]) -> tuple[int, dict]:
         "Cookie": environ.get("HTTP_COOKIE", ""),
         "X-WakeLink-Remote-Addr": environ.get("REMOTE_ADDR", ""),
         "X-WakeLink-Server-Addr": environ.get("SERVER_ADDR", ""),
+        "X-SYNO-TOKEN": environ.get("HTTP_X_SYNO_TOKEN", ""),
+        "X-SYNO-HASH": environ.get("HTTP_X_SYNO_HASH", ""),
     }
     if action == "action=pair":
         headers["X-WakeLink-Action"] = "pair"
@@ -77,7 +79,9 @@ def handle_request(environ: Mapping[str, str]) -> tuple[int, dict]:
         return 503, {"error": "WakeLink agent unavailable"}
 
     if status == 200 and action == "action=status":
-        return status, {key: payload.get(key) for key in ("online", "hostname", "ip_address", "mac_address", "agent_version")}
+        return status, {key: payload.get(key) for key in (
+            "online", "hostname", "ip_address", "mac_address", "agent_version", "power_permission_enabled",
+        )}
     if status == 200 and action == "action=pair":
         return status, {key: payload.get(key) for key in ("pairing_code", "expires_in")}
     return status, {"error": str(payload.get("error", "Setup request failed"))}

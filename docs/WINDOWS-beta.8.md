@@ -1,6 +1,6 @@
 # WakeLink Windows beta.8: local preview
 
-> **Historical beta.8 note.** Use the [current installation guide](GETTING_STARTED.en.md) or [guia actual](GETTING_STARTED.es.md) for new installs.
+> **Historical record / Registro histórico.** Not current setup instructions. Use the [current guides / guías actuales](README.md). Old names, versions and test results below describe that point in development only.
 
 **Superseded:** beta.8 produced desktop shortcuts that could not open the dashboard for a standard user because the TLS certificate was unreadable. Use the [beta.9 test instructions](WINDOWS-beta.9.md) for the correction. Do not distribute beta.8 as a working preview.
 

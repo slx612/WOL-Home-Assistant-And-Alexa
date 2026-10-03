@@ -1,6 +1,6 @@
 # Beta.7: upgrade and verification
 
-> **Historical beta.7 migration note.** Use the [current installation guide](GETTING_STARTED.en.md) or [guia actual](GETTING_STARTED.es.md) unless updating specifically from this old version.
+> **Historical record / Registro histórico.** Not current setup instructions. Use the [current guides / guías actuales](README.md). Old names, versions and test results below describe that point in development only.
 
 [English](#english) | [Espanol](#espanol)
 

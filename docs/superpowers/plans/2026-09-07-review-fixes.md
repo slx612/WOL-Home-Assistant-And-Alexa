@@ -1,5 +1,7 @@
 # Review Fixes Implementation Plan
 
+> **Historical record / Registro histórico.** Not current setup instructions. Use the [current guides / guías actuales](../../README.md). Old names, versions and test results below describe that point in development only.
+
 **Goal:** Correct the reproduced beta.6 defects without external services or real power operations during testing.
 **Spec:** docs/REVIEW_2026-09-07.md
 **Architecture:** Preserve the shared runtime and HA entities. Use TLS with a persistent self-signed certificate and SHA-256 pinning, never downgrade to HTTP. First enrollment is trust-on-first-use on a trusted LAN. Existing beta.6 entries automatically authenticate the new certificate using their saved secret, a fresh nonce and HMAC-SHA-256, without re-pairing. Keep identifiers and automations. This supersedes the initial breaking-upgrade decision.

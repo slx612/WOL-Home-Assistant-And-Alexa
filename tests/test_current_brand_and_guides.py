@@ -3,13 +3,36 @@
 from pathlib import Path
 import json
 import re
+import struct
 import sys
 import unittest
+from urllib.parse import parse_qs, unquote, urlsplit
 
 from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CURRENT_GUIDES = [ROOT / "README.md", ROOT / "linux_agent/README.md",
+                  ROOT / "dsm_package/README.md", *(ROOT / "docs" / name for name in (
+    "README.md", "README.es.md", "HISTORY.md", "HACS_PUBLISHING.md", "KNOWN_ISSUES.md",
+    *(f"{name}.{language}.md" for name in (
+        "GETTING_STARTED", "INSTALL_UBUNTU", "INSTALL_DSM", "ALEXA", "HELP")
+      for language in ("en", "es"))))]
+
+
+def markdown_text(page):
+    return re.sub(r"(?ms)^```[^\n]*\n.*?^```[ \t]*$", "", page.read_text(encoding="utf-8"))
+
+
+def anchors(text):
+    result = set(re.findall(r'<a\s+id="([^"]+)"', text))
+    counts = {}
+    for heading in re.findall(r"(?m)^#{1,6} (.+)$", text):
+        slug = re.sub(r"[^\w\- ]", "", heading.lower()).replace(" ", "-")
+        count = counts.get(slug, 0)
+        result.add(f"{slug}-{count}" if count else slug)
+        counts[slug] = count + 1
+    return result
 
 
 class CurrentBrandAndGuideTests(unittest.TestCase):
@@ -59,6 +82,22 @@ class CurrentBrandAndGuideTests(unittest.TestCase):
         self.assertNotIn("install PC Power Free from HACS", text)
         self.assertNotIn("instala PC Power Free desde HACS", text)
 
+    def test_covers_show_logo_and_install_guides_link_to_the_correct_hacs_repository(self):
+        covers = [ROOT / "README.md", ROOT / "docs/README.es.md"]
+        for page in covers:
+            self.assertIn("/main/custom_components/pc_power_free/brand/logo.png", markdown_text(page))
+        for page in covers + [ROOT / "docs" / f"{guide}.{language}.md"
+                              for guide in ("GETTING_STARTED", "INSTALL_UBUNTU", "INSTALL_DSM")
+                              for language in ("en", "es")]:
+            links = re.findall(r"\]\((https://my\.home-assistant\.io/redirect/hacs_repository/\?[^)]+)\)",
+                               markdown_text(page))
+            with self.subTest(page=page.name):
+                self.assertEqual(len(links), 1)
+                self.assertEqual(parse_qs(urlsplit(links[0]).query), {
+                    "owner": ["slx612"], "repository": ["WOL-Home-Assistant-And-Alexa"],
+                    "category": ["integration"]})
+                self.assertIn("https://my.home-assistant.io/badges/hacs_repository.svg", markdown_text(page))
+
     def test_both_alexa_guides_disclose_external_dependency_and_untested_status(self):
         for language in ("en", "es"):
             text = (ROOT / "docs" / f"ALEXA.{language}.md").read_text(encoding="utf-8")
@@ -78,16 +117,49 @@ class CurrentBrandAndGuideTests(unittest.TestCase):
                 self.assertNotIn("Split Entities", steps["alexa_filter"]["description"])
 
     def test_current_local_documentation_links_resolve(self):
-        pages = [ROOT / "README.md", *(ROOT / "docs" / name for name in (
-            "README.md", "README.es.md", "GETTING_STARTED.en.md", "GETTING_STARTED.es.md",
-            "ALEXA.en.md", "ALEXA.es.md"))]
-        for page in pages:
-            for target in re.findall(r"\]\(([^)]+)\)", page.read_text(encoding="utf-8")):
-                if target.startswith(("https://", "http://", "#")):
+        for page in CURRENT_GUIDES:
+            for target in re.findall(r"\]\(([^)]+)\)", markdown_text(page)):
+                if target.startswith(("https://", "http://")):
                     continue
-                path = target.split("#", 1)[0]
+                path, _, fragment = unquote(target).partition("#")
+                destination = page.parent / path if path else page
                 with self.subTest(page=page.name, target=target):
-                    self.assertTrue((page.parent / path).exists())
+                    self.assertTrue(destination.exists())
+                    if destination.is_file() and fragment:
+                        self.assertIn(fragment, anchors(markdown_text(destination)))
+
+    def test_documentation_inventory_is_current_or_explicitly_historical(self):
+        current = set(CURRENT_GUIDES)
+        history = markdown_text(ROOT / "docs/HISTORY.md")
+        for page in (ROOT / "docs").rglob("*.md"):
+            if page in current:
+                continue
+            with self.subTest(page=page.name):
+                self.assertIn("Historical record / Registro", page.read_text(encoding="utf-8")[:600])
+                self.assertIn(page.relative_to(ROOT / "docs").as_posix(), history)
+
+    def test_screenshot_languages_match_each_user_guide(self):
+        for language in ("en", "es"):
+            for guide in ("ALEXA", "INSTALL_DSM"):
+                page = ROOT / "docs" / f"{guide}.{language}.md"
+                images = re.findall(r"!\[[^\]]*\]\(([^)]+)\)", markdown_text(page))
+                self.assertTrue(images, page.name)
+                for target in images:
+                    name = Path(target).name
+                    with self.subTest(page=page.name, image=name):
+                        if name.startswith(("ha-", "entity-")):
+                            self.assertEqual(name.endswith("-en.png"), language == "en")
+                        if "images/dsm/" in target:
+                            self.assertTrue(name.endswith(f".{language}.jpg"))
+
+    def test_bundled_brand_pngs_have_icon_and_logo_dimensions(self):
+        brand = ROOT / "custom_components/pc_power_free/brand"
+        icon = (brand / "icon.png").read_bytes()
+        self.assertEqual(icon[:8], b"\x89PNG\r\n\x1a\n")
+        self.assertEqual(struct.unpack(">II", icon[16:24]), (256, 256))
+        logo = (brand / "logo.png").read_bytes()
+        self.assertEqual(logo[:8], b"\x89PNG\r\n\x1a\n")
+        self.assertEqual(struct.unpack(">II", logo[16:24]), (720, 256))
 
 
 if __name__ == "__main__":

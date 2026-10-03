@@ -1,30 +1,31 @@
-# WakeLink documentation
+# WakeLink documentation / Documentación
 
-[English home](../README.md) | [Inicio en espanol](README.es.md)
+[English home](../README.md) | [Inicio en español](README.es.md)
 
-## Current guides / Guias actuales
+**New installation? Choose your system below and follow only that guide.** It includes Home Assistant and pairing. Alexa comes afterwards and is optional.
 
-| English | Espanol |
-| --- | --- |
-| [Install Windows + Home Assistant](GETTING_STARTED.en.md) | [Instalar Windows + Home Assistant](GETTING_STARTED.es.md) |
-| [Connect to Alexa: experimental Matter route](ALEXA.en.md) | [Conectar con Alexa: recorrido Matter experimental](ALEXA.es.md) |
+**¿Primera instalación? Elige tu sistema y sigue solo esa guía.** Incluye Home Assistant y la vinculación. Alexa se configura después y es opcional.
 
-[Known issues / Problemas conocidos](KNOWN_ISSUES.md), including the missing HACS icon.
+| What you need / Qué necesitas | English | Español |
+| --- | --- | --- |
+| Windows x64 | [Install](GETTING_STARTED.en.md) | [Instalar](GETTING_STARTED.es.md) |
+| Ubuntu 24.04 Desktop | [Install](INSTALL_UBUNTU.en.md) | [Instalar](INSTALL_UBUNTU.es.md) |
+| Synology DSM 7 | [Install](INSTALL_DSM.en.md) | [Instalar](INSTALL_DSM.es.md) |
+| Alexa, after Home Assistant works | [Illustrated guide](ALEXA.en.md) | [Guía con capturas](ALEXA.es.md) |
+| Problems, updates and rollback | [Help](HELP.en.md) | [Ayuda](HELP.es.md) |
 
-Use the guides above for a new installation. The versioned notes below are **historical records**, not additional required installation steps. Old names and versions in them describe what was true for those betas.
+Windows has a published beta. Ubuntu's desktop package and DSM's current guided package are local previews. **Do not substitute an old public package for the preview named in its guide.**
 
-## Maintainer and advanced information
+Windows tiene una beta publicada. El paquete gráfico Ubuntu y el asistente actual DSM son pruebas locales. **No sustituyas el paquete indicado en su guía por uno antiguo publicado.**
 
-- [HACS/release checklist](HACS_PUBLISHING.md)
-- [Source code](../README.md#development)
-- [GitHub releases and package downloads](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases)
+## Not needed for installation / No necesario para instalar
 
-## Archived beta notes / Notas historicas
+- [Known HACS icon issue / Problema del icono HACS](KNOWN_ISSUES.md)
+- [Build and publish / Compilar y publicar](HACS_PUBLISHING.md) (maintainers / mantenimiento)
+- [Manual Linux server installation / Servidor Linux manual](../linux_agent/README.md)
+- [DSM package internals / Detalles del paquete DSM](../dsm_package/README.md)
+- [Historical releases and development notes / Historial](HISTORY.md)
 
-- [Beta.12 bilingual release notes](RELEASE_v0.2.0-beta.12.md)
-- [Matter preview beta.11](MATTER-PREVIEW-beta.11.md), [Windows beta.10](WINDOWS-beta.10.md), [Windows beta.9](WINDOWS-beta.9.md), [Windows beta.8](WINDOWS-beta.8.md)
-- [Upgrade beta.7](UPGRADE-beta.7.md), [TLS migration](TLS-MIGRATION.md), [Windows beta.8 validation](VALIDATION-Windows-beta.8.md), [beta.7 validation](VALIDATION-beta.7.md)
-- [beta.10 release notes](RELEASE_v0.2.0-beta.10.md), [beta.7 release notes](RELEASE_v0.2.0-beta.7.md), [beta.5 draft](RELEASE_DRAFT_v0.2.0-beta.5.md), [beta.6 draft](RELEASE_DRAFT_v0.2.0-beta.6.md), [early beta draft](RELEASE_DRAFT_v0.2.0-beta.md)
-- [Development history](PROJECT_CONTEXT.md), [2026-09-07 review](REVIEW_2026-09-07.md), [cross-platform plan](CROSS_PLATFORM_PLAN.md)
+Current user guides are maintained in English and Spanish. Home Assistant/DSM screenshots match the guide's language; Matterbridge's English interface is explained in both languages.
 
-These historical files remain available for debugging a specific old installation; they do not override the current guides. Internal `pc_power_free` IDs and `PC Power Free` data paths are intentionally preserved for upgrades.
+Las guías actuales se mantienen en inglés y español. Las capturas Home Assistant/DSM corresponden al idioma de la guía; la interfaz inglesa de Matterbridge se explica en ambos idiomas.
