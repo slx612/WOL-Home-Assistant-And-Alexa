@@ -14,9 +14,9 @@
 | Alexa, after Home Assistant works | [Illustrated guide](ALEXA.en.md) | [Guía con capturas](ALEXA.es.md) |
 | Problems, updates and rollback | [Help](HELP.en.md) | [Ayuda](HELP.es.md) |
 
-Windows has a published beta. Ubuntu's desktop package and DSM's current guided package are local previews. **Do not substitute an old public package for the preview named in its guide.**
+The [v1.0.0 release](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v1.0.0) contains all three installers and the Home Assistant integration. Choose your system's file under **Assets**, not **Source code**.
 
-Windows tiene una beta publicada. El paquete gráfico Ubuntu y el asistente actual DSM son pruebas locales. **No sustituyas el paquete indicado en su guía por uno antiguo publicado.**
+La [publicación v1.0.0](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v1.0.0) contiene los tres instaladores y la integración Home Assistant. Elige el archivo de tu sistema en **Assets**, no **Source code**.
 
 ## Not needed for installation / No necesario para instalar
 

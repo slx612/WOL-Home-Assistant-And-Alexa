@@ -20,7 +20,7 @@ Choose **one** guide for your device. Each includes Home Assistant setup, pairin
 
 <a id="download"></a>
 
-**Downloads:** open [beta.13](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.13), expand **Assets**, and choose your system's file. This release includes Windows, Ubuntu Desktop and DSM installers, plus the Home Assistant ZIP. Older DSM packages lack the current assistant. Follow the system guide below; updates keep existing pairing.
+**Downloads:** open [WakeLink v1.0.0](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v1.0.0), expand **Assets**, and choose your system's file. This release includes Windows, Ubuntu Desktop and DSM installers, plus the Home Assistant ZIP. Follow your system's guide; updates keep existing pairing.
 
 In HACS, search for `WakeLink`. Install the integration **once**, then pair each device separately. Do not download the individual Windows executables or GitHub's **Source code** archives for normal installation.
 
@@ -43,8 +43,8 @@ In HACS, search for `WakeLink`. Install the integration **once**, then pair each
 
 - **Wake:** Home Assistant sends Wake-on-LAN. Your hardware, firmware and network must support it. Pairing is not proof that wake works. WakeLink cannot start a stopped VM through its hypervisor.
 - **Shutdown/restart:** the running agent receives an authenticated local request. Save your work first. DSM needs the one-time permission in its guide.
-- **Alexa:** Home Assistant -> Matterbridge + `matterbridge-hass` -> Matter-compatible Echo/Alexa. Discovery has been reported working; a complete shutdown-and-wake test on a real Echo is still pending. Matterbridge needs a broad Home Assistant access token and must stay running. No third-party subscription is required, but Alexa voice services may need internet access.
-- **Beta:** Ubuntu's desktop upgrade was checked on a VM; a fresh desktop installation remains pending. DSM's fresh installation and controls have been reported working on the DSM 7.2 test VM; other DSM versions, physical NAS wake and downgrade remain unvalidated.
+- **Alexa:** Home Assistant -> Matterbridge + `matterbridge-hass` -> Matter-compatible Echo/Alexa. The tester confirmed shutdown and wake with a real Echo. This does not certify every Echo model. Matterbridge needs a broad Home Assistant access token and must stay running. No third-party subscription is required, but Alexa voice services may need internet access.
+- **Tested scope:** Windows desktop regressions and packaged binaries, Ubuntu 24.04 and DSM 7.2 VM updates, plus user-reported Windows/DSM controls and Alexa power tests. See [release validation and limits](docs/RELEASE_v1.0.0.md). Hardware Wake-on-LAN and other OS/model combinations are not universally guaranteed.
 
 No fixed computer IP is normally needed. Use a trusted LAN and never expose the agent port to the internet. Windows may warn about the unsigned installer: [check it safely](docs/HELP.en.md#windows-smartscreen), without disabling protection.
 

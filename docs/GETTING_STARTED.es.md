@@ -2,7 +2,7 @@
 
 [English](GETTING_STARTED.en.md) | [Español](GETTING_STARTED.es.md) | [Elegir otro sistema](README.es.md#empieza-aquí)
 
-**Necesitas:** PC Windows x64, permiso de administrador para instalar, Home Assistant con HACS y una red local de confianza que conecte ambos. Home Assistant debe seguir encendido en otro equipo cuando apagues este PC. Es una beta: guarda antes una copia de Home Assistant. Alexa es opcional y se configura después.
+**Necesitas:** PC Windows x64, permiso de administrador para instalar, Home Assistant con HACS y una red local de confianza que conecte ambos. Home Assistant debe seguir encendido en otro equipo cuando apagues este PC. Guarda una copia de Home Assistant antes de instalar o actualizar. Alexa es opcional y se configura después.
 
 En Home Assistant, **Configuración** puede llamarse **Ajustes** según la versión/idioma.
 
@@ -35,7 +35,7 @@ WakeLink prepara el agente, el acceso local del cortafuegos y el inicio con Wind
 HACS debe estar instalado y configurado. El botón abre la ficha de WakeLink: no lo instala automáticamente. Comprueba la dirección de Home Assistant antes de pulsar **Open link** (abrir enlace). Si pide la dirección de tu instancia, introduce la que usas normalmente para abrir Home Assistant, por ejemplo `http://homeassistant.local:8123`. Inicia sesión en tu Home Assistant si lo solicita.
 
 1. Usa el botón anterior o abre **HACS**, busca `WakeLink` y entra en su ficha. Está en el catálogo predeterminado. Si tu catálogo no lo muestra, abre **... > Repositorios personalizados**, introduce `https://github.com/slx612/WOL-Home-Assistant-And-Alexa`, elige **Integración** y pulsa **Añadir**. Busca de nuevo.
-2. Pulsa **Descargar** y selecciona la publicación que quieres probar. Si una beta está oculta, revisa el selector de versiones y la opción HACS para mostrar betas.
+2. Pulsa **Descargar** y selecciona la última publicación estable. La v1.0.0 no necesita activar la opción de betas.
 3. Reinicia **Home Assistant**, no el PC, cuando lo pida.
 4. Abre **Configuración > Dispositivos y servicios**. Si ya tienes WakeLink, no lo instales otra vez: una integración admite varios equipos.
 

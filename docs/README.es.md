@@ -20,7 +20,7 @@ Elige **una** guía para tu equipo. Incluye Home Assistant, vinculación, primer
 
 <a id="descarga"></a>
 
-**Descargas:** abre la [beta.13](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.13), despliega **Assets** y elige el archivo de tu sistema. Incluye instaladores Windows, Ubuntu Desktop y DSM, además del ZIP de Home Assistant. Los paquetes DSM antiguos no incluyen el asistente actual. Sigue la guía de tu sistema; actualizar conserva la vinculación existente.
+**Descargas:** abre [WakeLink v1.0.0](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v1.0.0), despliega **Assets** y elige el archivo de tu sistema. Incluye instaladores Windows, Ubuntu Desktop y DSM, además del ZIP de Home Assistant. Sigue la guía de tu sistema; actualizar conserva la vinculación existente.
 
 En HACS, busca `WakeLink`. Instala la integración **una sola vez** y vincula cada equipo por separado. Para una instalación normal no descargues los ejecutables individuales Windows ni los archivos **Source code** de GitHub.
 
@@ -43,8 +43,8 @@ En HACS, busca `WakeLink`. Instala la integración **una sola vez** y vincula ca
 
 - **Encender:** Home Assistant envía Wake-on-LAN. El hardware, firmware y red deben admitirlo. Vincular no demuestra que pueda encenderse. WakeLink no arranca una VM apagada mediante su hipervisor.
 - **Apagar/reiniciar:** el agente en marcha recibe una petición local autenticada. Guarda antes el trabajo. DSM necesita el permiso inicial explicado en su guía.
-- **Alexa:** Home Assistant -> Matterbridge + `matterbridge-hass` -> Echo/Alexa compatible con Matter. Se ha comunicado que el descubrimiento funciona; falta una prueba completa de apagado y encendido con un Echo real. Matterbridge necesita un token con acceso amplio a Home Assistant y debe seguir encendido. No hay suscripción de terceros, pero la voz de Alexa puede necesitar Internet.
-- **Beta:** se comprobó la actualización del escritorio Ubuntu en una VM; falta la instalación limpia. Se ha comunicado que la instalación limpia y los controles DSM funcionan en la VM DSM 7.2; faltan otras versiones DSM, el encendido de un NAS físico y la vuelta a un paquete anterior.
+- **Alexa:** Home Assistant -> Matterbridge + `matterbridge-hass` -> Echo/Alexa compatible con Matter. El usuario de pruebas confirmó apagado y encendido con un Echo real; no certifica todos los modelos. Matterbridge necesita un token con acceso amplio a Home Assistant y debe seguir encendido. No hay suscripción de terceros, pero la voz de Alexa puede necesitar Internet.
+- **Alcance probado:** pruebas del escritorio Windows y sus ejecutables, actualizaciones en VMs Ubuntu 24.04 y DSM 7.2, además de controles Windows/DSM y energía Alexa confirmados por el usuario. Consulta las [pruebas y límites de versión](RELEASE_v1.0.0.md). Wake-on-LAN del hardware y otras combinaciones de sistema/modelo no se garantizan universalmente.
 
 Normalmente no necesitas IP fija en el equipo. Usa una red de confianza y nunca expongas el puerto del agente a Internet. Windows puede avisar porque el instalador no tiene firma digital: [compruébalo sin desactivar protecciones](HELP.es.md#windows-smartscreen).
 

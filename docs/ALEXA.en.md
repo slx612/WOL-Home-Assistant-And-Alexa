@@ -2,7 +2,7 @@
 
 [English](ALEXA.en.md) | [Español](ALEXA.es.md) | [Install your device first](../README.md#start-here) | [Help](HELP.en.md)
 
-**Status: beta. Discovery has been reported working; a complete shutdown-and-wake test with a real Echo is still pending.** WakeLink does not connect to Alexa directly. The route is **WakeLink PC -> Home Assistant -> Matterbridge -> Alexa**. Matterbridge and its `matterbridge-hass` plugin are separate software and must keep running on the Home Assistant host when the PC is off. There is no third-party subscription, but Alexa may need the internet for voice recognition.
+**Status:** the tester confirmed discovery, shutdown and wake with a real Echo. Other Echo models are not individually certified. WakeLink does not connect to Alexa directly. The route is **WakeLink PC -> Home Assistant -> Matterbridge -> Alexa**. Matterbridge and its `matterbridge-hass` plugin are separate software and must keep running on the Home Assistant host when the PC is off. There is no third-party subscription, but Alexa may need the internet for voice recognition.
 
 You need a computer/NAS already paired with WakeLink in Home Assistant (called **PC** below), Home Assistant OS with the **Apps** menu (formerly **Add-ons**), a [Matter-compatible Echo](https://developer.amazon.com/docs/alexaplus/smarthome/matter-support.html), and the Alexa phone app. Echo and Home Assistant must be discoverable on the local network. **You do not need Home Assistant's Matter integration:** it imports Matter devices into Home Assistant, not your PC into Alexa.
 

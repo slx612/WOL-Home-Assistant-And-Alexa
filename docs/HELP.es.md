@@ -12,7 +12,7 @@ Abre [Publicaciones](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/rele
 | --- | --- |
 | Windows x64 | `WakeLink-Windows-x64-Setup.exe` |
 | Ubuntu Desktop | `WakeLink-Ubuntu-<version>.deb` (disponible desde beta.13) |
-| DSM | `pcpowerfree-dsm-noarch-<version>.spk` (beta.13 usa revisión 0024) |
+| DSM | `pcpowerfree-dsm-noarch-<version>.spk` (v1.0.0 usa 1.0.0-0001) |
 | Home Assistant | HACS: busca **WakeLink**; `WakeLink-Home-Assistant.zip` solo es para instalación manual |
 
 Las rutas `PC Power Free` y los identificadores `pc_power_free` / `pcpowerfree` conservan la compatibilidad: no los renombres. El instalador Windows con nombre antiguo es una copia idéntica compatible con el actualizador, no otra app.
@@ -55,8 +55,8 @@ Home Assistant debe seguir encendido y su paquete de encendido debe llegar a la 
 Hay **dos actualizaciones**: la aplicación del equipo y la integración Home Assistant. Una no actualiza la otra. Matterbridge y su complemento Alexa también son independientes.
 
 1. Crea una copia en **Configuración > Sistema > Copias de seguridad**; espera a que termine y conserva la clave de cifrado. Conserva una copia protegida del estado WakeLink del equipo y el instalador anterior.
-2. **Windows:** abre WakeLink **Actualizaciones > Buscar actualizaciones** y descarga/ejecuta el instalador ofrecido. El clic izquierdo en la bandeja abre la app; el derecho abre su menú. La búsqueda necesita acceso a GitHub y una publicación nueva con instalador Windows; no encuentra pruebas locales sin publicar ni betas solo de la integración.
-3. **Ubuntu:** abre WakeLink, pulsa **Buscar actualizaciones > Instalar actualización** y autoriza Ubuntu. El actualizador se incluye en beta.13 y en la prueba local beta.12 que ya lo tenía. **DSM:** añade una vez la [fuente WakeLink](INSTALL_DSM.es.md#actualizaciones-en-el-centro-de-paquetes), pulsa **Actualizar** en el Centro de paquetes y sigue el asistente. También puedes instalar el `.spk` oficial encima mediante **Instalación manual**. Ninguna ruta requiere volver a vincular.
+2. **Windows:** abre WakeLink **Actualizaciones > Buscar actualizaciones**, descarga el instalador y cierra la ventana WakeLink antes de ejecutarlo. Si lo pide, cierra la ventana y pulsa **Reintentar**; cancelar esa comprobación inicial conserva la instalación. El clic izquierdo en la bandeja abre la app; el derecho, su menú. Las versiones estables solo ofrecen estables. La búsqueda necesita GitHub y una publicación con instalador Windows; no encuentra pruebas sin publicar.
+3. **Ubuntu:** abre WakeLink, pulsa **Buscar actualizaciones > Instalar actualización** y autoriza Ubuntu. Las versiones antiguas sin buscador necesitan instalar el `.deb` oficial encima una vez. **DSM:** añade una vez la [fuente WakeLink](INSTALL_DSM.es.md#actualizaciones-en-el-centro-de-paquetes), pulsa **Actualizar** en el Centro de paquetes y sigue el asistente. También puedes instalar el `.spk` oficial encima mediante **Instalación manual**. Ninguna ruta requiere volver a vincular.
 4. En **HACS > WakeLink**, instala la versión nueva y reinicia Home Assistant. Si no aparece una beta, revisa el selector de versiones y la opción HACS de mostrar betas. No elijas un cambio sin probar de la rama predeterminada solo para obtener un número más alto.
 5. Comprueba el equipo existente y los sensores. No debería pedir otro código. Si inesperadamente aparece la configuración inicial, detente y conserva la copia y el error.
 

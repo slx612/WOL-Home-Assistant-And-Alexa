@@ -2,7 +2,7 @@
 
 [English](ALEXA.en.md) | [Español](ALEXA.es.md) | [Instalar tu equipo primero](README.es.md#empieza-aquí) | [Ayuda](HELP.es.md)
 
-**Estado: beta. Se ha comunicado que el descubrimiento funciona; falta una prueba completa de apagado y encendido con un Echo real.** WakeLink no se conecta directamente con Alexa. El recorrido es **PC con WakeLink -> Home Assistant -> Matterbridge -> Alexa**. Matterbridge y su complemento `matterbridge-hass` son independientes y deben seguir funcionando en Home Assistant cuando el PC esté apagado. No hay suscripción de terceros, pero Alexa puede necesitar Internet para entender la voz.
+**Estado:** el usuario de pruebas confirmó descubrimiento, apagado y encendido con un Echo real. No se certifican individualmente los demás modelos. WakeLink no se conecta directamente con Alexa. El recorrido es **PC con WakeLink -> Home Assistant -> Matterbridge -> Alexa**. Matterbridge y su complemento `matterbridge-hass` son independientes y deben seguir funcionando en Home Assistant cuando el PC esté apagado. No hay suscripción de terceros, pero Alexa puede necesitar Internet para entender la voz.
 
 Necesitas un ordenador/NAS ya vinculado a WakeLink en Home Assistant (lo llamaremos **PC** en los pasos), Home Assistant OS con el menú **Aplicaciones** (antes **Complementos**), un [Echo compatible con Matter](https://developer.amazon.com/docs/alexaplus/smarthome/matter-support.html) y la app Alexa en el móvil. Echo y Home Assistant deben verse en la red local. **No necesitas instalar la integración Matter de Home Assistant:** sirve para recibir dispositivos Matter, no para publicar este PC en Alexa.
 

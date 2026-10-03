@@ -11,31 +11,31 @@
 - The agent uses the shared runtime and runs as a package user, **not root**. The UI exposes status and pairing; power actions come from the paired Home Assistant integration.
 - Initial shutdown/restart authorization uses DSM's native password confirmation. WakeLink does not store the password. A disabled, non-repeating task runs the fixed protected helper once, then is removed.
 - Only normal, immediate `synoshutdown --shutdown` and `synoshutdown --reboot` are granted. No shell, arbitrary root command, forced shutdown or delay.
-- Setup depends on DSM's installed native client interfaces. Future DSM versions need regression testing; the current preview is not SynoCommunity-ready.
+- Setup depends on DSM's installed native client interfaces. Future DSM versions need regression testing; this package is not distributed by SynoCommunity.
 
 Nombre visible **WakeLink**; se conservan los identificadores internos y los datos para actualizar. La ventana usa la sesión administradora DSM; el servidor comprueba esa sesión, no se fía de ocultar el icono. El agente no es root. El permiso inicial confirma mediante el diálogo DSM y solo permite apagado/reinicio normales. No guarda la contraseña ni autoriza una consola. Se deben repetir pruebas de compatibilidad tras cambios DSM.
 
-## Beta.13
+## v1.0.0
 
-DSM revision **0024**, based on app **0.2.0-beta.13**, includes the current guided permission and a Package Center catalog. Earlier local revision 0021 was used for the fresh-install test. Installation, session checks, limited command permission and post-boot sensors were checked on a DSM 7.2 VM. The user reported successful fresh installation and power controls. Other DSM versions, controlled restart, physical NAS wake and downgrade remain unvalidated.
+DSM package **1.0.0-0001**, app **1.0.0**, includes guided limited permission and the Package Center catalog. The beta.13-to-1.0 upgrade on DSM 7.2 preserved identity, guard state and power grant. Earlier guided fresh installation and controls were reported working by the tester. Other models/versions, physical NAS wake and downgrade remain unvalidated. See [release evidence](../docs/RELEASE_v1.0.0.md).
 
-La revisión DSM **0024**, app **0.2.0-beta.13**, incluye el asistente actual y catálogo del Centro de paquetes. Se usó la prueba local 0021 para la instalación limpia anterior. Se comprobaron instalación, sesión, permiso limitado y sensores después del arranque en una VM DSM 7.2. El usuario comunicó instalación limpia y controles funcionales. Faltan otras versiones, reinicio controlado, encendido físico y regreso a un paquete anterior.
+El paquete **1.0.0-0001**, app **1.0.0**, incluye permiso limitado guiado y catálogo. Actualizar beta.13 a 1.0 en DSM 7.2 conservó identidad, protección y permiso. El usuario había confirmado instalación limpia y controles. Otros modelos/versiones, encendido físico y vuelta atrás no están validados; consulta las [pruebas de versión](../docs/RELEASE_v1.0.0.md).
 
 ## Build / Compilar
 
 From the repository root on Windows / Desde la raíz del repositorio en Windows:
 
 ```powershell
-.\dsm_package\build-dsm-package.ps1 -DsmRevision 24
+.\dsm_package\build-dsm-package.ps1 -DsmRevision 1
 ```
 
-The builder produces `dsm_package/dist/pcpowerfree-dsm-noarch-0.2.0-0024.spk` for beta.13. Always specify a higher numeric DSM revision for later changes; the default beta number would be lower than local test revisions. Python 3 must be available on the target NAS; `ifaddr` and `zeroconf` are bundled. The package includes metadata, lifecycle scripts, desktop assets, and the protected `conf/power_permissions.py` helper.
+The builder produces `dsm_package/dist/pcpowerfree-dsm-noarch-1.0.0-0001.spk`. Increase the revision for later DSM-only changes within the same app version. Python 3 must be available on the target NAS; `ifaddr` and `zeroconf` are bundled. The package includes metadata, lifecycle scripts, desktop assets and the protected `conf/power_permissions.py` helper.
 
-The 0021 fresh-install build and 0021-to-0022 in-place upgrade were tested; the catalog then exposed/downloaded 0023 successfully. The package source generator is `build_repository.py`; publication steps and the remaining graphical-wizard check are in [the release checklist](../docs/HACS_PUBLISHING.md#dsm-package-source). Keep quick install/upgrade disabled for DSM's third-party warning. Publish the catalog only after its installer exists in Releases.
+The package source generator is `build_repository.py`; publication steps and validation boundaries are in [the release checklist](../docs/HACS_PUBLISHING.md#dsm-package-source). Keep quick install/upgrade disabled for DSM's third-party warning. Publish the catalog only after its installer exists in Releases.
 
-Se probaron la instalación limpia 0021 y la actualización 0021 a 0022; el catálogo detectó y descargó 0023 correctamente. `build_repository.py` genera la fuente; la [lista de publicación](../docs/HACS_PUBLISHING.md#fuente-de-paquetes-dsm) explica cómo publicarla y qué prueba gráfica falta. No habilites instalación/actualización silenciosa para evitar el aviso DSM. Publica el catálogo después del instalador.
+`build_repository.py` genera la fuente; la [lista de publicación](../docs/HACS_PUBLISHING.md#fuente-de-paquetes-dsm) explica cómo publicarla y sus límites de validación. No habilites instalación/actualización silenciosa para evitar el aviso DSM. Publica el catálogo después del instalador.
 
-Esta prueba genera ese archivo en `dsm_package/dist/`. Usa una revisión numérica superior para cambios posteriores solo DSM; por defecto corresponde al número beta de la app. El NAS necesita Python 3; se incluyen `ifaddr` y `zeroconf`.
+Se genera el archivo en `dsm_package/dist/`. Incrementa la revisión para cambios solo DSM dentro de la misma versión. El NAS necesita Python 3; se incluyen `ifaddr` y `zeroconf`.
 
 ## State and permissions / Datos y permisos
 

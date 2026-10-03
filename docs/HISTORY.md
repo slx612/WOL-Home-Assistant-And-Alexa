@@ -8,6 +8,8 @@
 
 ## Releases / Publicaciones
 
+- [v1.0.0: first stable release / primera estable](RELEASE_v1.0.0.md)
+
 - [Beta.12](RELEASE_v0.2.0-beta.12.md)
 - [Beta.10](RELEASE_v0.2.0-beta.10.md)
 - [Beta.7](RELEASE_v0.2.0-beta.7.md)

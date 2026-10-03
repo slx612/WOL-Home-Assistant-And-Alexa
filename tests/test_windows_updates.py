@@ -186,6 +186,14 @@ class TrayUpdateTests(unittest.TestCase):
         self.assert_dialog_contains("WakeLink", "0.2.0-beta.5")
         self.assertFalse(self.app._update_check_in_progress)
 
+    def test_stable_installation_does_not_offer_a_newer_beta(self):
+        self.fetch.return_value = response([release("2.0.0-beta.1"), release("1.0.0")])
+        with patch.object(tray, "APP_VERSION", "1.0.0"):
+            self.app._update_check_worker(manual=True)
+        self.assert_dialog_contains("No newer Windows installer", "1.0.0")
+        self.assertNotIn("2.0.0-beta.1", self.dialog.call_args.args[1])
+        self.browser.assert_not_called()
+
     def test_manual_network_error_is_visible_and_releases_busy_state(self):
         self.fetch.side_effect = URLError("offline")
         self.app._update_check_in_progress = True

@@ -9,7 +9,7 @@ RequestExecutionLevel admin
 !define APP_NAME "PC Power Free"
 !define APP_DISPLAY_NAME "WakeLink"
 !define APP_PUBLISHER "WakeLink open-source project"
-!define APP_VERSION "0.2.0-beta.13"
+!define APP_VERSION "1.0.0"
 !define INSTALL_BASENAME "pcpowerfree-windows-x64-setup.exe"
 !define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
 
@@ -25,7 +25,7 @@ InstallDirRegKey HKLM "${UNINSTALL_KEY}" "InstallLocation"
 ShowInstDetails hide
 ShowUnInstDetails hide
 BrandingText "${APP_DISPLAY_NAME} ${APP_VERSION}"
-VIProductVersion "0.2.0.13"
+VIProductVersion "1.0.0.0"
 VIAddVersionKey "ProductName" "${APP_DISPLAY_NAME}"
 VIAddVersionKey "ProductVersion" "${APP_VERSION}"
 VIAddVersionKey "FileDescription" "${APP_DISPLAY_NAME} Windows installer"
@@ -82,6 +82,19 @@ LangString DesktopShortcut 1033 "Create a desktop shortcut"
 LangString DesktopShortcut 1034 "Crear un acceso directo en el escritorio"
 LangString ShortcutFailed 1033 "The desktop shortcut could not be updated. WakeLink is installed; open it from the Start menu."
 LangString ShortcutFailed 1034 "No se pudo actualizar el acceso directo del escritorio. WakeLink esta instalado; abrelo desde el menu Inicio."
+LangString CloseDashboard 1033 "Close the WakeLink window before continuing, then select Retry. No files have been changed. Cancel to leave the installation untouched."
+LangString CloseDashboard 1034 "Cierra la ventana WakeLink y pulsa Reintentar. No se ha cambiado ningun archivo. Cancelar conserva la instalacion sin cambios."
+
+!macro EnsureDashboardClosed Label
+  InitPluginsDir
+  File /oname=$PLUGINSDIR\check-dashboard-closed.ps1 "check-dashboard-closed.ps1"
+  ${Label}Check:
+  ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File "$PLUGINSDIR\check-dashboard-closed.ps1"' $0
+  ${If} $0 != 0
+    MessageBox MB_ICONEXCLAMATION|MB_RETRYCANCEL "$(CloseDashboard)" IDRETRY ${Label}Check
+    Abort
+  ${EndIf}
+!macroend
 
 Function .onInit
   StrCpy $IsUpgrade 0
@@ -115,6 +128,7 @@ Section "WakeLink" SEC_MAIN
     Abort
   ${EndIf}
 
+  !insertmacro EnsureDashboardClosed InstallDashboard
   SetShellVarContext all
   SetOutPath "$INSTDIR"
 
@@ -176,6 +190,7 @@ Section /o "$(DesktopShortcut)" SEC_DESKTOP
 SectionEnd
 
 Section "Uninstall"
+  !insertmacro EnsureDashboardClosed UninstallDashboard
   SetShellVarContext all
 
   ExecWait '"$SYSDIR\taskkill.exe" /IM "PCPowerTray.exe" /F'

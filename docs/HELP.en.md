@@ -12,7 +12,7 @@ Open [Releases](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases)
 | --- | --- |
 | Windows x64 | `WakeLink-Windows-x64-Setup.exe` |
 | Ubuntu Desktop | `WakeLink-Ubuntu-<version>.deb` (available from beta.13) |
-| DSM | `pcpowerfree-dsm-noarch-<version>.spk` (beta.13 uses revision 0024) |
+| DSM | `pcpowerfree-dsm-noarch-<version>.spk` (v1.0.0 uses 1.0.0-0001) |
 | Home Assistant | HACS: search **WakeLink**; `WakeLink-Home-Assistant.zip` is only for manual installation |
 
 Old `PC Power Free` paths and `pc_power_free` / `pcpowerfree` IDs are compatibility details. Do not rename them. The legacy Windows installer is an identical updater-compatible copy, not another app.
@@ -55,8 +55,8 @@ Home Assistant must still be on, and its wake packet must reach the correct netw
 There are **two updates**: the device's app and the Home Assistant integration. Updating one does not update the other. Alexa's Matterbridge/plugin are separate too.
 
 1. Back up Home Assistant under **Settings > System > Backups**; wait for completion and keep the encryption key. Preserve a protected copy of the device's WakeLink state and the previous installer.
-2. **Windows:** open WakeLink **Updates > Check for updates**, then download/run the offered installer. Left-click the tray icon to open the app; right-click for its menu. A manual check needs GitHub access and a newer release with a Windows installer; it does not see unpublished local builds or integration-only betas.
-3. **Ubuntu:** open WakeLink, select **Check for updates > Install update**, and approve Ubuntu's request. The updater is included in beta.13 and the earlier local update-capable beta.12. **DSM:** add the [WakeLink package source](INSTALL_DSM.en.md#updates-in-package-center) once, then use **Update** in Package Center and follow its wizard. Installing the official `.spk` over WakeLink through **Manual Install** is also supported. Neither route requires pairing again.
+2. **Windows:** open WakeLink **Updates > Check for updates**, download the offered installer, then close the WakeLink window before running it. If asked, close the window and select **Retry**; canceling that initial check leaves the installation intact. Left-click the tray icon opens the app; right-click opens its menu. Stable versions only offer stable releases. A manual check needs GitHub access and a release with a Windows installer; it does not see unpublished builds.
+3. **Ubuntu:** open WakeLink, select **Check for updates > Install update**, and approve Ubuntu's request. Older builds without an updater need the official `.deb` installed over them once. **DSM:** add the [WakeLink package source](INSTALL_DSM.en.md#updates-in-package-center) once, then use **Update** in Package Center and follow its wizard. Installing the official `.spk` over WakeLink through **Manual Install** is also supported. Neither route requires pairing again.
 4. In **HACS > WakeLink**, install the new integration version and restart Home Assistant. If a beta is missing, check the version selector and HACS's option to show beta versions. Do not select an untested default-branch commit merely to get a higher number.
 5. Check the existing device and sensor values. No new pairing code should be needed. If installation unexpectedly asks for first-time setup, stop and preserve the backup/error.
 

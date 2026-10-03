@@ -4,7 +4,7 @@
 
 This controls **the NAS itself**, not a PC or a VM hosted on the NAS. You need DSM 7 with Python 3 available, an administrator account, and Home Assistant with HACS on the same trusted local network. Home Assistant must stay running elsewhere when this NAS is off. Alexa is configured afterwards.
 
-**Test version:** these instructions require DSM package revision **`0021` or later** with the guided permission button. Older published packages may not have it. The user reported a successful fresh installation using this guide and working controls on the DSM 7.2 VM; sensor recovery after startup was checked. This does not validate every model: controlled restart, Wake-on-LAN on a physical NAS and package downgrade tests remain pending.
+**Version:** use **v1.0.0**, DSM package **1.0.0-0001**, with the guided permission button. The user reported a successful fresh installation and working controls on the DSM 7.2 VM; upgrades and sensor recovery were checked. Other models/DSM versions, physical NAS wake and downgrade remain outside this validation.
 
 ## Installation summary
 
@@ -18,7 +18,7 @@ This controls **the NAS itself**, not a PC or a VM hosted on the NAS. You need D
 
 ## 1. Download and prepare
 
-Download **[pcpowerfree-dsm-noarch-0.2.0-0024.spk](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/download/v0.2.0-beta.13/pcpowerfree-dsm-noarch-0.2.0-0024.spk)** from [beta.13 Assets](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.13), not a Windows `.exe` or Ubuntu `.deb`. This is app beta.13, DSM package revision **0024**. The higher revision allows upgrades from the local 0021-0023 test builds. The old filename keeps upgrades compatible; the app is called WakeLink.
+Download **[pcpowerfree-dsm-noarch-1.0.0-0001.spk](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/download/v1.0.0/pcpowerfree-dsm-noarch-1.0.0-0001.spk)** from [v1.0.0 Assets](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v1.0.0), not a Windows `.exe` or Ubuntu `.deb`. Package **1.0.0-0001** is newer than beta.13's **0.2.0-0024**: DSM compares the complete version, not the last four digits alone. The internal filename keeps upgrades compatible; the app is called WakeLink.
 
 Keep the previous installer, a Home Assistant backup and a protected backup of WakeLink's state before updating. For a VM, use a verified hypervisor backup/snapshot. State backups contain credentials: never publish them. An older installer alone is not a guaranteed rollback.
 
@@ -58,13 +58,13 @@ If setup fails, select **Refresh** first. If a disabled **WakeLink power setup .
 
 HACS must already be installed and configured. The button opens WakeLink's card, not an automatic installation. Check the Home Assistant address before selecting **Open link**. If asked for your instance URL, enter the address you normally use to open Home Assistant, such as `http://homeassistant.local:8123`. Sign in to your Home Assistant if requested.
 
-1. Use the button above, or in Home Assistant open **HACS**, search for `WakeLink`, open its card and select **Download**. Choose the release you want to test; enable HACS's beta-version option if needed. Restart Home Assistant when prompted. If it is missing, use **... > Custom repositories**, enter `https://github.com/slx612/WOL-Home-Assistant-And-Alexa`, choose **Integration**, select **Add** and search again. Install the integration only once. You do not need the Windows app.
+1. Use the button above, or in Home Assistant open **HACS**, search for `WakeLink`, open its card and select **Download**. Choose the latest stable release; v1.0.0 needs no beta-version option. Restart Home Assistant when prompted. If it is missing, use **... > Custom repositories**, enter `https://github.com/slx612/WOL-Home-Assistant-And-Alexa`, choose **Integration**, select **Add** and search again. Install the integration only once. You do not need the Windows app.
 2. In WakeLink's DSM window, select **Generate pairing code**.
 3. In Home Assistant, open **Settings > Devices & services** and select the discovered NAS. If missing, select **Add integration > WakeLink**.
 4. Check its name and IP, then enter the six-digit code within ten minutes. If asked for an IP/port, use the NAS address and `58477`, unless you changed the agent port.
 5. Check that the NAS appears under WakeLink with **Power**, **Restart**, **Boot time** and **Uptime**. The HACS list may still lack an icon because of a [known display issue](KNOWN_ISSUES.md#english); installation can still succeed.
 
-**Checkpoint:** the NAS is paired, and the DSM window says **Permission enabled**. Home Assistant shows a TLS fingerprint while pairing; verify the intended NAS name/IP and pair only on the trusted network. This DSM preview does not yet display that fingerprint for side-by-side comparison.
+**Checkpoint:** the NAS is paired, and the DSM window says **Permission enabled**. Home Assistant shows a TLS fingerprint while pairing; verify the intended NAS name/IP and pair only on the trusted network. The DSM window does not display that fingerprint for side-by-side comparison.
 
 ### What the sensors show
 
@@ -82,7 +82,7 @@ When the NAS is off or the agent is not responding yet during startup, both show
 
 Use **Restart** only when a real NAS restart is intended. It is not a refresh button.
 
-Only **normal, immediate** shutdown/restart is supported, not force or a delay. Do not use this beta on a Synology High Availability cluster: native power commands may affect both nodes. When Home Assistant works, follow the [Alexa guide](ALEXA.en.md). Matterbridge cannot fix a missing DSM power permission.
+Only **normal, immediate** shutdown/restart is supported, not force or a delay. Do not use WakeLink on a Synology High Availability cluster: native power commands may affect both nodes. When Home Assistant works, follow the [Alexa guide](ALEXA.en.md). Matterbridge cannot fix a missing DSM power permission.
 
 ## Update or revoke permission
 
@@ -90,7 +90,7 @@ Use **Manual Install** to install a newer `.spk` over WakeLink. Do not uninstall
 
 ### Updates in Package Center
 
-Add WakeLink's package source **once** so Package Center can find future updates. DSM 7.2 recognized the catalog in VM tests; see the [release notes](RELEASE_v0.2.0-beta.13.md) for exact validation coverage.
+Add WakeLink's package source **once** so Package Center can find future updates. DSM 7.2 recognized the catalog in VM tests; see the [release notes](RELEASE_v1.0.0.md) for exact validation coverage.
 
 1. Open **Package Center > Settings > Package Sources > Add**.
 2. Enter **WakeLink** as the name and paste the exact address below. Select **OK**. Do not use the GitHub project page or a `.spk` download URL as a source.

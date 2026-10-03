@@ -4,13 +4,13 @@
 
 This guide is for **Ubuntu 24.04 Desktop**, with a graphical desktop. For a headless server, see the [manual installation](../linux_agent/README.md#manual-installation-for-servers). The computer and Home Assistant must be on the same trusted local network. Home Assistant must stay running on another device when this PC is off. You need HACS in Home Assistant. Set up Alexa afterwards.
 
-**Status:** the desktop installer is available in **beta.13**. An upgrade over a manual installation has been tested on the Ubuntu VM; a complete fresh installation is still untested. Pairing alone does not prove that the hardware supports Wake-on-LAN.
+**Version:** use the stable **v1.0.0** installer below. Ubuntu 24.04 VM tests cover native installation, activation and in-place upgrades. The native administrator dialog still requires your approval. Pairing alone does not prove that the hardware supports Wake-on-LAN.
 
 ## 1. Choose the right file
 
-Download **[WakeLink-Ubuntu-0.2.0-beta.13.deb](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/download/v0.2.0-beta.13/WakeLink-Ubuntu-0.2.0-beta.13.deb)** from [beta.13 Assets](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.13). Future installers use `WakeLink-Ubuntu-<version>.deb`. Do not use the Linux source bundle, a Windows `.exe`, a DSM `.spk` or GitHub's **Source code** files. You do not need to compile anything.
+Download **[WakeLink-Ubuntu-1.0.0.deb](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/download/v1.0.0/WakeLink-Ubuntu-1.0.0.deb)** from [v1.0.0 Assets](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v1.0.0). Future installers use `WakeLink-Ubuntu-<version>.deb`. Do not use the Linux source bundle, a Windows `.exe`, a DSM `.spk` or GitHub's **Source code** files. You do not need to compile anything.
 
-Back up Home Assistant before testing a beta. The computer needs Internet access during installation to download Ubuntu dependencies.
+Back up Home Assistant before installing or updating. The computer needs Internet access during installation to download Ubuntu dependencies.
 
 ## 2. Install and open the app
 
@@ -33,13 +33,13 @@ sudo apt install ./FILE_NAME.deb
 
 HACS must already be installed and configured. The button opens WakeLink's card, not an automatic installation. Check the Home Assistant address before selecting **Open link**. If asked for your instance URL, enter the address you normally use to open Home Assistant, such as `http://homeassistant.local:8123`. Sign in to your Home Assistant if requested.
 
-1. Use the button above, or in Home Assistant open **HACS**, search for `WakeLink`, open its card and select **Download**. Choose the release you want to test; enable HACS's beta-version option if needed. Restart Home Assistant when prompted. If search finds nothing, use **... > Custom repositories**, enter `https://github.com/slx612/WOL-Home-Assistant-And-Alexa`, choose **Integration**, select **Add**, then search again. Install this integration only once, even for several devices.
+1. Use the button above, or in Home Assistant open **HACS**, search for `WakeLink`, open its card and select **Download**. Choose the latest stable release; v1.0.0 does not require the beta-version option. Restart Home Assistant when prompted. If search finds nothing, use **... > Custom repositories**, enter `https://github.com/slx612/WOL-Home-Assistant-And-Alexa`, choose **Integration**, select **Add**, then search again. Install this integration only once, even for several devices.
 2. In WakeLink, use the six-digit code shown after enabling the agent. If it is missing or expired, select **Generate pairing code** and approve Ubuntu's request.
 3. In Home Assistant, open **Settings > Devices & services** and select the discovered computer. If it is missing, select **Add integration > WakeLink**. Check that you selected your computer, not another device on the network.
 4. Enter the code within ten minutes. If discovery is unavailable and the form asks for an IP, use the computer's address and port `58477`, unless you changed it.
 5. Check that the computer appears under WakeLink with **Power**, **Restart**, **Boot time** and **Uptime**. **Do not turn it off just to check its state.**
 
-**Checkpoint:** your computer is listed in Home Assistant. The pairing screen shows its TLS fingerprint; check the intended device name/IP and pair only on the trusted network. This preview's Ubuntu window does not yet show a fingerprint for side-by-side comparison.
+**Checkpoint:** your computer is listed in Home Assistant. The pairing screen shows its TLS fingerprint; check the intended device name/IP and pair only on the trusted network. The Ubuntu window does not display a fingerprint for side-by-side comparison.
 
 The code pairs Home Assistant; it is not your Ubuntu password. Updates do not need a new code. A fixed IP is normally unnecessary, but guest networks and VLANs may block discovery.
 
@@ -60,9 +60,9 @@ If shutdown works but wake does not, check firmware and network adapter Wake-on-
 3. If an update is available, select **Install update**, confirm and approve Ubuntu's administrator prompt. WakeLink downloads the Ubuntu installer, verifies its GitHub SHA-256 checksum and package identity, and installs it through Ubuntu's package manager.
 4. Wait for the completion message, then open WakeLink again. The background service is restarted automatically. **Do not generate another pairing code.**
 
-This updater is included in **beta.13**. If you have the earlier local beta.12 desktop build, its updater can offer beta.13. Installations without an updater need this `.deb` installed over them once. No eligible published installer is an explicit error, not a claim that you are up to date. Network errors and canceled authorization leave the current installation intact. Beta installations may offer betas; stable installations only offer stable releases. Ubuntu's system updater does not independently discover WakeLink: no APT repository is configured. Installation always requires your approval.
+Upgrading from beta.13 uses the same updater. Older installations without it need this `.deb` installed over them once. No eligible published installer is an explicit error, not a claim that you are up to date. Network errors and canceled authorization leave the current installation intact. Beta installations may offer betas; stable installations only offer stable releases. Ubuntu's system updater does not independently discover WakeLink: no APT repository is configured. Installation always requires your approval.
 
-Alternatively, install a newer official `.deb` **over** the existing one. Do not uninstall or delete the Home Assistant device. Configuration, certificates and pairing remain in `/etc/pc-power-free/`. The VM update test preserved all three state files byte-for-byte. This old internal name does not refer to another application. See the [release notes](RELEASE_v0.2.0-beta.13.md) for the exact test coverage and remaining checks.
+Alternatively, install a newer official `.deb` **over** the existing one. Do not uninstall or delete the Home Assistant device. Configuration, certificates and pairing remain in `/etc/pc-power-free/`. The VM update test preserved these state files byte-for-byte. This old internal name does not refer to another application. See the [release notes](RELEASE_v1.0.0.md) for exact test coverage and limits.
 
 | What you see | What to do |
 | --- | --- |

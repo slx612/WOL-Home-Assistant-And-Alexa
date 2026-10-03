@@ -6,6 +6,8 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import shutil
+import time
 import unittest
 from unittest.mock import patch
 
@@ -15,6 +17,29 @@ sys.path.insert(0, str(ROOT / "windows_agent"))
 
 @unittest.skipUnless(sys.platform == "win32", "Windows desktop")
 class DesktopDataTests(unittest.TestCase):
+    def test_installer_preflight_blocks_until_dashboard_is_closed(self):
+        script = ROOT / "windows_agent/check-dashboard-closed.ps1"
+        with tempfile.TemporaryDirectory() as temporary:
+            name = "WakeLinkDashboardProbe" + Path(temporary).name
+            executable = Path(temporary) / (name + ".exe")
+            shutil.copy2(Path(os.environ["SystemRoot"]) / "System32/cmd.exe", executable)
+            command = ["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+                       "-File", str(script), "-ProcessName", name]
+            process = subprocess.Popen([str(executable), "/d", "/q", "/c", "set /p unused="],
+                stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                creationflags=subprocess.CREATE_NO_WINDOW)
+            try:
+                time.sleep(.2)
+                self.assertIsNone(process.poll())
+                self.assertEqual(subprocess.run(command, capture_output=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW).returncode, 1)
+            finally:
+                process.terminate()
+                process.wait(timeout=5)
+                process.stdin.close()
+            self.assertEqual(subprocess.run(command, capture_output=True,
+                creationflags=subprocess.CREATE_NO_WINDOW).returncode, 0)
+
     def test_settings_save_preserves_existing_identity_and_unrelated_options(self):
         import setup_wizard_gui as setup
         with tempfile.TemporaryDirectory() as temporary:
@@ -126,6 +151,13 @@ class DesktopViewTests(unittest.TestCase):
         self.jobs = patch.object(desktop_ui.WakeLinkApplication, "_run_job")
         self.jobs.start()
         self.addCleanup(self.jobs.stop)
+
+    def test_window_and_tray_report_the_running_agent_version(self):
+        from agent_core.common import AGENT_VERSION
+        import pc_power_tray
+        self.ui.WakeLinkApplication(self.root, initial_language="en")
+        self.assertIn(AGENT_VERSION, self.root.title())
+        self.assertEqual(pc_power_tray.APP_VERSION, AGENT_VERSION)
 
     def test_first_run_goes_to_setup_without_showing_a_fake_pairing_code(self):
         app = self.ui.WakeLinkApplication(self.root, initial_language="en")

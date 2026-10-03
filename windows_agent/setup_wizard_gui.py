@@ -29,12 +29,12 @@ from update_check import fetch_latest_github_release, format_update_error, is_ne
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-from agent_core.common import atomic_write_json, load_config
+from agent_core.common import AGENT_VERSION, atomic_write_json, load_config
 from agent_core.tls import create_server_context
 
 APP_TITLE = "WakeLink"
 APP_DIR_NAME = "PC Power Free"
-APP_VERSION = "0.2.0-beta.12"
+APP_VERSION = AGENT_VERSION
 DEFAULT_AGENT_PORT = 58477
 DEFAULT_TASK_NAME = "PC Power Agent"
 DEFAULT_RULE_NAME = "PC Power Agent"

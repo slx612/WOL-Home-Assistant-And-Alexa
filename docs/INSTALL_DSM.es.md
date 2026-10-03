@@ -4,7 +4,7 @@
 
 Esto controla **el propio NAS**, no un PC ni una VM alojada en él. Necesitas DSM 7 con Python 3 disponible, una cuenta administradora y Home Assistant con HACS en la misma red local de confianza. Home Assistant debe seguir encendido en otro equipo cuando apagues este NAS. En Home Assistant, **Configuración** puede llamarse **Ajustes** en algunas versiones. Alexa se configura después.
 
-**Versión de pruebas:** estas instrucciones necesitan un paquete DSM de revisión **`0021` o posterior**, con el botón de autorización guiada. Los paquetes antiguos publicados pueden no incluirlo. El usuario ha comunicado una instalación limpia correcta siguiendo esta guía y controles funcionales en la VM DSM 7.2; se ha comprobado la recuperación de los sensores tras arrancar. Esto no valida todos los modelos: faltan pruebas controladas de reinicio, Wake-on-LAN en un NAS físico y regreso a un paquete anterior.
+**Versión:** usa **v1.0.0**, paquete DSM **1.0.0-0001**, con el botón de autorización guiada. El usuario comunicó instalación limpia y controles funcionales en la VM DSM 7.2; se comprobaron actualizaciones y recuperación de sensores. Otros modelos/versiones DSM, encendido de un NAS físico y regreso a un paquete anterior quedan fuera de esta validación.
 
 ## Resumen de la instalación
 
@@ -18,7 +18,7 @@ Esto controla **el propio NAS**, no un PC ni una VM alojada en él. Necesitas DS
 
 ## 1. Descargar y preparar
 
-Descarga **[pcpowerfree-dsm-noarch-0.2.0-0024.spk](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/download/v0.2.0-beta.13/pcpowerfree-dsm-noarch-0.2.0-0024.spk)** desde los [Assets de beta.13](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v0.2.0-beta.13), no el `.exe` Windows ni el `.deb` Ubuntu. Es la app beta.13 con revisión DSM **0024**, superior a las pruebas locales 0021-0023 para poder actualizar encima. El nombre antiguo mantiene la compatibilidad; la app se llama WakeLink.
+Descarga **[pcpowerfree-dsm-noarch-1.0.0-0001.spk](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/download/v1.0.0/pcpowerfree-dsm-noarch-1.0.0-0001.spk)** desde los [Assets de v1.0.0](https://github.com/slx612/WOL-Home-Assistant-And-Alexa/releases/tag/v1.0.0), no el `.exe` Windows ni el `.deb` Ubuntu. El paquete **1.0.0-0001** supera **0.2.0-0024** de beta.13: DSM compara la versión completa, no solo las cuatro cifras finales. El nombre interno mantiene la compatibilidad; la app se llama WakeLink.
 
 Antes de actualizar, conserva el instalador anterior, una copia de Home Assistant y una copia protegida del estado de WakeLink. Para una VM, utiliza una copia o instantánea verificada del hipervisor. El estado contiene credenciales: no lo publiques. El instalador anterior, por sí solo, no garantiza poder volver atrás.
 
@@ -58,13 +58,13 @@ Si falla, pulsa primero **Actualizar**. Si queda una tarea deshabilitada **WakeL
 
 HACS debe estar instalado y configurado. El botón abre la ficha de WakeLink: no lo instala automáticamente. Comprueba la dirección de Home Assistant antes de pulsar **Open link** (abrir enlace). Si pide la dirección de tu instancia, introduce la que usas normalmente para abrir Home Assistant, por ejemplo `http://homeassistant.local:8123`. Inicia sesión en tu Home Assistant si lo solicita.
 
-1. Usa el botón anterior o en Home Assistant abre **HACS**, busca `WakeLink`, entra en su ficha y pulsa **Descargar**. Elige la publicación que quieres probar; activa la opción HACS de mostrar betas si hace falta. Reinicia Home Assistant cuando lo pida. Si falta, usa **... > Repositorios personalizados**, introduce `https://github.com/slx612/WOL-Home-Assistant-And-Alexa`, elige **Integración**, pulsa **Añadir** y busca de nuevo. Instala la integración una sola vez. No necesitas el programa Windows.
+1. Usa el botón anterior o en Home Assistant abre **HACS**, busca `WakeLink`, entra en su ficha y pulsa **Descargar**. Elige la última versión estable; la v1.0.0 no necesita activar betas. Reinicia Home Assistant cuando lo pida. Si falta, usa **... > Repositorios personalizados**, introduce `https://github.com/slx612/WOL-Home-Assistant-And-Alexa`, elige **Integración**, pulsa **Añadir** y busca de nuevo. Instala la integración una sola vez. No necesitas el programa Windows.
 2. En la ventana DSM de WakeLink, pulsa **Generar código de vinculación**.
 3. En Home Assistant, abre **Ajustes > Dispositivos y servicios** y selecciona el NAS descubierto. Si no aparece, pulsa **Añadir integración > WakeLink**.
 4. Comprueba el nombre y la IP e introduce el código de seis cifras antes de diez minutos. Si pide IP/puerto, usa los del NAS y `58477`, salvo que hayas cambiado el puerto del agente.
 5. Comprueba que el NAS aparece con **Power**, **Restart**, **Boot time** y **Uptime** (pueden mantener nombres ingleses). Si falta el icono en la lista HACS, es un [problema visual conocido](KNOWN_ISSUES.md#espanol); no impide instalar.
 
-**Comprueba:** el NAS está vinculado y la ventana DSM pone **Permiso activado**. El formulario Home Assistant muestra la huella TLS; verifica nombre/IP y vincula solo en la red de confianza. Esta prueba DSM todavía no muestra esa huella para compararla lado a lado.
+**Comprueba:** el NAS está vinculado y la ventana DSM pone **Permiso activado**. El formulario Home Assistant muestra la huella TLS; verifica nombre/IP y vincula solo en la red de confianza. La ventana DSM no muestra esa huella para compararla lado a lado.
 
 ### Qué muestran los sensores
 
@@ -82,13 +82,13 @@ Cuando el NAS está apagado o el agente todavía no responde durante el arranque
 
 Pulsa **Restart** solo cuando quieras reiniciar realmente el NAS. No es un botón para refrescar.
 
-Solo se admite apagado/reinicio **normal e inmediato**, sin modo forzado ni retraso. No uses esta beta en un clúster Synology High Availability: las órdenes nativas pueden afectar a ambos nodos. Cuando Home Assistant funcione, sigue la [guía de Alexa](ALEXA.es.md). Matterbridge no resuelve la falta de permisos de energía en DSM.
+Solo se admite apagado/reinicio **normal e inmediato**, sin modo forzado ni retraso. No uses WakeLink en un clúster Synology High Availability: las órdenes nativas pueden afectar a ambos nodos. Cuando Home Assistant funcione, sigue la [guía de Alexa](ALEXA.es.md). Matterbridge no resuelve la falta de permisos de energía en DSM.
 
 ## Actualizar o retirar el permiso
 
 ### Actualizaciones en el Centro de paquetes
 
-Añade la fuente de paquetes WakeLink **una vez** para que el Centro de paquetes encuentre futuras actualizaciones. DSM 7.2 reconoció el catálogo en la VM; las [notas de versión](RELEASE_v0.2.0-beta.13.md) detallan qué se ha probado.
+Añade la fuente de paquetes WakeLink **una vez** para que el Centro de paquetes encuentre futuras actualizaciones. DSM 7.2 reconoció el catálogo en la VM; las [notas de versión](RELEASE_v1.0.0.md) detallan qué se ha probado.
 
 1. Abre **Centro de paquetes > Configuración > Fuentes del paquete > Agregar**. Según el idioma DSM puede aparecer **Fuentes de paquetes** o **Añadir**.
 2. Pon **WakeLink** como nombre y pega la dirección exacta de abajo. Pulsa **Aceptar**. No pongas la portada GitHub ni la descarga del `.spk` como fuente.

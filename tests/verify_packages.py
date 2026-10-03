@@ -1,5 +1,6 @@
 """Verify built archives/Windows code without installing or executing power actions."""
 import io
+import argparse
 import hashlib
 import sys
 import json
@@ -44,8 +45,12 @@ def verify_sources(archive, prefix=""):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--windows-only", action="store_true")
+    parser.add_argument("--dsm-package", type=Path)
+    args = parser.parse_args()
     results = {}
-    if "--windows-only" in sys.argv:
+    if args.windows_only:
         print(json.dumps(verify_windows(), indent=2))
         return
     with zipfile.ZipFile(ROOT / "release_assets/WakeLink-Home-Assistant.zip") as archive:
@@ -67,9 +72,11 @@ def main():
         results["linux_files"] = verify_sources(archive)
 
     version = json.loads((ROOT / "custom_components/pc_power_free/manifest.json").read_text())["version"]
-    base, beta = version.split("-beta.")
-    spk = ROOT / f"dsm_package/dist/pcpowerfree-dsm-noarch-{base}-{int(beta):04}.spk"
+    base, _, beta = version.partition("-beta.")
+    spk = args.dsm_package or ROOT / f"dsm_package/dist/pcpowerfree-dsm-noarch-{base}-{int(beta or 0):04}.spk"
     with tarfile.open(spk) as archive:
+        info = archive.extractfile("INFO").read().decode()
+        assert f"aligned with upstream {version}." in info
         payload = archive.extractfile("package.tgz").read()
         with tarfile.open(fileobj=io.BytesIO(payload), mode="r:gz") as inner:
             results["dsm_files"] = verify_sources(inner, "app/")
@@ -83,6 +90,10 @@ def main():
 
 def verify_windows():
     results = {}
+    version = json.loads((ROOT / "custom_components/pc_power_free/manifest.json").read_text())["version"]
+    base, _, beta = version.partition("-beta.")
+    major, minor, patch = map(int, base.split("."))
+    expected_ms, expected_ls = major << 16 | minor, patch << 16 | int(beta or 0)
     installer = ROOT / "windows_agent/dist/pcpowerfree-windows-x64-setup.exe"
     friendly_installer = ROOT / "windows_agent/dist/WakeLink-Windows-x64-Setup.exe"
     assert installer.is_file() and friendly_installer.is_file(), "Missing update-compatible installer alias"
@@ -109,7 +120,9 @@ def verify_windows():
         levels = []
         with pefile.PE(str(path)) as pe:
             assert any(entry.id == 14 for entry in pe.DIRECTORY_ENTRY_RESOURCE.entries), "Missing icon"
-            assert pe.VS_FIXEDFILEINFO[0].FileVersionLS == 12, "Missing beta.12 product metadata"
+            metadata = pe.VS_FIXEDFILEINFO[0]
+            assert (metadata.FileVersionMS, metadata.FileVersionLS) == (expected_ms, expected_ls), "Incorrect product metadata"
+            assert bool(metadata.FileFlags & 2) == bool(beta), "Incorrect prerelease flag"
             for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
                 if resource_type.id != 24:
                     continue

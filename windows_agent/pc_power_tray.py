@@ -28,11 +28,12 @@ from update_check import (
     normalize_version_text,
     parse_version_key,
 )
+from agent_core.common import AGENT_VERSION
 
 APP_NAME = "WakeLink"
 APP_TITLE = "WakeLink"
 APP_DIR_NAME = "PC Power Free"
-APP_VERSION = "0.2.0-beta.12"
+APP_VERSION = AGENT_VERSION
 DEFAULT_AGENT_PORT = 58477
 CONFIG_FILENAME = "config.json"
 COMMAND_GUARD_ALLOW = "allow"
@@ -495,7 +496,7 @@ class TrayApp:
                 if not self._should_auto_check_updates() and not self._manual_update_requested.is_set():
                     return
 
-            latest_release = fetch_latest_github_release()
+            latest_release = fetch_latest_github_release(include_prereleases="-" in APP_VERSION)
             self._record_update_check(latest_release.version)
             if is_newer_version(latest_release.version, APP_VERSION):
                 if self._should_prompt_for_release(latest_release.version) or manual or self._manual_update_requested.is_set():

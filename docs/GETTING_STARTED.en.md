@@ -2,7 +2,7 @@
 
 [English](GETTING_STARTED.en.md) | [Español](GETTING_STARTED.es.md) | [Choose another system](../README.md#start-here)
 
-**You need:** a Windows x64 PC, administrator permission to install, Home Assistant with HACS, and a trusted local network connecting both. Home Assistant must remain on another device when this PC is off. This is a beta; make a Home Assistant backup first. Alexa is optional and comes afterwards.
+**You need:** a Windows x64 PC, administrator permission to install, Home Assistant with HACS, and a trusted local network connecting both. Home Assistant must remain on another device when this PC is off. Make a Home Assistant backup before installing or updating. Alexa is optional and comes afterwards.
 
 ## 1. Download the installer
 
@@ -33,7 +33,7 @@ WakeLink configures the background agent, local firewall access and Windows star
 HACS must already be installed and configured. The button opens WakeLink's card, not an automatic installation. Check the Home Assistant address on the page before selecting **Open link**. If asked for your instance URL, enter the address you normally use to open Home Assistant, such as `http://homeassistant.local:8123`. Sign in to your Home Assistant if requested.
 
 1. Use the button above, or open **HACS**, search for `WakeLink` and open it. It is in the default catalog. If your catalog does not show it, open **... > Custom repositories**, enter `https://github.com/slx612/WOL-Home-Assistant-And-Alexa`, choose **Integration**, and select **Add**. Search again.
-2. Select **Download** and the release you want to test. If a beta is hidden, check the version selector and HACS's beta-version option.
+2. Select **Download** and the latest stable release. You do not need to enable beta versions for v1.0.0.
 3. Restart **Home Assistant**, not the PC, when prompted.
 4. Open **Settings > Devices & services**. Do not add a second WakeLink installation if you already have one; one integration handles multiple devices.
 

@@ -81,7 +81,7 @@ TEXT = {
     "updates_desc": ("Check for a Windows installer. Updates keep your settings and pairing; do not uninstall first.", "Busca un instalador para Windows. Actualizar conserva ajustes y vinculaci\u00f3n; no desinstales antes."),
     "installed": ("INSTALLED DESKTOP VERSION", "VERSI\u00d3N DEL PROGRAMA INSTALADA"),
     "check_updates": ("Check for updates", "Buscar actualizaciones"),
-    "update_idle": ("Ready to check GitHub releases, including betas.", "Listo para consultar las versiones de GitHub, incluidas las betas."),
+    "update_idle": ("Ready to check official GitHub releases.", "Listo para consultar las versiones oficiales de GitHub."),
     "latest": ("No newer Windows release found. Latest published: {version}", "No hay una versi\u00f3n m\u00e1s nueva para Windows. \u00daltima publicada: {version}"),
     "available": ("Windows update available: {version}", "Actualizaci\u00f3n para Windows disponible: {version}"),
     "download": ("Download Windows installer", "Descargar instalador para Windows"),
@@ -624,7 +624,8 @@ class WakeLinkApplication:
         self.download_url = None
         self.download_button.grid_remove()
         self.update_var.set(self.t("checking"))
-        self._run_job("updates", setup.fetch_latest_github_release, self._update_received)
+        self._run_job("updates", lambda: setup.fetch_latest_github_release(
+            include_prereleases="-" in setup.APP_VERSION), self._update_received)
 
     def _update_received(self, release):
         if setup.is_newer_version(release.version, setup.APP_VERSION):
