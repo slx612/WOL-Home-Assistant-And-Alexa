@@ -33,6 +33,8 @@ Keep the visible name **WakeLink** and preserve internal IDs/discovery types and
 
 The VM accepted the static JSON catalog, discovered revision 0023 and downloaded it through native Package Center APIs. Installing that downloaded SPK worked. The 0021-to-0022 upgrade retained identity and the power grant. Use the normal unsigned-package wizard: quick upgrade must be disabled. The graphical wizard is still untested end-to-end.
 
+Beta.13 public verification: DSM recognized the published HTTPS source and the downloaded revision 0024 installed with native `synopkg`; Ubuntu's real public update installer upgraded beta.12 to beta.13. Both retained configuration/TLS identity and authenticated with the existing credentials. The public source remains configured on the disposable DSM VM. No power orders were sent. See [release validation](RELEASE_v0.2.0-beta.13.md#validation-and-limits); do not mark the remaining graphical-dialog check complete.
+
 After uploading and verifying the real release asset, run `dsm_package/build_repository.py SPK_PATH EXACT_GITHUB_ASSET_URL dsm_package/repository.json`, commit that generated catalog to the default branch, and verify the public HTTPS URL. Only then publish `https://raw.githubusercontent.com/slx612/WOL-Home-Assistant-And-Alexa/main/dsm_package/repository.json` as the package source. Update this catalog for each release; do not publish an entry for a missing/future asset. No Worker or paid hosting is required for the tested DSM 7.2 GET client.
 
 ### Beta.13 coverage
@@ -69,6 +71,8 @@ Conserva nombre visible **WakeLink**, identificadores internos y rutas. Las imá
 ### Fuente de paquetes DSM
 
 La VM aceptó el JSON estático, detectó la revisión 0023 y la descargó mediante las API del Centro de paquetes. La instalación de ese SPK descargado funcionó. Actualizar 0021 a 0022 conservó identidad y permiso de energía. Hay que usar el asistente normal de paquete sin firma: no habilitar actualización rápida/silenciosa. Falta probar el asistente gráfico completo.
+
+Verificación pública beta.13: DSM reconoció la fuente HTTPS publicada y el SPK 0024 descargado se instaló mediante `synopkg`; el actualizador real Ubuntu descargó e instaló beta.13 sobre beta.12. Se conservaron configuración e identidad TLS, y funcionaron las credenciales anteriores. La fuente pública queda configurada en la VM DSM prescindible. No se enviaron órdenes de energía. Consulta las [pruebas de versión](RELEASE_v0.2.0-beta.13.md#pruebas-y-límites); no marques completa la comprobación gráfica pendiente.
 
 Después de subir y verificar el instalador real, ejecuta `dsm_package/build_repository.py RUTA_SPK URL_EXACTA_ASSET_GITHUB dsm_package/repository.json`, publica ese catálogo generado en la rama predeterminada y comprueba su URL HTTPS pública. Solo entonces anuncia `https://raw.githubusercontent.com/slx612/WOL-Home-Assistant-And-Alexa/main/dsm_package/repository.json` como fuente. Actualízalo en cada versión; no anuncies archivos futuros o ausentes. El cliente GET DSM 7.2 probado no necesita Worker ni alojamiento de pago.
 
