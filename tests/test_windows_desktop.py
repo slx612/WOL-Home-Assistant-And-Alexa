@@ -1,4 +1,5 @@
 """Exercise the desktop flow with temporary data, never the installed agent."""
+import gc
 import json
 import os
 from pathlib import Path
@@ -118,6 +119,8 @@ class DesktopViewTests(unittest.TestCase):
         self.addCleanup(self.environment.stop)
         self.root = tk.Tk()
         self.root.withdraw()
+        # Finalize old Tcl variables here, never on a later HTTPS worker thread.
+        self.addCleanup(gc.collect)
         self.addCleanup(self.root.destroy)
         # No background network/OS jobs: only the real widgets and UI state are exercised.
         self.jobs = patch.object(desktop_ui.WakeLinkApplication, "_run_job")
